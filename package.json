@@ -1,0 +1,19 @@
+{
+  "name": "gozar",
+  "private": true,
+  "workspaces": [
+    "ts/packages/*",
+    "ts/apps/*"
+  ],
+  "scripts": {
+    "build:ts": "npm run build --workspace @gozar/shared && npm run build --workspace @gozar/control-plane",
+    "typecheck:ts": "npm run typecheck --workspace @gozar/shared && npm run typecheck --workspace @gozar/control-plane",
+    "dev:control-plane": "npm run dev --workspace @gozar/control-plane",
+    "start:control-plane": "npm run start --workspace @gozar/control-plane"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}

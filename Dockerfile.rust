@@ -1,0 +1,17 @@
+FROM rust:1.78-bookworm AS builder
+WORKDIR /workspace
+
+ARG SERVICE
+
+COPY Cargo.toml ./
+COPY rust ./rust
+
+RUN cargo build --release --bin ${SERVICE}
+
+FROM debian:bookworm-slim
+RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /workspace/target/release/${SERVICE} /usr/local/bin/service
+
+CMD ["/usr/local/bin/service"]
+
