@@ -1,0 +1,13 @@
+flowchart LR
+    User["User App / Shell"] --> Client["Desktop Client\nTCP 7000"]
+    Control["Control Plane\nTypeScript"] -. signed config .-> Client
+    Client -. heartbeat .-> Control
+    Relay -. heartbeat .-> Control
+    Gateway -. heartbeat .-> Control
+
+    Client -->|Path A: direct QUIC| Gateway
+    Client -->|Path B: QUIC| Relay
+    Relay -->|forwarded QUIC| Gateway
+    Gateway -->|TCP| Echo["Local Echo Service"]
+    Echo --> Gateway
+    Gateway --> Client

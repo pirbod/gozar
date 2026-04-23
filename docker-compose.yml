@@ -1,0 +1,94 @@
+version: "3.9"
+
+services:
+  control-plane:
+    build:
+      context: .
+      dockerfile: Dockerfile.node
+    environment:
+      PORT: "8080"
+      CONTROL_SECRET: "gozar-local-shared-secret"
+      ADMIN_TOKEN: "gozar-admin-token"
+      GATEWAY_QUIC_ADDR: "gateway:6200"
+      RELAY_QUIC_ADDR: "relay:6100"
+      GATEWAY_QUEUE_LIMIT: "64"
+      RELAY_QUEUE_LIMIT: "32"
+      CLIENT_QUEUE_LIMIT: "16"
+      OTEL_SERVICE_NAME: "gozar-control-plane"
+    ports:
+      - "8080:8080"
+
+  echo-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.rust
+      args:
+        SERVICE: echo-service
+    environment:
+      RUST_LOG: "info"
+      ECHO_LISTEN_ADDR: "0.0.0.0:9000"
+      OTEL_SERVICE_NAME: "gozar-echo-service"
+
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.rust
+      args:
+        SERVICE: gateway
+    depends_on:
+      - echo-service
+      - control-plane
+    environment:
+      RUST_LOG: "info"
+      GOZAR_NODE_ID: "gateway-1"
+      GOZAR_ROLE: "gateway"
+      GOZAR_CONTROL_PLANE_URL: "http://control-plane:8080"
+      GOZAR_CONTROL_SECRET: "gozar-local-shared-secret"
+      GOZAR_LISTEN_ADDR: "0.0.0.0:6200"
+      GOZAR_ECHO_ADDR: "echo-service:9000"
+      GOZAR_QUEUE_LIMIT: "64"
+      OTEL_SERVICE_NAME: "gozar-gateway"
+
+  relay:
+    build:
+      context: .
+      dockerfile: Dockerfile.rust
+      args:
+        SERVICE: relay
+    depends_on:
+      - gateway
+      - control-plane
+    environment:
+      RUST_LOG: "info"
+      GOZAR_NODE_ID: "relay-1"
+      GOZAR_ROLE: "relay"
+      GOZAR_CONTROL_PLANE_URL: "http://control-plane:8080"
+      GOZAR_CONTROL_SECRET: "gozar-local-shared-secret"
+      GOZAR_LISTEN_ADDR: "0.0.0.0:6100"
+      GOZAR_GATEWAY_ADDR: "gateway:6200"
+      GOZAR_QUEUE_LIMIT: "32"
+      OTEL_SERVICE_NAME: "gozar-relay"
+
+  desktop-client:
+    build:
+      context: .
+      dockerfile: Dockerfile.rust
+      args:
+        SERVICE: desktop-client
+    depends_on:
+      - relay
+      - gateway
+      - control-plane
+    environment:
+      RUST_LOG: "info"
+      GOZAR_NODE_ID: "desktop-client-1"
+      GOZAR_ROLE: "desktop-client"
+      GOZAR_CONTROL_PLANE_URL: "http://control-plane:8080"
+      GOZAR_CONTROL_SECRET: "gozar-local-shared-secret"
+      GOZAR_LOCAL_LISTEN_ADDR: "0.0.0.0:7000"
+      GOZAR_POLL_SECONDS: "5"
+      GOZAR_QUEUE_LIMIT: "16"
+      OTEL_SERVICE_NAME: "gozar-desktop-client"
+    ports:
+      - "7000:7000"
+
