@@ -88,21 +88,21 @@ jobs:
 
           send_message() {
             python3 - "$1" <<'PY'
-import socket
-import sys
+            import socket
+            import sys
 
-message = sys.argv[1]
-with socket.create_connection(("127.0.0.1", 7000), timeout=5) as sock:
-    sock.settimeout(5)
-    sock.sendall((message + "\n").encode())
-    data = b""
-    while not data.endswith(b"\n"):
-        chunk = sock.recv(4096)
-        if not chunk:
-            break
-        data += chunk
-print(data.decode().strip())
-PY
+            message = sys.argv[1]
+            with socket.create_connection(("127.0.0.1", 7000), timeout=5) as sock:
+                sock.settimeout(5)
+                sock.sendall((message + "\n").encode())
+                data = b""
+                while not data.endswith(b"\n"):
+                    chunk = sock.recv(4096)
+                    if not chunk:
+                        break
+                    data += chunk
+            print(data.decode().strip())
+            PY
           }
 
           assert_contains() {
