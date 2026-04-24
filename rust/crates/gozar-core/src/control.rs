@@ -105,7 +105,8 @@ pub fn heartbeat_signature_base(
 }
 
 fn path_summary(paths: &[PathDescriptor]) -> String {
-    paths.iter()
+    paths
+        .iter()
         .map(|path| {
             format!(
                 "{}:{}:{}:{}",
@@ -240,7 +241,11 @@ pub async fn post_heartbeat(
     Ok(heartbeat)
 }
 
-pub fn demo_paths(relay_addr: String, gateway_addr: String, queue_limits: &QueueLimits) -> Vec<PathDescriptor> {
+pub fn demo_paths(
+    relay_addr: String,
+    gateway_addr: String,
+    queue_limits: &QueueLimits,
+) -> Vec<PathDescriptor> {
     vec![
         PathDescriptor {
             id: "direct".to_string(),
@@ -262,8 +267,8 @@ pub fn demo_paths(relay_addr: String, gateway_addr: String, queue_limits: &Queue
 #[cfg(test)]
 mod tests {
     use super::{
-        config_request_signature_base, config_response_signature_base, sign, verify,
-        ClientConfig, ClientConfigEnvelope, QueueLimits,
+        config_request_signature_base, config_response_signature_base, sign, verify, ClientConfig,
+        ClientConfigEnvelope, QueueLimits,
     };
     use crate::overlay::{PathDescriptor, PathKind};
 
@@ -305,4 +310,3 @@ mod tests {
         assert!(base.contains("relay:relay:6100"));
     }
 }
-

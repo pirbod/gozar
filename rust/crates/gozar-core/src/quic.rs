@@ -15,10 +15,8 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 pub const DEV_SERVER_NAME: &str = "gozar.local";
 
 pub fn make_server_endpoint(bind_addr: SocketAddr) -> Result<Endpoint> {
-    let CertifiedKey { cert, key_pair } = generate_simple_self_signed(vec![
-        "localhost".to_string(),
-        DEV_SERVER_NAME.to_string(),
-    ])?;
+    let CertifiedKey { cert, key_pair } =
+        generate_simple_self_signed(vec!["localhost".to_string(), DEV_SERVER_NAME.to_string()])?;
     let certificate: CertificateDer<'static> = cert.der().clone();
     let key = PrivateKeyDer::Pkcs8(PrivatePkcs8KeyDer::from(key_pair.serialize_der()));
     let server_config = ServerConfig::with_single_cert(vec![certificate], key)?;
@@ -67,10 +65,7 @@ where
     Ok(response)
 }
 
-pub async fn write_json<T: Serialize>(
-    send: &mut quinn::SendStream,
-    value: &T,
-) -> Result<()> {
+pub async fn write_json<T: Serialize>(send: &mut quinn::SendStream, value: &T) -> Result<()> {
     let body = serde_json::to_vec(value).context("failed to serialize quic payload")?;
     let frame_len = (body.len() as u32).to_be_bytes();
     send.write_all(&frame_len)

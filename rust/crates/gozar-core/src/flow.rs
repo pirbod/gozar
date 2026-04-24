@@ -181,4 +181,3 @@ mod tests {
         assert_eq!(selected.as_deref(), Some("relay"));
     }
 }
-

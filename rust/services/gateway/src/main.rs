@@ -34,9 +34,7 @@ impl Config {
             control_secret: env_var("GOZAR_CONTROL_SECRET", "gozar-local-shared-secret"),
             listen_addr: env_var("GOZAR_LISTEN_ADDR", "0.0.0.0:6200"),
             echo_addr: env_var("GOZAR_ECHO_ADDR", "127.0.0.1:9000"),
-            queue_limit: env_var("GOZAR_QUEUE_LIMIT", "64")
-                .parse()
-                .unwrap_or(64),
+            queue_limit: env_var("GOZAR_QUEUE_LIMIT", "64").parse().unwrap_or(64),
         }
     }
 }
@@ -75,7 +73,9 @@ async fn main() -> Result<()> {
                                 let queue = queue.clone();
                                 let echo_addr = echo_addr.clone();
                                 tokio::spawn(async move {
-                                    if let Err(error) = handle_stream(send, recv, queue, &echo_addr).await {
+                                    if let Err(error) =
+                                        handle_stream(send, recv, queue, &echo_addr).await
+                                    {
                                         warn!(error = ?error, "gateway stream failed");
                                     }
                                 });
@@ -102,7 +102,9 @@ async fn announce(config: &Config) {
         listen_addr: config.listen_addr.clone(),
         status: "ready".to_string(),
     };
-    if let Err(error) = post_heartbeat(&config.control_plane_url, &config.control_secret, &payload).await {
+    if let Err(error) =
+        post_heartbeat(&config.control_plane_url, &config.control_secret, &payload).await
+    {
         warn!(error = ?error, "gateway heartbeat failed");
     }
 }
@@ -135,7 +137,8 @@ async fn handle_stream(
     };
 
     write_json(&mut send, &response).await?;
-    send.finish().context("failed to close gateway send stream")?;
+    send.finish()
+        .context("failed to close gateway send stream")?;
     Ok(())
 }
 
@@ -155,4 +158,3 @@ async fn call_echo_service(addr: &str, message: &str) -> Result<String> {
         .context("failed to read from echo service")?;
     Ok(line.trim_end().to_string())
 }
-
