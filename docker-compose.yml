@@ -17,6 +17,16 @@ services:
       OTEL_SERVICE_NAME: "gozar-control-plane"
     ports:
       - "8080:8080"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:8080/healthz').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
 
   echo-service:
     build:
@@ -36,8 +46,10 @@ services:
       args:
         SERVICE: gateway
     depends_on:
-      - echo-service
-      - control-plane
+      control-plane:
+        condition: service_healthy
+      echo-service:
+        condition: service_started
     environment:
       RUST_LOG: "info"
       GOZAR_NODE_ID: "gateway-1"
@@ -47,6 +59,7 @@ services:
       GOZAR_LISTEN_ADDR: "0.0.0.0:6200"
       GOZAR_ECHO_ADDR: "echo-service:9000"
       GOZAR_QUEUE_LIMIT: "64"
+      GOZAR_HEARTBEAT_SECONDS: "5"
       OTEL_SERVICE_NAME: "gozar-gateway"
 
   relay:
@@ -56,8 +69,10 @@ services:
       args:
         SERVICE: relay
     depends_on:
-      - gateway
-      - control-plane
+      control-plane:
+        condition: service_healthy
+      gateway:
+        condition: service_started
     environment:
       RUST_LOG: "info"
       GOZAR_NODE_ID: "relay-1"
@@ -67,6 +82,7 @@ services:
       GOZAR_LISTEN_ADDR: "0.0.0.0:6100"
       GOZAR_GATEWAY_ADDR: "gateway:6200"
       GOZAR_QUEUE_LIMIT: "32"
+      GOZAR_HEARTBEAT_SECONDS: "5"
       OTEL_SERVICE_NAME: "gozar-relay"
 
   desktop-client:
@@ -76,9 +92,12 @@ services:
       args:
         SERVICE: desktop-client
     depends_on:
-      - relay
-      - gateway
-      - control-plane
+      control-plane:
+        condition: service_healthy
+      gateway:
+        condition: service_started
+      relay:
+        condition: service_started
     environment:
       RUST_LOG: "info"
       GOZAR_NODE_ID: "desktop-client-1"
@@ -91,4 +110,3 @@ services:
       OTEL_SERVICE_NAME: "gozar-desktop-client"
     ports:
       - "7000:7000"
-

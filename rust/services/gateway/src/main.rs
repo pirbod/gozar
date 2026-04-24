@@ -1,4 +1,4 @@
-use std::{env, net::SocketAddr};
+use std::{env, net::SocketAddr, time::Duration};
 
 use anyhow::{anyhow, Context, Result};
 use gozar_core::{
@@ -11,6 +11,7 @@ use gozar_core::{
 use tokio::{
     io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
     net::TcpStream,
+    time::sleep,
 };
 use tracing::{info, warn};
 
@@ -23,6 +24,7 @@ struct Config {
     listen_addr: String,
     echo_addr: String,
     queue_limit: usize,
+    heartbeat_seconds: u64,
 }
 
 impl Config {
@@ -35,6 +37,7 @@ impl Config {
             listen_addr: env_var("GOZAR_LISTEN_ADDR", "0.0.0.0:6200"),
             echo_addr: env_var("GOZAR_ECHO_ADDR", "127.0.0.1:9000"),
             queue_limit: env_var("GOZAR_QUEUE_LIMIT", "64").parse().unwrap_or(64),
+            heartbeat_seconds: env_var("GOZAR_HEARTBEAT_SECONDS", "5").parse().unwrap_or(5),
         }
     }
 }
@@ -49,7 +52,7 @@ async fn main() -> Result<()> {
     init_telemetry(&service_name)?;
 
     let config = Config::from_env();
-    announce(&config).await;
+    tokio::spawn(heartbeat_loop(config.clone()));
 
     let queue = InFlightQueue::new(config.node_id.clone(), config.queue_limit);
     let listen_addr: SocketAddr = config
@@ -95,7 +98,14 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn announce(config: &Config) {
+async fn heartbeat_loop(config: Config) {
+    loop {
+        send_heartbeat(&config).await;
+        sleep(Duration::from_secs(config.heartbeat_seconds)).await;
+    }
+}
+
+async fn send_heartbeat(config: &Config) {
     let payload = HeartbeatRequest {
         node_id: config.node_id.clone(),
         role: config.role.clone(),
