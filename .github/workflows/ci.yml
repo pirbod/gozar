@@ -38,3 +38,114 @@ jobs:
       - name: Build
         run: npm run build:ts
 
+  e2e:
+    runs-on: ubuntu-latest
+    needs:
+      - rust
+      - typescript
+    steps:
+      - uses: actions/checkout@v4
+      - name: End-to-end smoke test
+        run: |
+          set -euo pipefail
+
+          cleanup() {
+            docker compose down -v --remove-orphans || true
+          }
+
+          fail() {
+            echo "$1" >&2
+            docker compose logs || true
+            exit 1
+          }
+
+          wait_for_health() {
+            local attempts="$1"
+            local delay_seconds="$2"
+            for _ in $(seq 1 "$attempts"); do
+              if curl -fsS http://127.0.0.1:8080/healthz >/dev/null; then
+                return 0
+              fi
+              sleep "$delay_seconds"
+            done
+            return 1
+          }
+
+          wait_for_nodes() {
+            local attempts="$1"
+            local delay_seconds="$2"
+            local state
+            for _ in $(seq 1 "$attempts"); do
+              state="$(curl -fsS http://127.0.0.1:8080/api/v1/state -H 'x-gozar-admin-token: gozar-admin-token' || true)"
+              if [[ -n "$state" ]] && python3 -c 'import json, sys; data = json.loads(sys.stdin.read()); nodes = {node["node_id"] for node in data["nodes"]}; required = {"desktop-client-1", "relay-1", "gateway-1"}; sys.exit(0 if required.issubset(nodes) else 1)' <<<"$state"; then
+                return 0
+              fi
+              sleep "$delay_seconds"
+            done
+            echo "$state"
+            return 1
+          }
+
+          send_message() {
+            python3 - "$1" <<'PY'
+import socket
+import sys
+
+message = sys.argv[1]
+with socket.create_connection(("127.0.0.1", 7000), timeout=5) as sock:
+    sock.settimeout(5)
+    sock.sendall((message + "\n").encode())
+    data = b""
+    while not data.endswith(b"\n"):
+        chunk = sock.recv(4096)
+        if not chunk:
+            break
+        data += chunk
+print(data.decode().strip())
+PY
+          }
+
+          assert_contains() {
+            local haystack="$1"
+            local needle="$2"
+            local message="$3"
+            if [[ "$haystack" != *"$needle"* ]]; then
+              fail "$message\nResponse: $haystack"
+            fi
+          }
+
+          trap cleanup EXIT
+
+          docker compose down -v --remove-orphans || true
+          docker compose up --build -d
+
+          wait_for_health 30 2 || fail "control plane did not become healthy"
+          wait_for_nodes 30 2 || fail "control plane did not observe all expected nodes"
+
+          direct_response=""
+          for _ in $(seq 1 15); do
+            if direct_response="$(send_message 'hello from direct path')" && [[ "$direct_response" == *"path=direct"* ]]; then
+              break
+            fi
+            sleep 2
+          done
+          echo "$direct_response"
+          assert_contains "$direct_response" "path=direct" "direct overlay path did not become active"
+          assert_contains "$direct_response" "gateway-1(" "direct response did not include gateway hop"
+
+          curl -fsS -X POST http://127.0.0.1:8080/api/v1/admin/preferred-path \
+            -H 'content-type: application/json' \
+            -H 'x-gozar-admin-token: gozar-admin-token' \
+            -d '{"preferred_path":"relay","switch_reason":"ci relay smoke test"}' >/dev/null
+
+          relay_response=""
+          for _ in $(seq 1 15); do
+            if relay_response="$(send_message 'hello from relay path')" && [[ "$relay_response" == *"path=relay"* ]]; then
+              break
+            fi
+            sleep 2
+          done
+          echo "$relay_response"
+          assert_contains "$relay_response" "path=relay" "relay overlay path did not become active"
+          assert_contains "$relay_response" "relay-1(" "relay response did not include relay hop"
+          assert_contains "$relay_response" "gateway-1(" "relay response did not include gateway hop"
