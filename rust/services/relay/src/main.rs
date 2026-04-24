@@ -31,9 +31,7 @@ impl Config {
             control_secret: env_var("GOZAR_CONTROL_SECRET", "gozar-local-shared-secret"),
             listen_addr: env_var("GOZAR_LISTEN_ADDR", "0.0.0.0:6100"),
             gateway_addr: env_var("GOZAR_GATEWAY_ADDR", "127.0.0.1:6200"),
-            queue_limit: env_var("GOZAR_QUEUE_LIMIT", "32")
-                .parse()
-                .unwrap_or(32),
+            queue_limit: env_var("GOZAR_QUEUE_LIMIT", "32").parse().unwrap_or(32),
         }
     }
 }
@@ -72,7 +70,9 @@ async fn main() -> Result<()> {
                                 let queue = queue.clone();
                                 let gateway_addr = gateway_addr.clone();
                                 tokio::spawn(async move {
-                                    if let Err(error) = handle_stream(send, recv, queue, &gateway_addr).await {
+                                    if let Err(error) =
+                                        handle_stream(send, recv, queue, &gateway_addr).await
+                                    {
                                         warn!(error = ?error, "relay stream failed");
                                     }
                                 });
@@ -99,7 +99,9 @@ async fn announce(config: &Config) {
         listen_addr: config.listen_addr.clone(),
         status: "ready".to_string(),
     };
-    if let Err(error) = post_heartbeat(&config.control_plane_url, &config.control_secret, &payload).await {
+    if let Err(error) =
+        post_heartbeat(&config.control_plane_url, &config.control_secret, &payload).await
+    {
         warn!(error = ?error, "relay heartbeat failed");
     }
 }
@@ -132,4 +134,3 @@ async fn handle_stream(
     send.finish().context("failed to close relay send stream")?;
     Ok(())
 }
-

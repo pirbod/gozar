@@ -37,7 +37,11 @@ async fn handle_client(stream: TcpStream) -> Result<()> {
     let (reader, mut writer) = stream.into_split();
     let mut lines = BufReader::new(reader).lines();
 
-    while let Some(line) = lines.next_line().await.context("failed to read echo request")? {
+    while let Some(line) = lines
+        .next_line()
+        .await
+        .context("failed to read echo request")?
+    {
         let response = format!("echo-service observed: {line}\n");
         writer
             .write_all(response.as_bytes())

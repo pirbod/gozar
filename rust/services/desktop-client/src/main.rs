@@ -77,12 +77,8 @@ impl Config {
             control_plane_url: env_var("GOZAR_CONTROL_PLANE_URL", "http://127.0.0.1:8080"),
             control_secret: env_var("GOZAR_CONTROL_SECRET", "gozar-local-shared-secret"),
             local_listen_addr: env_var("GOZAR_LOCAL_LISTEN_ADDR", "127.0.0.1:7000"),
-            poll_seconds: env_var("GOZAR_POLL_SECONDS", "5")
-                .parse()
-                .unwrap_or(5),
-            queue_limit: env_var("GOZAR_QUEUE_LIMIT", "16")
-                .parse()
-                .unwrap_or(16),
+            poll_seconds: env_var("GOZAR_POLL_SECONDS", "5").parse().unwrap_or(5),
+            queue_limit: env_var("GOZAR_QUEUE_LIMIT", "16").parse().unwrap_or(16),
         }
     }
 }
@@ -109,7 +105,12 @@ async fn main() -> Result<()> {
 
     let listener = TcpListener::bind(&config.local_listen_addr)
         .await
-        .with_context(|| format!("failed to bind local client socket {}", config.local_listen_addr))?;
+        .with_context(|| {
+            format!(
+                "failed to bind local client socket {}",
+                config.local_listen_addr
+            )
+        })?;
     info!(
         listen_addr = %config.local_listen_addr,
         "desktop client is ready; send newline-delimited text to exercise the overlay"
@@ -122,7 +123,9 @@ async fn main() -> Result<()> {
         let hook = hook.clone();
 
         tokio::spawn(async move {
-            if let Err(error) = handle_local_connection(stream, peer_addr.to_string(), shared, queue, hook).await {
+            if let Err(error) =
+                handle_local_connection(stream, peer_addr.to_string(), shared, queue, hook).await
+            {
                 warn!(peer = %peer_addr, error = ?error, "local client connection ended with an error");
             }
         });
@@ -141,11 +144,23 @@ async fn control_plane_loop(
             listen_addr: config.local_listen_addr.clone(),
             status: "ready".to_string(),
         };
-        if let Err(error) = post_heartbeat(&config.control_plane_url, &config.control_secret, &heartbeat).await {
+        if let Err(error) = post_heartbeat(
+            &config.control_plane_url,
+            &config.control_secret,
+            &heartbeat,
+        )
+        .await
+        {
             warn!(error = ?error, "client heartbeat failed");
         }
 
-        match fetch_client_config(&config.control_plane_url, &config.node_id, &config.control_secret).await {
+        match fetch_client_config(
+            &config.control_plane_url,
+            &config.node_id,
+            &config.control_secret,
+        )
+        .await
+        {
             Ok(envelope) => {
                 let current = shared.active_path.read().await.clone();
                 let next = hook
@@ -183,7 +198,11 @@ async fn handle_local_connection(
     let (reader, mut writer) = stream.into_split();
     let mut lines = BufReader::new(reader).lines();
 
-    while let Some(line) = lines.next_line().await.context("failed to read local input")? {
+    while let Some(line) = lines
+        .next_line()
+        .await
+        .context("failed to read local input")?
+    {
         let reply = match forward_local_message(&line, &shared, &queue, hook.as_ref()).await {
             Ok(response) => format_response(&response),
             Err(error) => {
@@ -269,4 +288,3 @@ fn format_response(response: &OverlayResponse) -> String {
         response.trace_id, response.path_id, route, response.terminus, response.message
     )
 }
-

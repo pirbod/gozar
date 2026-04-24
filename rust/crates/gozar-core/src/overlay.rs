@@ -66,4 +66,3 @@ pub struct OverlayResponse {
     pub route: Vec<HopRecord>,
     pub terminus: String,
 }
-
