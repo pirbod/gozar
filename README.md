@@ -6,15 +6,34 @@
 
 This repository is not offensive tooling, not malware, and not a productized circumvention system. It is a minimal, local-first research prototype for lawful experimentation in controlled environments. Do not deploy it to networks or jurisdictions where you do not have authorization to test. The demo uses development-only trust assumptions, including locally generated QUIC certificates and a shared control-plane secret, and must not be treated as production-grade security software.
 
+## Project Status
+
+The repository is now in a solid prototype state:
+
+- Rust CI is green for formatting, clippy, and workspace tests.
+- TypeScript CI is green for workspace typechecking and builds.
+- GitHub Actions includes an end-to-end Docker smoke test that verifies both overlay paths.
+- Docker Compose startup is hardened with a control-plane healthcheck, dependency gating, and recurring relay/gateway heartbeats.
+
+## Verified Flows
+
+These flows have been exercised against the live demo stack:
+
+- `direct`: desktop client -> gateway -> echo service
+- `relay`: desktop client -> relay -> gateway -> echo service
+- Control-plane path switching from `direct` to `relay`
+- Per-hop queue metadata visible in returned route strings
+- Node registration visible through `/api/v1/state`
+
 ## What Is Included
 
 - A Rust desktop-edge client that exposes a local TCP socket and forwards newline-delimited application traffic over the overlay.
-- A Rust relay that receives QUIC traffic, enforces a queue limit, and forwards to the gateway.
-- A Rust gateway that receives QUIC traffic, enforces a queue limit, and forwards to a local echo service.
+- A Rust relay that receives QUIC traffic, enforces a queue limit, forwards to the gateway, and now re-heartbeats until the control plane is available.
+- A Rust gateway that receives QUIC traffic, enforces a queue limit, forwards to a local echo service, and now re-heartbeats until the control plane is available.
 - A Rust local echo service used to demonstrate safe end-to-end flow.
-- A TypeScript control plane with authenticated control messages, path preference updates, and in-memory node heartbeat tracking.
+- A TypeScript control plane with authenticated control messages, path preference updates, in-memory node heartbeat tracking, and a `/healthz` endpoint for orchestration.
 - OpenTelemetry bootstrap for Rust and TypeScript services.
-- Docker Compose for local dev and GitHub Actions for CI.
+- Docker Compose for local dev and GitHub Actions for Rust, TypeScript, and end-to-end CI.
 
 ## Demo Shape
 
@@ -71,6 +90,14 @@ The client polls every five seconds by default, so the next line sent to `7000` 
 
 For more complete instructions, see [docs/local-run.md](docs/local-run.md).
 
+## CI Coverage
+
+The repository now has three CI layers in [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+
+- `rust`: `cargo fmt --check`, `cargo clippy`, and `cargo test`
+- `typescript`: workspace typecheck and build verification
+- `e2e`: Docker Compose smoke test that waits for the control plane, verifies node registration, sends a `direct` message, switches to `relay`, and verifies relay-path traffic
+
 ## Design Notes
 
 - QUIC is used for the overlay links.
@@ -78,6 +105,7 @@ For more complete instructions, see [docs/local-run.md](docs/local-run.md).
 - Each forwarding hop uses the shared `InFlightQueue` interface to cap in-flight work.
 - Queue depth and hop identity are returned in the response so local testing can observe path behavior.
 - The control plane and services exchange authenticated control messages using an HMAC-based envelope.
+- Compose orchestration now treats control-plane readiness explicitly instead of relying on container start order alone.
 
 ## Docs
 
@@ -94,4 +122,4 @@ For more complete instructions, see [docs/local-run.md](docs/local-run.md).
 - There is no persistence, key rotation, congestion control tuning, NAT traversal, or kernel-level tunnel device.
 - The desktop client is a local edge proxy shim, not a full OS-integrated VPN adapter.
 - Observability currently exports to stdout by default; an OTLP collector config is provided for future extension.
-
+- The e2e CI job is a smoke test, not a full fault-injection or performance test harness.
