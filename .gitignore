@@ -8,4 +8,5 @@ coverage/
 .env.local
 .idea/
 .vscode/
-
+runtime/
+temp.txt

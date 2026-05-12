@@ -1,0 +1,23 @@
+name: adaptive-failover
+description: Starts on the relay path, stops the relay, then lets the runner request a direct-path fallback after the first observed failure.
+mode: adaptive
+initial_preferred_path: relay
+fallback_path: direct
+affected_service: relay
+affected_path: relay
+impairment_type: relay_outage
+duration_seconds: 20
+request_count: 20
+request_interval_seconds: 0.5
+settle_seconds: 3
+recovery_wait_seconds: 3
+ci_safe: true
+expected_behavior: The evaluation should observe a failure, request a direct fallback, and measure whether later requests recover.
+metrics_to_collect:
+  - disruption_detection_time
+  - failover_time
+  - recovery_time
+  - number_of_path_switches
+  - request_success_rate
+  - selected_path_over_time
+  - error_counts_by_category

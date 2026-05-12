@@ -1,0 +1,126 @@
+{
+  "synthetic_example": true,
+  "notice": "Illustrative data only. Do not cite these values as measured benchmark results.",
+  "generated_at": "2026-04-23T00:00:00+00:00",
+  "run_started_at": "2026-04-23T00:00:00+00:00",
+  "run_finished_at": "2026-04-23T00:04:00+00:00",
+  "ci_safe": false,
+  "scenario_count": 3,
+  "scenarios": [
+    {
+      "name": "baseline-direct",
+      "description": "Synthetic direct baseline example.",
+      "mode": "static-direct",
+      "affected_service": "none",
+      "affected_path": "direct",
+      "impairment_type": "none",
+      "expected_behavior": "Requests complete through the direct path.",
+      "scenario_started_at": "2026-04-23T00:00:00+00:00",
+      "scenario_finished_at": "2026-04-23T00:00:25+00:00",
+      "metrics": {
+        "connection_setup_time_ms": 1.7,
+        "time_to_first_success_ms": 18.4,
+        "request_success_rate": 1.0,
+        "requests_total": 16,
+        "requests_successful": 16,
+        "median_latency_ms": 8.2,
+        "p95_latency_ms": 12.9,
+        "throughput_estimate_bytes_per_second": 420.0,
+        "failover_time_ms": null,
+        "recovery_time_ms": null,
+        "disruption_detection_time_ms": null,
+        "number_of_path_switches": 0,
+        "selected_path_over_time": [
+          {
+            "request_index": 0,
+            "path": "direct",
+            "timestamp_unix": 1776902400.0
+          }
+        ],
+        "error_counts_by_category": {},
+        "scenario_start_timestamp_unix": 1776902400.0,
+        "scenario_end_timestamp_unix": 1776902425.0
+      },
+      "ci_safe": true
+    },
+    {
+      "name": "baseline-relay",
+      "description": "Synthetic relay baseline example.",
+      "mode": "static-relay",
+      "affected_service": "none",
+      "affected_path": "relay",
+      "impairment_type": "none",
+      "expected_behavior": "Requests complete through relay and gateway hops.",
+      "scenario_started_at": "2026-04-23T00:00:30+00:00",
+      "scenario_finished_at": "2026-04-23T00:00:55+00:00",
+      "metrics": {
+        "connection_setup_time_ms": 1.9,
+        "time_to_first_success_ms": 24.1,
+        "request_success_rate": 1.0,
+        "requests_total": 16,
+        "requests_successful": 16,
+        "median_latency_ms": 15.4,
+        "p95_latency_ms": 21.8,
+        "throughput_estimate_bytes_per_second": 390.0,
+        "failover_time_ms": null,
+        "recovery_time_ms": null,
+        "disruption_detection_time_ms": null,
+        "number_of_path_switches": 0,
+        "selected_path_over_time": [
+          {
+            "request_index": 0,
+            "path": "relay",
+            "timestamp_unix": 1776902430.0
+          }
+        ],
+        "error_counts_by_category": {},
+        "scenario_start_timestamp_unix": 1776902430.0,
+        "scenario_end_timestamp_unix": 1776902455.0
+      },
+      "ci_safe": true
+    },
+    {
+      "name": "adaptive-failover",
+      "description": "Synthetic relay-outage recovery example.",
+      "mode": "adaptive",
+      "affected_service": "relay",
+      "affected_path": "relay",
+      "impairment_type": "relay_outage",
+      "expected_behavior": "A relay failure is observed, then requests recover after direct fallback is requested.",
+      "scenario_started_at": "2026-04-23T00:01:00+00:00",
+      "scenario_finished_at": "2026-04-23T00:01:45+00:00",
+      "metrics": {
+        "connection_setup_time_ms": 2.1,
+        "time_to_first_success_ms": 40.5,
+        "request_success_rate": 0.85,
+        "requests_total": 20,
+        "requests_successful": 17,
+        "median_latency_ms": 11.6,
+        "p95_latency_ms": 31.2,
+        "throughput_estimate_bytes_per_second": 360.0,
+        "failover_time_ms": 5200.0,
+        "recovery_time_ms": 5500.0,
+        "disruption_detection_time_ms": 300.0,
+        "number_of_path_switches": 1,
+        "selected_path_over_time": [
+          {
+            "request_index": 0,
+            "path": "relay",
+            "timestamp_unix": 1776902460.0
+          },
+          {
+            "request_index": 6,
+            "path": "direct",
+            "timestamp_unix": 1776902466.0
+          }
+        ],
+        "error_counts_by_category": {
+          "overlay_error": 3
+        },
+        "scenario_start_timestamp_unix": 1776902460.0,
+        "scenario_end_timestamp_unix": 1776902505.0
+      },
+      "ci_safe": true
+    }
+  ]
+}

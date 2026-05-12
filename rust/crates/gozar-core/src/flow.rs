@@ -167,6 +167,10 @@ mod tests {
                 ingress_addr: "gateway:6200".to_string(),
                 hops: vec!["gateway-1".to_string()],
                 queue_limit: 64,
+                relay_id: None,
+                last_observed_at_unix: Some(10),
+                operator_preference: 40,
+                supports_research_gateway: false,
             },
             PathDescriptor {
                 id: "relay".to_string(),
@@ -174,6 +178,10 @@ mod tests {
                 ingress_addr: "relay:6100".to_string(),
                 hops: vec!["relay-1".to_string(), "gateway-1".to_string()],
                 queue_limit: 32,
+                relay_id: Some("relay-1".to_string()),
+                last_observed_at_unix: Some(10),
+                operator_preference: 0,
+                supports_research_gateway: false,
             },
         ];
 

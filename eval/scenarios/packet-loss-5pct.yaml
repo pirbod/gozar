@@ -1,0 +1,21 @@
+name: packet-loss-5pct
+description: Applies 5 percent packet loss to the relay service with local netem.
+mode: static-relay
+preferred_path: relay
+affected_service: relay
+affected_path: relay
+impairment_type: packet_loss
+packet_loss_percent: 5
+duration_seconds: 20
+request_count: 24
+request_interval_seconds: 0.25
+settle_seconds: 3
+ci_safe: false
+expected_behavior: Most requests should succeed, but latency and retry-related errors may increase.
+metrics_to_collect:
+  - request_success_rate
+  - median_latency
+  - p95_latency
+  - throughput_estimate
+  - selected_path_over_time
+  - error_counts_by_category

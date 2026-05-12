@@ -1,50 +1,41 @@
 # gozar
 
-`gozar` is a lawful academic research prototype for studying resilient communications overlays. It is intentionally framed as defensive networking research: it explores how a desktop-edge client can feel VPN-like to the user while using a QUIC-first multi-path overlay instead of a single static tunnel.
+`gozar` is a censorship-resilience research prototype for studying multi-path QUIC overlays in controlled environments. It is designed for lawful academic evaluation, lab simulation, and consent-based pilots only. It is not a production circumvention tool, not a field-deployment bypass product, and not offensive tooling.
 
 ## Safety Disclaimer
 
-This repository is not offensive tooling, not malware, and not a productized circumvention system. It is a minimal, local-first research prototype for lawful experimentation in controlled environments. Do not deploy it to networks or jurisdictions where you do not have authorization to test. The demo uses development-only trust assumptions, including locally generated QUIC certificates and a shared control-plane secret, and must not be treated as production-grade security software.
+This repository must be used only in environments where you are authorized to test. It intentionally avoids production claims and keeps high-risk features constrained:
 
-## Project Status
+- research gateway mode is disabled by default
+- relay and gateway behavior are scoped to lab-only configuration
+- QUIC trust is development-only
+- control messages use demo HMAC signing plus replay checks
+- simulation scripts target local Docker services for safe fault injection
 
-The repository is now in a solid prototype state:
+See [docs/safety-boundaries.md](docs/safety-boundaries.md).
 
-- Rust CI is green for formatting, clippy, and workspace tests.
-- TypeScript CI is green for workspace typechecking and builds.
-- GitHub Actions includes an end-to-end Docker smoke test that verifies both overlay paths.
-- Docker Compose startup is hardened with a control-plane healthcheck, dependency gating, and recurring relay/gateway heartbeats.
+## What The Prototype Does
 
-## Verified Flows
+- runs a Rust desktop client, relay, gateway, and echo service over a QUIC-first overlay
+- exposes a TypeScript control plane with signed config and signed relay-directory responses
+- scores direct and relay paths on the client and logs the score breakdown
+- supports a lab-only research gateway mode for controlled HTTP forwarding tests
+- persists control-plane state and writes audit logs for operator actions and node observations
+- includes store-and-forward and mesh-adapter skeletons for future research
 
-These flows have been exercised against the live demo stack:
+## Current Research Features
 
-- `direct`: desktop client -> gateway -> echo service
-- `relay`: desktop client -> relay -> gateway -> echo service
-- Control-plane path switching from `direct` to `relay`
-- Per-hop queue metadata visible in returned route strings
-- Node registration visible through `/api/v1/state`
+- Signed client config responses
+- Signed relay directory responses
+- Replay protection for control messages
+- Persistent control-plane state in `runtime/control-plane`
+- Audit log output in `runtime/control-plane/audit.log.ndjson`
+- Per-hop queue-limit visibility in returned route metadata
+- Client path scoring with logged rationale
+- Lab-only HTTP forwarding when explicitly enabled
+- Fault-injection scripts for outage, latency, and loss simulations
 
-## What Is Included
-
-- A Rust desktop-edge client that exposes a local TCP socket and forwards newline-delimited application traffic over the overlay.
-- A Rust relay that receives QUIC traffic, enforces a queue limit, forwards to the gateway, and now re-heartbeats until the control plane is available.
-- A Rust gateway that receives QUIC traffic, enforces a queue limit, forwards to a local echo service, and now re-heartbeats until the control plane is available.
-- A Rust local echo service used to demonstrate safe end-to-end flow.
-- A TypeScript control plane with authenticated control messages, path preference updates, in-memory node heartbeat tracking, and a `/healthz` endpoint for orchestration.
-- OpenTelemetry bootstrap for Rust and TypeScript services.
-- Docker Compose for local dev and GitHub Actions for Rust, TypeScript, and end-to-end CI.
-
-## Demo Shape
-
-The overlay has two available paths:
-
-- `direct`: desktop client -> gateway
-- `relay`: desktop client -> relay -> gateway
-
-The client polls the control plane for a signed path preference and also has path switching hooks for runtime failures. Each hop appends queue-depth information to the returned route so the demo makes hop-level flow governance visible.
-
-## Monorepo Layout
+## Repository Layout
 
 ```text
 gozar/
@@ -58,20 +49,22 @@ gozar/
 |  |- packages/shared/
 |  `- apps/control-plane/
 |- docs/
+|- eval/
 |- observability/
+|- scripts/simulations/
 |- docker-compose.yml
 `- .github/workflows/ci.yml
 ```
 
 ## Quick Start
 
-The simplest path is Docker Compose:
+Default demo mode keeps research HTTP forwarding off:
 
 ```bash
 docker compose up --build
 ```
 
-Then send a line of traffic to the desktop client:
+Send traffic through the default direct path:
 
 ```bash
 printf 'hello from gozar\n' | nc 127.0.0.1 7000
@@ -86,40 +79,90 @@ curl -X POST http://127.0.0.1:8080/api/v1/admin/preferred-path \
   -d '{"preferred_path":"relay","switch_reason":"simulate direct path degradation"}'
 ```
 
-The client polls every five seconds by default, so the next line sent to `7000` should show the relay hop in the returned route.
+Check control-plane state:
 
-For more complete instructions, see [docs/local-run.md](docs/local-run.md).
+```bash
+curl http://127.0.0.1:8080/api/v1/state \
+  -H 'x-gozar-admin-token: gozar-admin-token'
+```
+
+## Research Gateway Mode
+
+Enable the controlled lab HTTP forwarder explicitly:
+
+```bash
+GOZAR_ENABLE_RESEARCH_GATEWAY=true docker compose up --build
+```
+
+Then test a safe internal HTTP target through the overlay:
+
+```bash
+curl 'http://127.0.0.1:7100/research-fetch?url=http://control-plane:8080/healthz'
+```
+
+The gateway will only forward to configured lab allowlist origins. By default that allowlist is:
+
+```text
+http://control-plane:8080
+```
+
+See [docs/research-gateway.md](docs/research-gateway.md).
+
+## Research Evaluation Platform
+
+Gozar now includes a local-first evaluation platform for measuring adaptive path behavior under simulated blocking, outage, latency, loss, and bandwidth constraints. The goal is to support reproducible PhD research evidence in a controlled lab, not to claim production circumvention capability.
+
+```bash
+make eval-baseline
+make eval-adaptive
+make eval
+make eval-clean
+```
+
+Results are written to `eval/results/latest/results.json` and `eval/results/latest/summary.md`. See [docs/evaluation.md](docs/evaluation.md) for run details and [docs/research-alignment.md](docs/research-alignment.md) for the research-question-to-metric mapping.
 
 ## CI Coverage
 
-The repository now has three CI layers in [`.github/workflows/ci.yml`](.github/workflows/ci.yml):
+[.github/workflows/ci.yml](.github/workflows/ci.yml) now runs four layers:
 
-- `rust`: `cargo fmt --check`, `cargo clippy`, and `cargo test`
-- `typescript`: workspace typecheck and build verification
-- `e2e`: Docker Compose smoke test that waits for the control plane, verifies node registration, sends a `direct` message, switches to `relay`, and verifies relay-path traffic
+- `rust`: format, clippy, and workspace tests
+- `typescript`: typecheck, TypeScript tests, and build verification
+- `e2e`: Docker smoke test for direct path, relay path, default-disabled research gateway, and explicitly enabled research gateway mode
+- `eval-smoke`: CI-safe evaluation run with generated result artifacts
 
-## Design Notes
+## Simulation Scripts
 
-- QUIC is used for the overlay links.
-- Path choice is controlled by a signed control-plane response and a local fallback hook.
-- Each forwarding hop uses the shared `InFlightQueue` interface to cap in-flight work.
-- Queue depth and hop identity are returned in the response so local testing can observe path behavior.
-- The control plane and services exchange authenticated control messages using an HMAC-based envelope.
-- Compose orchestration now treats control-plane readiness explicitly instead of relying on container start order alone.
+Lab-only simulation helpers live in [scripts/simulations](scripts/simulations):
+
+- `partial-outage.sh`
+- `relay-failure.sh`
+- `high-latency.sh`
+- `packet-loss.sh`
+- `gateway-unavailable.sh`
+- `clear-netem.sh`
+
+These scripts are intended for local Docker-based experiments only.
 
 ## Docs
 
 - [Architecture](docs/architecture.md)
 - [Threat model](docs/threat-model.md)
 - [Local run instructions](docs/local-run.md)
+- [Research gateway mode](docs/research-gateway.md)
+- [Signed relay directory](docs/relay-directory.md)
+- [Path scoring](docs/path-scoring.md)
+- [Store-and-forward skeleton](docs/store-forward.md)
+- [Evaluation platform](docs/evaluation.md)
+- [Research alignment](docs/research-alignment.md)
+- [Safety boundaries](docs/safety-boundaries.md)
 - [ADR 0001: Polyglot monorepo layout](docs/adr/0001-polyglot-monorepo.md)
 - [ADR 0002: QUIC-first multi-path overlay](docs/adr/0002-quic-first-multipath.md)
 - [ADR 0003: HMAC control messages for demo safety](docs/adr/0003-authenticated-control-messages.md)
 
 ## Known Limitations
 
-- The demo uses generated development certificates and a shared secret.
-- There is no persistence, key rotation, congestion control tuning, NAT traversal, or kernel-level tunnel device.
-- The desktop client is a local edge proxy shim, not a full OS-integrated VPN adapter.
-- Observability currently exports to stdout by default; an OTLP collector config is provided for future extension.
-- The e2e CI job is a smoke test, not a full fault-injection or performance test harness.
+- This is still a research prototype, not a production system.
+- QUIC certificates are generated for development convenience only.
+- Control-plane authentication uses a shared secret for demo simplicity.
+- The research gateway is intentionally narrow and does not attempt generic web compatibility.
+- Store-and-forward and mesh adapters are scaffolding for future milestones, not finished subsystems.

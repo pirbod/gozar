@@ -1,0 +1,21 @@
+name: bandwidth-512kbps
+description: Limits relay egress to 512 kbit using local netem to estimate fallback throughput under constrained links.
+mode: static-relay
+preferred_path: relay
+affected_service: relay
+affected_path: relay
+impairment_type: bandwidth
+bandwidth: 512kbit
+duration_seconds: 20
+request_count: 24
+request_interval_seconds: 0.25
+settle_seconds: 3
+ci_safe: false
+expected_behavior: Requests should remain functional while throughput and latency reflect the configured local limit.
+metrics_to_collect:
+  - request_success_rate
+  - median_latency
+  - p95_latency
+  - throughput_estimate
+  - selected_path_over_time
+  - error_counts_by_category

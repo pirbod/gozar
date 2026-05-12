@@ -1,0 +1,23 @@
+name: intermittent-connectivity
+description: Alternates pausing and unpausing the relay container to emulate intermittent local connectivity.
+mode: adaptive
+initial_preferred_path: relay
+fallback_path: direct
+affected_service: relay
+affected_path: relay
+impairment_type: intermittent
+duration_seconds: 20
+cycle_seconds: 3
+request_count: 24
+request_interval_seconds: 0.5
+settle_seconds: 3
+ci_safe: false
+expected_behavior: Adaptive mode should request a direct-path fallback after relay failures and record recovery behavior.
+metrics_to_collect:
+  - disruption_detection_time
+  - failover_time
+  - recovery_time
+  - number_of_path_switches
+  - request_success_rate
+  - selected_path_over_time
+  - error_counts_by_category

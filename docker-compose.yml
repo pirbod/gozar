@@ -12,7 +12,12 @@ services:
       GATEWAY_QUEUE_LIMIT: "64"
       RELAY_QUEUE_LIMIT: "32"
       CLIENT_QUEUE_LIMIT: "16"
+      RESEARCH_GATEWAY_ALLOWED: "${GOZAR_ENABLE_RESEARCH_GATEWAY:-false}"
+      CONTROL_STATE_FILE: "/data/control-plane-state.json"
+      AUDIT_LOG_FILE: "/data/audit.log.ndjson"
       OTEL_SERVICE_NAME: "gozar-control-plane"
+    volumes:
+      - ./runtime/control-plane:/data
     ports:
       - "8080:8080"
     healthcheck:
@@ -48,6 +53,8 @@ services:
         condition: service_healthy
       echo-service:
         condition: service_started
+    cap_add:
+      - NET_ADMIN
     environment:
       RUST_LOG: "info"
       GOZAR_NODE_ID: "gateway-1"
@@ -58,6 +65,8 @@ services:
       GOZAR_ECHO_ADDR: "echo-service:9000"
       GOZAR_QUEUE_LIMIT: "64"
       GOZAR_HEARTBEAT_SECONDS: "5"
+      GOZAR_ENABLE_RESEARCH_GATEWAY: "${GOZAR_ENABLE_RESEARCH_GATEWAY:-false}"
+      GOZAR_RESEARCH_ALLOWED_ORIGINS: "${GOZAR_RESEARCH_ALLOWED_ORIGINS:-http://control-plane:8080}"
       OTEL_SERVICE_NAME: "gozar-gateway"
 
   relay:
@@ -71,6 +80,8 @@ services:
         condition: service_healthy
       gateway:
         condition: service_started
+    cap_add:
+      - NET_ADMIN
     environment:
       RUST_LOG: "info"
       GOZAR_NODE_ID: "relay-1"
@@ -105,7 +116,9 @@ services:
       GOZAR_LOCAL_LISTEN_ADDR: "0.0.0.0:7000"
       GOZAR_POLL_SECONDS: "5"
       GOZAR_QUEUE_LIMIT: "16"
+      GOZAR_ENABLE_RESEARCH_GATEWAY: "${GOZAR_ENABLE_RESEARCH_GATEWAY:-false}"
+      GOZAR_RESEARCH_LISTEN_ADDR: "0.0.0.0:7100"
       OTEL_SERVICE_NAME: "gozar-desktop-client"
     ports:
       - "7000:7000"
-
+      - "7100:7100"

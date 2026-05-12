@@ -1,0 +1,22 @@
+name: baseline-direct
+description: Direct-path baseline with no impairment. Used as the low-friction reference point for local lab runs.
+mode: static-direct
+preferred_path: direct
+affected_service: none
+affected_path: direct
+impairment_type: none
+duration_seconds: 15
+request_count: 16
+request_interval_seconds: 0.25
+settle_seconds: 3
+ci_safe: true
+expected_behavior: Requests should complete through the direct gateway path with no intentional impairment.
+metrics_to_collect:
+  - connection_setup_time
+  - time_to_first_successful_request
+  - request_success_rate
+  - median_latency
+  - p95_latency
+  - throughput_estimate
+  - selected_path_over_time
+  - error_counts_by_category

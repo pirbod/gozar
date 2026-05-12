@@ -8,6 +8,6 @@ rust-version.workspace = true
 [dependencies]
 anyhow.workspace = true
 gozar-core = { path = "../../crates/gozar-core" }
+serde_json.workspace = true
 tokio.workspace = true
 tracing.workspace = true
-

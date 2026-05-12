@@ -1,0 +1,21 @@
+name: latency-200ms
+description: Adds 200 ms of local netem latency to the relay service to measure degraded fallback behavior.
+mode: static-relay
+preferred_path: relay
+affected_service: relay
+affected_path: relay
+impairment_type: latency
+latency_ms: 200
+duration_seconds: 20
+request_count: 20
+request_interval_seconds: 0.25
+settle_seconds: 3
+ci_safe: false
+expected_behavior: Requests should continue to succeed with increased median and p95 latency.
+metrics_to_collect:
+  - request_success_rate
+  - median_latency
+  - p95_latency
+  - throughput_estimate
+  - selected_path_over_time
+  - error_counts_by_category

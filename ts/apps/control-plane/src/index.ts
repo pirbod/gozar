@@ -2,18 +2,15 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import type { AddressInfo } from "node:net";
 
 import {
+  CONTROL_MESSAGE_MAX_AGE_SECONDS,
   configRequestSignatureBase,
-  configResponseSignatureBase,
   heartbeatSignatureBase,
   parseSignedHeaders,
   readJsonBody,
-  sign,
+  relayDirectoryRequestSignatureBase,
   verify,
-  type ClientConfig,
-  type ClientConfigEnvelope,
+  verifyTimestampFreshness,
   type HeartbeatRequest,
-  type PathDescriptor,
-  type QueueLimits,
 } from "@gozar/shared";
 import { SpanStatusCode, trace } from "@opentelemetry/api";
 import { Resource } from "@opentelemetry/resources";
@@ -21,122 +18,200 @@ import { BatchSpanProcessor, ConsoleSpanExporter } from "@opentelemetry/sdk-trac
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
 
-type PreferredPath = "direct" | "relay";
+import {
+  appendAuditLog,
+  buildPaths,
+  createRuntimeState,
+  defaultPersistentState,
+  issueConfigEnvelope,
+  issueRelayDirectoryEnvelope,
+  loadPersistentState,
+  persistState,
+  requestReplayKey,
+  snapshotState,
+  upsertNodeObservation,
+  type AdminSwitchRequest,
+  type ControlRuntimeState,
+} from "./state";
 
-interface NodeObservation {
-  node_id: string;
-  role: string;
-  listen_addr: string;
-  status: string;
-  observed_at_unix: number;
-}
-
-interface ControlState {
-  preferred_path: PreferredPath;
-  switch_reason: string;
-  relay_quic_addr: string;
-  gateway_quic_addr: string;
-  queue_limits: QueueLimits;
-  nodes: Map<string, NodeObservation>;
-}
-
-interface AdminSwitchRequest {
-  preferred_path: PreferredPath;
-  switch_reason?: string;
+class HttpError extends Error {
+  constructor(
+    public readonly statusCode: number,
+    message: string,
+  ) {
+    super(message);
+  }
 }
 
 const port = Number(process.env.PORT ?? "8080");
 const controlSecret = process.env.CONTROL_SECRET ?? "gozar-local-shared-secret";
 const adminToken = process.env.ADMIN_TOKEN ?? "gozar-admin-token";
 const serviceName = process.env.OTEL_SERVICE_NAME ?? "gozar-control-plane";
-
-const state: ControlState = {
-  preferred_path: "direct",
-  switch_reason: "default direct path for lab demo",
-  relay_quic_addr: process.env.RELAY_QUIC_ADDR ?? "127.0.0.1:6100",
-  gateway_quic_addr: process.env.GATEWAY_QUIC_ADDR ?? "127.0.0.1:6200",
-  queue_limits: {
-    client: Number(process.env.CLIENT_QUEUE_LIMIT ?? "16"),
-    relay: Number(process.env.RELAY_QUEUE_LIMIT ?? "32"),
-    gateway: Number(process.env.GATEWAY_QUEUE_LIMIT ?? "64"),
-  },
-  nodes: new Map(),
-};
+const stateFile =
+  process.env.CONTROL_STATE_FILE ?? "./runtime/control-plane/control-plane-state.json";
+const auditLogFile =
+  process.env.AUDIT_LOG_FILE ?? "./runtime/control-plane/audit.log.ndjson";
 
 const tracer = initTelemetry(serviceName);
 
-const server = createServer((req, res) => {
-  tracer.startActiveSpan(`${req.method ?? "GET"} ${req.url ?? "/"}`, async (span) => {
-    try {
-      await route(req, res);
-      span.setStatus({ code: SpanStatusCode.OK });
-    } catch (error) {
-      span.recordException(error as Error);
-      span.setStatus({
-        code: SpanStatusCode.ERROR,
-        message: error instanceof Error ? error.message : String(error),
-      });
-      writeJson(res, 500, {
-        error: error instanceof Error ? error.message : "unexpected error",
-      });
-    } finally {
-      span.end();
-    }
+start().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+
+async function start(): Promise<void> {
+  const persistent = await loadPersistentState(stateFile, defaultPersistentState(process.env));
+  const state = createRuntimeState(persistent, {
+    control_secret: controlSecret,
+    admin_token: adminToken,
+    state_file: stateFile,
+    audit_log_file: auditLogFile,
   });
-});
 
-server.listen(port, () => {
-  const address = server.address() as AddressInfo;
-  console.log(
-    JSON.stringify({
-      level: "info",
-      msg: "control plane ready",
-      port: address.port,
-      preferred_path: state.preferred_path,
-    }),
-  );
-});
+  await persistState(state);
+  await appendAuditLog(state, "startup", {
+    preferred_path: state.preferred_path,
+    research_gateway_allowed: state.research_gateway_allowed,
+  });
 
-async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  const server = createServer((req, res) => {
+    tracer.startActiveSpan(`${req.method ?? "GET"} ${req.url ?? "/"}`, async (span) => {
+      try {
+        await route(req, res, state);
+        span.setStatus({ code: SpanStatusCode.OK });
+      } catch (error) {
+        span.recordException(error as Error);
+        span.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: error instanceof Error ? error.message : String(error),
+        });
+        const statusCode = error instanceof HttpError ? error.statusCode : 500;
+        writeJson(res, statusCode, {
+          error: error instanceof Error ? error.message : "unexpected error",
+        });
+      } finally {
+        span.end();
+      }
+    });
+  });
+
+  server.listen(port, () => {
+    const address = server.address() as AddressInfo;
+    console.log(
+      JSON.stringify({
+        level: "info",
+        msg: "control plane ready",
+        port: address.port,
+        preferred_path: state.preferred_path,
+        research_gateway_allowed: state.research_gateway_allowed,
+      }),
+    );
+  });
+}
+
+async function route(
+  req: IncomingMessage,
+  res: ServerResponse,
+  state: ControlRuntimeState,
+): Promise<void> {
   const method = req.method ?? "GET";
   const url = new URL(req.url ?? "/", "http://gozar-control-plane.local");
 
   if (method === "GET" && url.pathname === "/healthz") {
-    writeJson(res, 200, { ok: true, service: "gozar-control-plane" });
+    writeJson(res, 200, {
+      ok: true,
+      service: "gozar-control-plane",
+      research_gateway_allowed: state.research_gateway_allowed,
+    });
     return;
   }
 
   if (method === "GET" && url.pathname === "/api/v1/client/config") {
+    // Every signed control read is freshness-checked and replay-checked before we even
+    // look at the HMAC, which keeps stale nonces from driving route changes.
     const headers = parseSignedHeaders(req);
+    verifyTimestampFreshness(headers.timestamp, CONTROL_MESSAGE_MAX_AGE_SECONDS);
+    state.replay_cache.checkAndRecord(
+      requestReplayKey("config", headers.node_id, headers.nonce),
+      headers.timestamp,
+    );
+
     const payload = configRequestSignatureBase(headers.node_id, headers.timestamp, headers.nonce);
     if (!verify(controlSecret, payload, headers.signature)) {
-      writeJson(res, 401, { error: "invalid control signature" });
-      return;
+      throw new HttpError(401, "invalid control signature");
     }
 
-    const envelope = issueConfig(headers.node_id, headers.nonce);
+    const envelope = issueConfigEnvelope(state, headers.node_id, headers.nonce);
+    await appendAuditLog(state, "config_issued", {
+      node_id: headers.node_id,
+      request_nonce: headers.nonce,
+      response_nonce: envelope.response_nonce,
+      preferred_path: state.preferred_path,
+    });
+    writeJson(res, 200, envelope);
+    return;
+  }
+
+  if (method === "GET" && url.pathname === "/api/v1/relay-directory") {
+    const headers = parseSignedHeaders(req);
+    verifyTimestampFreshness(headers.timestamp, CONTROL_MESSAGE_MAX_AGE_SECONDS);
+    state.replay_cache.checkAndRecord(
+      requestReplayKey("relay-directory", headers.node_id, headers.nonce),
+      headers.timestamp,
+    );
+
+    const payload = relayDirectoryRequestSignatureBase(
+      headers.node_id,
+      headers.timestamp,
+      headers.nonce,
+    );
+    if (!verify(controlSecret, payload, headers.signature)) {
+      throw new HttpError(401, "invalid relay directory signature");
+    }
+
+    const envelope = issueRelayDirectoryEnvelope(state, headers.node_id, headers.nonce);
+    await appendAuditLog(state, "relay_directory_issued", {
+      node_id: headers.node_id,
+      request_nonce: headers.nonce,
+      response_nonce: envelope.response_nonce,
+      relay_count: envelope.directory.entries.length,
+    });
     writeJson(res, 200, envelope);
     return;
   }
 
   if (method === "POST" && url.pathname === "/api/v1/nodes/heartbeat") {
+    // Heartbeats feed both the live in-memory view and the persisted audit trail so
+    // experiments can correlate route decisions with what the control plane observed.
     const headers = parseSignedHeaders(req);
+    verifyTimestampFreshness(headers.timestamp, CONTROL_MESSAGE_MAX_AGE_SECONDS);
+    state.replay_cache.checkAndRecord(
+      requestReplayKey("heartbeat", headers.node_id, headers.nonce),
+      headers.timestamp,
+    );
+
     const heartbeat = await readJsonBody<HeartbeatRequest>(req);
     if (headers.node_id !== heartbeat.node_id) {
-      writeJson(res, 400, { error: "header and body node ids differ" });
-      return;
+      throw new HttpError(400, "header and body node ids differ");
     }
 
     const payload = heartbeatSignatureBase(headers.node_id, headers.timestamp, headers.nonce, heartbeat);
     if (!verify(controlSecret, payload, headers.signature)) {
-      writeJson(res, 401, { error: "invalid heartbeat signature" });
-      return;
+      throw new HttpError(401, "invalid heartbeat signature");
     }
 
-    const observed_at_unix = nowUnix();
-    state.nodes.set(heartbeat.node_id, {
+    const observed_at_unix = Math.floor(Date.now() / 1000);
+    upsertNodeObservation(state, {
       ...heartbeat,
       observed_at_unix,
+      features: heartbeat.features ?? [],
+    });
+    await persistState(state);
+    await appendAuditLog(state, "heartbeat_accepted", {
+      node_id: heartbeat.node_id,
+      role: heartbeat.role,
+      listen_addr: heartbeat.listen_addr,
+      features: heartbeat.features ?? [],
     });
 
     writeJson(res, 200, {
@@ -147,20 +222,19 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   }
 
   if (method === "POST" && url.pathname === "/api/v1/admin/preferred-path") {
-    if (req.headers["x-gozar-admin-token"] !== adminToken) {
-      writeJson(res, 401, { error: "missing or invalid admin token" });
-      return;
-    }
-
+    assertAdmin(req, state.admin_token);
     const body = await readJsonBody<AdminSwitchRequest>(req);
     if (body.preferred_path !== "direct" && body.preferred_path !== "relay") {
-      writeJson(res, 400, { error: "preferred_path must be direct or relay" });
-      return;
+      throw new HttpError(400, "preferred_path must be direct or relay");
     }
 
     state.preferred_path = body.preferred_path;
-    state.switch_reason =
-      body.switch_reason ?? `operator requested ${body.preferred_path} path`;
+    state.switch_reason = body.switch_reason ?? `operator requested ${body.preferred_path} path`;
+    await persistState(state);
+    await appendAuditLog(state, "preferred_path_updated", {
+      preferred_path: state.preferred_path,
+      switch_reason: state.switch_reason,
+    });
 
     writeJson(res, 200, {
       preferred_path: state.preferred_path,
@@ -170,61 +244,22 @@ async function route(req: IncomingMessage, res: ServerResponse): Promise<void> {
   }
 
   if (method === "GET" && url.pathname === "/api/v1/state") {
-    if (req.headers["x-gozar-admin-token"] !== adminToken) {
-      writeJson(res, 401, { error: "missing or invalid admin token" });
-      return;
-    }
-
+    assertAdmin(req, state.admin_token);
     writeJson(res, 200, {
-      preferred_path: state.preferred_path,
-      switch_reason: state.switch_reason,
-      queue_limits: state.queue_limits,
-      nodes: Array.from(state.nodes.values()),
+      ...snapshotState(state),
       paths: buildPaths(state),
     });
     return;
   }
 
-  writeJson(res, 404, { error: "not found" });
+  throw new HttpError(404, "not found");
 }
 
-function issueConfig(node_id: string, request_nonce: string): ClientConfigEnvelope {
-  const config: ClientConfig = {
-    node_id,
-    preferred_path: state.preferred_path,
-    switch_reason: state.switch_reason,
-    valid_for_seconds: 30,
-    queue_limits: state.queue_limits,
-    paths: buildPaths(state),
-  };
-
-  const envelope: ClientConfigEnvelope = {
-    request_nonce,
-    issued_at_unix: nowUnix(),
-    config,
-    signature: "",
-  };
-  envelope.signature = sign(controlSecret, configResponseSignatureBase(envelope));
-  return envelope;
-}
-
-function buildPaths(currentState: ControlState): PathDescriptor[] {
-  return [
-    {
-      id: "direct",
-      kind: "direct",
-      ingress_addr: currentState.gateway_quic_addr,
-      hops: ["gateway-1"],
-      queue_limit: currentState.queue_limits.gateway,
-    },
-    {
-      id: "relay",
-      kind: "relay",
-      ingress_addr: currentState.relay_quic_addr,
-      hops: ["relay-1", "gateway-1"],
-      queue_limit: currentState.queue_limits.relay,
-    },
-  ];
+function assertAdmin(req: IncomingMessage, expectedToken: string): void {
+  const token = req.headers["x-gozar-admin-token"];
+  if (token !== expectedToken) {
+    throw new HttpError(401, "missing or invalid admin token");
+  }
 }
 
 function writeJson(res: ServerResponse, statusCode: number, body: unknown): void {
@@ -237,10 +272,6 @@ function writeJson(res: ServerResponse, statusCode: number, body: unknown): void
   res.setHeader("content-type", "application/json; charset=utf-8");
   res.setHeader("content-length", Buffer.byteLength(payload));
   res.end(payload);
-}
-
-function nowUnix(): number {
-  return Math.floor(Date.now() / 1000);
 }
 
 function initTelemetry(name: string) {
