@@ -1,0 +1,20 @@
+name: gateway-restart
+description: Restarts the gateway service to measure recovery when the common egress hop briefly disappears.
+mode: adaptive
+preferred_path: direct
+affected_service: gateway
+affected_path: direct
+impairment_type: gateway_outage
+duration_seconds: 20
+request_count: 20
+request_interval_seconds: 0.5
+settle_seconds: 3
+ci_safe: true
+expected_behavior: Requests may fail during restart, then recover when the gateway heartbeat returns.
+metrics_to_collect:
+  - request_success_rate
+  - recovery_time
+  - median_latency
+  - p95_latency
+  - selected_path_over_time
+  - error_counts_by_category

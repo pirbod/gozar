@@ -9,5 +9,7 @@ rust-version.workspace = true
 anyhow.workspace = true
 gozar-core = { path = "../../crates/gozar-core" }
 quinn.workspace = true
+reqwest.workspace = true
+serde_json.workspace = true
 tokio.workspace = true
 tracing.workspace = true

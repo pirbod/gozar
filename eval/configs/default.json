@@ -1,0 +1,21 @@
+{
+  "description": "Default local evaluation settings for the Gozar Docker Compose lab.",
+  "safety_boundary": "Local-only simulated impairments for lawful academic evaluation.",
+  "control_base_url": "http://127.0.0.1:8080",
+  "client_host": "127.0.0.1",
+  "client_port": 7000,
+  "admin_token_env": "GOZAR_ADMIN_TOKEN",
+  "default_request_count": 20,
+  "results_dir": "eval/results/latest",
+  "docker_services": {
+    "desktop_client": "desktop-client",
+    "relay": "relay",
+    "gateway": "gateway",
+    "control_plane": "control-plane"
+  },
+  "notes": [
+    "CI-safe runs avoid tc/netem and use application-level outages only.",
+    "Local netem runs require Docker and NET_ADMIN capability on the affected service containers.",
+    "No external network targets are required or expected."
+  ]
+}

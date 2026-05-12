@@ -1,0 +1,6 @@
+latest/
+*.tmp
+*.log
+!example/
+!example/results.json
+!example/summary.md

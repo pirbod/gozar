@@ -1,0 +1,19 @@
+name: relay-blocked
+description: Stops the relay service while the client remains pinned to relay mode to measure static fallback failure.
+mode: static-relay
+preferred_path: relay
+affected_service: relay
+affected_path: relay
+impairment_type: relay_outage
+duration_seconds: 20
+request_count: 16
+request_interval_seconds: 0.5
+settle_seconds: 3
+ci_safe: true
+expected_behavior: Static relay mode should show failed requests until the relay is restored.
+metrics_to_collect:
+  - request_success_rate
+  - time_to_first_successful_request
+  - recovery_time
+  - selected_path_over_time
+  - error_counts_by_category

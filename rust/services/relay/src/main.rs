@@ -36,6 +36,10 @@ impl Config {
             heartbeat_seconds: env_var("GOZAR_HEARTBEAT_SECONDS", "5").parse().unwrap_or(5),
         }
     }
+
+    fn features(&self) -> Vec<String> {
+        vec!["quic_relay".to_string(), "lab_simulation_ready".to_string()]
+    }
 }
 
 fn env_var(key: &str, fallback: &str) -> String {
@@ -107,6 +111,7 @@ async fn send_heartbeat(config: &Config) {
         role: config.role.clone(),
         listen_addr: config.listen_addr.clone(),
         status: "ready".to_string(),
+        features: config.features(),
     };
     if let Err(error) =
         post_heartbeat(&config.control_plane_url, &config.control_secret, &payload).await

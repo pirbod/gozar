@@ -35,6 +35,8 @@ jobs:
         run: npm install
       - name: Typecheck
         run: npm run typecheck:ts
+      - name: Test
+        run: npm run test:ts
       - name: Build
         run: npm run build:ts
 
@@ -83,6 +85,18 @@ jobs:
               sleep "$delay_seconds"
             done
             echo "$state"
+            return 1
+          }
+
+          wait_for_research_listener() {
+            local attempts="$1"
+            local delay_seconds="$2"
+            for _ in $(seq 1 "$attempts"); do
+              if curl -fsS http://127.0.0.1:7100/healthz >/dev/null; then
+                return 0
+              fi
+              sleep "$delay_seconds"
+            done
             return 1
           }
 
@@ -135,4 +149,42 @@ jobs:
           assert_contains "$relay_response" "relay-1(" "relay response did not include relay hop"
           assert_contains "$relay_response" "gateway-1(" "relay response did not include gateway hop"
 
+          if curl -fsS http://127.0.0.1:7100/healthz >/dev/null 2>&1; then
+            fail "research gateway listener should be disabled by default"
+          fi
 
+          docker compose down -v --remove-orphans || true
+          GOZAR_ENABLE_RESEARCH_GATEWAY=true docker compose up --build -d
+
+          wait_for_health 30 2 || fail "control plane did not become healthy after enabling research gateway"
+          wait_for_nodes 30 2 || fail "control plane did not observe all expected nodes after enabling research gateway"
+          wait_for_research_listener 30 2 || fail "research gateway listener did not become ready"
+
+          research_response=""
+          for _ in $(seq 1 15); do
+            if research_response="$(curl -fsS 'http://127.0.0.1:7100/research-fetch?url=http://control-plane:8080/healthz')"; then
+              break
+            fi
+            sleep 2
+          done
+          echo "$research_response"
+          assert_contains "$research_response" "gozar-control-plane" "research gateway did not reach the lab HTTP target"
+
+  eval-smoke:
+    runs-on: ubuntu-latest
+    needs:
+      - rust
+      - typescript
+    steps:
+      - uses: actions/checkout@v4
+      - name: CI-safe evaluation smoke test
+        run: make eval-smoke
+      - name: Upload evaluation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gozar-eval-results
+          path: eval/results/latest
+      - name: Cleanup evaluation stack
+        if: always()
+        run: make eval-clean
