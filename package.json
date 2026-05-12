@@ -6,10 +6,12 @@
     "ts/apps/*"
   ],
   "scripts": {
-    "build:ts": "npm run build --workspace @gozar/shared && npm run build --workspace @gozar/control-plane",
-    "typecheck:ts": "npm run typecheck --workspace @gozar/shared && npm run build --workspace @gozar/shared && npm run typecheck --workspace @gozar/control-plane",
-    "test:ts": "npm run test --workspace @gozar/shared && npm run test --workspace @gozar/control-plane",
+    "build": "npm run build:ts",
+    "build:ts": "npm run build --workspace @gozar/shared && npm run build --workspace @gozar/control-plane && npm run build --workspace gorz-web",
+    "typecheck:ts": "npm run typecheck --workspace @gozar/shared && npm run build --workspace @gozar/shared && npm run typecheck --workspace @gozar/control-plane && npm run typecheck --workspace gorz-web",
+    "test:ts": "npm run test --workspace @gozar/shared && npm run test --workspace @gozar/control-plane && npm run test --workspace gorz-web",
     "dev:control-plane": "npm run dev --workspace @gozar/control-plane",
+    "dev:gorz": "npm run dev --workspace gorz-web",
     "start:control-plane": "npm run start --workspace @gozar/control-plane"
   },
   "devDependencies": {
