@@ -12,7 +12,7 @@ export default defineConfig({
   cacheDir: "node_modules/.vite-gorz",
   plugins: [react()],
   test: {
-    environment: "node",
+    environment: "jsdom",
     globals: true,
   },
 });

@@ -123,110 +123,58 @@ Results are written to `eval/results/latest/results.json` and `eval/results/late
 
 ## Gorz
 
-Gorz is a private encrypted messaging proof of concept with built-in network confidence awareness. The name means mace, and the product framing is protective: private messaging, clear delivery status, safety-aware diagnostics, and minimal exposure.
+Gorz is now a local-first, Python-backed messaging prototype for confidence-aware delivery and
+redacted incident evidence. It remains a prototype, uses demo cryptography, and is not for real
+sensitive communication.
 
-**Warning:** Gorz currently uses mock cryptographic primitives for demonstration only. Do not use this PoC for real sensitive communication.
+### What Changed
 
-**Warning:** Gorz is not production secure. It uses mock cryptography and simulated diagnostics. Do not use it for real sensitive messaging.
+- FastAPI backend in `python/gorz_api`.
+- SQLite persistence for demo identities, conversations, envelopes, evidence, incidents, audit,
+  and safety state.
+- Python confidence engine and local diagnostic simulator.
+- Redacted incident package generation and downloadable JSON.
+- React UI backed by the Python API.
+- Gorz-specific Docker Compose, Makefile targets, validation script, and CI workflow.
 
-### What Gorz Is
-
-- A React and TypeScript messenger prototype in `ts/apps/gorz-web`.
-- A local-first demo of confidence-scored delivery state.
-- A translation of the Gozar research model into user-facing message delivery language.
-- A safe UI for simulated incident records that redact identifiers and message content.
-
-### What Gorz Is Not
-
-- Not a production secure messenger.
-- Not a censorship evasion tool.
-- Not a network bypass product.
-- Not a scanner or bridge discovery system.
-- Not a collector of real IP addresses, phone numbers, device identifiers, exact locations, or message plaintext.
-
-### Relationship To Gozar
-
-The Gozar research framework treats Internet access as a confidence-scored inference problem across DNS resolution, transport establishment, TLS or QUIC validation, HTTP or application delivery, external path validation, independent corroboration, and safety-aware minimization. Gorz applies that model to messaging: a message is fully deliverable only when the encrypted envelope reaches the mock relay or peer path and the path is not merely domestic-only or partially reachable.
-
-### Safety Principles
-
-- Diagnostics are simulated for the PoC.
-- Diagnostics are local-first and consent-based.
-- Incident records are redacted by default.
-- No diagnostics are uploaded automatically.
-- Safety mode is enabled by default.
-- Emergency pause can stop new mock sends.
-
-### Current PoC Limitations
-
-- Mock cryptography is used only to demonstrate product flow.
-- Connectivity evidence is fully simulated and does not run real probes.
-- Message storage is local state in the browser session.
-- Incident export is a redacted JSON preview, not a formal evidence submission.
-- The app has no backend relay, account system, or production key management.
-
-### Local Run
-
-Install workspace dependencies, then run the Gorz web app:
+### Run The Demo
 
 ```bash
-npm install
-npm run dev:gorz
+make gorz-install
+make gorz-demo
 ```
 
-Build and test the TypeScript workspaces:
+After `make gorz-demo` starts services:
 
-```bash
-npm run build
-npm run test:ts
-```
+- Gorz Web: `http://localhost:5174`
+- Gorz API: `http://localhost:8090/api/gorz/health`
+- API Docs: `http://localhost:8090/docs`
 
-Run only the Gorz app checks:
+### Safety Boundaries
 
-```bash
-npm run build --workspace gorz-web
-npm run test --workspace gorz-web
-```
+- Local demo only.
+- Simulated diagnostics only.
+- Not production secure.
+- Not a bypass product.
+- Not for real sensitive communication.
+- No public network scanning, bridge discovery, relay discovery, real IP collection, exact location
+  collection, phone number collection, or automatic diagnostic upload.
 
-### Architecture Overview
+### Demo Flow
 
-Gorz is frontend-first. React components render the messenger UI, `crypto/mockE2EE.ts` isolates demo-only cryptographic behavior, `connectivity/confidenceModel.ts` implements the bottleneck-aware score, `connectivity/diagnosticSimulator.ts` supplies safe mock scenarios, and `connectivity/incidentRecord.ts` creates redacted local JSON records.
+Create two demo identities, create a conversation, send messages under `direct_ok`, `degraded`, and
+`blocked`, inspect the confidence evidence, export a redacted incident package, review the audit
+trail, enable emergency pause, confirm sends are blocked, then resume.
 
-### Folder Structure
+### Gorz Docs
 
-```text
-ts/apps/gorz-web/
-|- package.json
-|- index.html
-|- src/
-|  |- App.tsx
-|  |- components/
-|  |- crypto/
-|  |- connectivity/
-|  |- data/
-|  |- types/
-|  `- utils/
-docs/gorz/
-|- product-brief.md
-|- architecture.md
-|- threat-model.md
-|- safety-model.md
-|- incident-record-schema.md
-`- local-run.md
-```
-
-### Tests
-
-The Gorz workspace includes Vitest coverage for confidence classification, incident redaction, mock encryption round trip, and delivery-state mapping.
-
-### Future Roadmap
-
-- Phase 1: Real UI and mock local encryption.
-- Phase 2: Replace mock crypto with audited E2EE library.
-- Phase 3: Add real backend relay with encrypted envelopes only.
-- Phase 4: Add optional privacy-preserving aggregate diagnostics.
-- Phase 5: Add formal incident export compatible with Gozar evidence schemas.
-- Phase 6: Add independent third-party audit.
+- [Production prototype plan](docs/gorz/production-prototype-plan.md)
+- [API contract](docs/gorz/api-contract.md)
+- [Python backend](docs/gorz/python-backend.md)
+- [Confidence model](docs/gorz/confidence-model.md)
+- [Redaction policy](docs/gorz/redaction-policy.md)
+- [Demo script](docs/gorz/demo-script.md)
+- [Prototype safety boundaries](docs/gorz/prototype-safety-boundaries.md)
 
 ## CI Coverage
 

@@ -1,44 +1,53 @@
 # Gorz Product Brief
 
-Gorz is a privacy-first encrypted messaging proof of concept inspired by the Gozar research framework for confidence-scored, multi-layer Internet access evidence. It presents message delivery as an understandable confidence state instead of leaving users in an indefinite connecting state.
+Gorz is a local-first private messaging prototype inspired by the Gozar research model. It presents
+message delivery as a confidence-aware evidence state rather than a simple sent or failed label.
 
 ## Purpose
 
-Gorz helps a user understand whether a mock encrypted message appears deliverable, delayed, queued, likely blocked, failed, or inconclusive. It does this with local simulated evidence across DNS, transport, TLS or QUIC, message delivery, externality, corroboration, and safety minimization.
+Gorz helps reviewers explore how a messaging UI can explain uncertain delivery using local demo
+evidence. It shows identities, conversations, redacted envelope records, confidence scoring,
+incident export, audit history, and emergency pause.
 
 ## User Personas
 
-- Everyday private messenger user who needs clear delivery status.
-- Safety-conscious user who wants minimal diagnostics and no automatic upload.
-- Research reviewer evaluating how confidence-scored network evidence can be made understandable.
-- Product designer exploring messaging UX under uncertain network conditions.
+- Stakeholder reviewing a clickable local messaging demo.
+- Safety-conscious reviewer checking diagnostic boundaries.
+- Research reviewer evaluating confidence-scored delivery language.
+- Product designer exploring delivery-state UX under uncertainty.
 
 ## Use Cases
 
-- Send a one-to-one mock encrypted message.
-- Compare delivery state across safe simulated network scenarios.
-- Review a compact confidence panel without raw technical detail.
-- Enable safety controls such as local diagnostics only and emergency pause.
-- Generate a redacted incident record preview for review.
+- Create local demo identities.
+- Send local demo messages under multiple scenarios.
+- Compare confidence-scored delivery status.
+- Inspect evidence behind the score.
+- Export a redacted incident package.
+- Review audit events.
+- Enable emergency pause.
 
 ## Demo Narrative
 
-1. Gorz opens to a direct chat with Sara.
-2. Safety mode is enabled by default.
-3. The user sends a mock encrypted message.
-4. The selected network scenario determines whether the message is delivered, queued, delayed, likely blocked, or failed.
-5. The network confidence panel explains the result using high-level language.
-6. The incident panel shows redacted JSON with no real identifiers or message plaintext.
+1. Create two demo identities.
+2. Create a local conversation.
+3. Send a `direct_ok` message.
+4. Send a `degraded` message.
+5. Send a `blocked` message.
+6. Compare the confidence cards and evidence breakdown.
+7. Generate and download a redacted incident package.
+8. Review audit history.
+9. Enable emergency pause and verify sends are blocked.
 
 ## Product Boundaries
 
-Gorz does not implement censorship evasion, hidden probing, protocol camouflage, bridge discovery, domain fronting, or automatic diagnostic upload. All diagnostic evidence is simulated and local to the PoC.
+Gorz is a prototype, a local demo, and not for real sensitive communication. It does not implement
+production secure messaging, external probing, bridge discovery, relay discovery, public network
+scanning, exact location collection, phone number collection, or automatic diagnostic upload.
 
 ## Roadmap
 
-- Phase 1: Real UI and mock local encryption.
-- Phase 2: Replace mock crypto with audited E2EE library.
-- Phase 3: Add real backend relay with encrypted envelopes only.
-- Phase 4: Add optional privacy-preserving aggregate diagnostics.
-- Phase 5: Add formal incident export compatible with Gozar evidence schemas.
-- Phase 6: Add independent third-party audit.
+- Keep the prototype local-first and safe by default.
+- Replace demo cryptography only after a formal production security plan exists.
+- Add richer local-only evidence review tools.
+- Add controlled lab allowlists only if explicitly documented and enabled.
+
