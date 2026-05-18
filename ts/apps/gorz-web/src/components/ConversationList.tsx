@@ -1,65 +1,84 @@
-import { MessageCircle, Pin } from "lucide-react";
+import { MessageSquarePlus } from "lucide-react";
+import { FormEvent, useMemo, useState } from "react";
 
-import type { Contact, Conversation } from "../types/chat";
+import type { ConversationSummary, IdentityResponse } from "../api/types";
+import { formatTimestamp } from "../utils/formatting";
 
 interface ConversationListProps {
-  conversations: Conversation[];
-  contacts: Contact[];
+  conversations: ConversationSummary[];
+  identities: IdentityResponse[];
+  activeIdentityId: string;
   selectedConversationId: string;
   onSelectConversation: (conversationId: string) => void;
+  onCreateConversation: (title: string, participantIds: string[]) => void;
 }
 
 export function ConversationList({
   conversations,
-  contacts,
+  identities,
+  activeIdentityId,
   selectedConversationId,
   onSelectConversation,
+  onCreateConversation,
 }: ConversationListProps) {
+  const [title, setTitle] = useState("Local demo conversation");
+  const otherIdentity = useMemo(
+    () => identities.find((identity) => identity.identity_id !== activeIdentityId) ?? null,
+    [activeIdentityId, identities],
+  );
+  const canCreate = Boolean(activeIdentityId && otherIdentity);
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault();
+    if (!canCreate || !otherIdentity) {
+      return;
+    }
+    onCreateConversation(title.trim() || "Local demo conversation", [
+      activeIdentityId,
+      otherIdentity.identity_id,
+    ]);
+  }
+
   return (
-    <nav className="conversation-list" aria-label="Conversations">
-      <div className="section-heading">
-        <span>Messages</span>
-        <MessageCircle aria-hidden="true" size={18} />
+    <section className="panel compact-panel" aria-labelledby="conversation-list-title">
+      <div className="section-title">
+        <h2 id="conversation-list-title">Conversations</h2>
+        <MessageSquarePlus aria-hidden="true" size={18} />
       </div>
-      <div className="conversation-items">
-        {conversations.map((conversation) => (
-          <button
-            aria-current={conversation.id === selectedConversationId ? "true" : undefined}
-            className="conversation-item"
-            key={conversation.id}
-            onClick={() => onSelectConversation(conversation.id)}
-            type="button"
-          >
-            <span className="avatar">{getConversationInitials(conversation, contacts)}</span>
-            <span className="conversation-copy">
-              <span className="conversation-title-row">
-                <span>{conversation.title}</span>
-                {conversation.pinned ? <Pin aria-label="Pinned" size={13} /> : null}
-              </span>
-              <span className="conversation-preview">{conversation.lastMessagePreview}</span>
-            </span>
-            {conversation.unreadCount > 0 ? (
-              <span className="unread-badge" aria-label={`${conversation.unreadCount} unread`}>
-                {conversation.unreadCount}
-              </span>
-            ) : null}
-          </button>
-        ))}
+
+      <form className="stacked-form" onSubmit={handleSubmit}>
+        <label htmlFor="conversation-title">New local conversation</label>
+        <input
+          id="conversation-title"
+          onChange={(event) => setTitle(event.target.value)}
+          value={title}
+        />
+        <button className="secondary-button" disabled={!canCreate} type="submit">
+          Create
+        </button>
+        {!canCreate ? <p className="muted-copy">Create two demo identities first.</p> : null}
+      </form>
+
+      <div className="list-stack">
+        {conversations.length === 0 ? (
+          <p className="empty-state">No conversations yet.</p>
+        ) : (
+          conversations.map((conversation) => (
+            <button
+              aria-current={conversation.conversation_id === selectedConversationId ? "page" : undefined}
+              className="list-row"
+              key={conversation.conversation_id}
+              onClick={() => onSelectConversation(conversation.conversation_id)}
+              type="button"
+            >
+              <strong>{conversation.title}</strong>
+              <span>{conversation.participant_ids.length} participants</span>
+              <small>{formatTimestamp(conversation.created_at)}</small>
+            </button>
+          ))
+        )}
       </div>
-    </nav>
+    </section>
   );
 }
 
-function getConversationInitials(conversation: Conversation, contacts: Contact[]): string {
-  if (conversation.kind !== "direct") {
-    return conversation.title
-      .split(" ")
-      .map((word) => word[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase();
-  }
-
-  const peerId = conversation.participantIds.find((id) => id !== "local-user");
-  return contacts.find((contact) => contact.id === peerId)?.avatarInitials ?? "GR";
-}

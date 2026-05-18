@@ -1,45 +1,45 @@
 # Gorz Local Run
 
-Gorz is a Vite React app in `ts/apps/gorz-web`.
+Gorz now runs as a Python FastAPI backend plus a Vite React web UI.
 
-## Install
-
-```bash
-npm install
-```
-
-## Run
+## One-Command Demo
 
 ```bash
-npm run dev:gorz
+make gorz-install
+make gorz-demo
 ```
 
-Vite prints the local URL. The app opens to the Sara conversation, with Safety mode enabled and the network confidence panel available on desktop.
+`make gorz-demo` starts:
 
-## Build
+- Gorz Web: `http://localhost:5174`
+- Gorz API: `http://localhost:8090/api/gorz/health`
+- API Docs: `http://localhost:8090/docs`
+
+## Local Checks
 
 ```bash
-npm run build --workspace gorz-web
+make gorz-test
+make gorz-lint
+make gorz-validate
 ```
 
-## Test
-
-```bash
-npm run test --workspace gorz-web
-```
-
-The tests cover confidence classification, incident record redaction, mock encryption round trip, and delivery-state mapping by diagnostic scenario.
+If host Python tooling is unavailable, the Make targets use the Gorz API Docker image for backend
+tests, linting, and validation.
 
 ## Demo Checklist
 
-1. Select a conversation.
-2. Send a mock message.
-3. Change the diagnostic scenario.
-4. Confirm delivery state updates.
-5. Open Network Confidence.
-6. Open Safety Mode.
-7. Open Incident Record and review the JSON.
+1. Create two local demo identities.
+2. Create a local conversation.
+3. Send messages under `direct_ok`, `degraded`, and `blocked`.
+4. Compare confidence scores and evidence.
+5. Generate an incident package.
+6. Download the redacted JSON.
+7. Review audit events.
+8. Enable emergency pause and confirm sends are blocked.
+9. Resume demo sends.
 
 ## Limits
 
-The app does not make external network requests, run live probes, or perform production cryptography. It is a local proof of concept only.
+The prototype does not perform external probing, public relay discovery, public network scanning,
+automatic upload, or production secure messaging. Diagnostics are simulated and local-only.
+

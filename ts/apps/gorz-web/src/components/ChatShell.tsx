@@ -24,10 +24,12 @@ export function ChatShell({
     <div className="chat-shell">
       <MessageThread conversation={conversation} contacts={contacts} messages={messages} />
       <MessageComposer
-        conversationId={conversation.id}
         disabled={composerDisabled}
         disabledReason={composerDisabledReason}
-        onSendMessage={onSendMessage}
+        onScenarioChange={() => undefined}
+        onSendMessage={(body) => onSendMessage({ conversationId: conversation.id, body, disappearing: false })}
+        scenarios={[]}
+        selectedScenario="direct_ok"
       />
     </div>
   );
