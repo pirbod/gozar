@@ -1,0 +1,48 @@
+services:
+  gorz-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.gorz-api
+    environment:
+      GORZ_DATABASE_URL: "sqlite:////data/gorz.sqlite3"
+      GORZ_CORS_ORIGINS: "http://localhost:5174,http://127.0.0.1:5174"
+    ports:
+      - "8090:8090"
+    volumes:
+      - gorz-sqlite:/data
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/api/gorz/health', timeout=2)"
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  gorz-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.gorz-web
+    depends_on:
+      gorz-api:
+        condition: service_healthy
+    environment:
+      VITE_GORZ_API_BASE_URL: "http://localhost:8090"
+    ports:
+      - "5174:5174"
+    healthcheck:
+      test:
+        - "CMD"
+        - "node"
+        - "-e"
+        - "fetch('http://127.0.0.1:5174').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+volumes:
+  gorz-sqlite:
+

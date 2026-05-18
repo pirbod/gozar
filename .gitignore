@@ -3,6 +3,8 @@ dist/
 node_modules/
 .DS_Store
 *.log
+__pycache__/
+*.py[cod]
 coverage/
 .env
 .env.local
