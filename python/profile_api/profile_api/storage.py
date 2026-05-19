@@ -9,7 +9,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
 from .config import Settings, get_settings
-from .models import Base, IssuerKey, SafetyState
+from .models import Base, SafetyState
 
 _engine: Engine | None = None
 _session_factory: sessionmaker[Session] | None = None
@@ -67,15 +67,3 @@ def init_db(settings: Settings | None = None) -> None:
 def get_session() -> Generator[Session]:
     with session_factory()() as session:
         yield session
-
-
-def store_issuer_public_key(session: Session, issuer_public_key: str) -> IssuerKey:
-    key = session.scalar(select(IssuerKey).where(IssuerKey.issuer_public_key == issuer_public_key))
-    if key is not None:
-        return key
-    session.query(IssuerKey).update({"active": False})
-    key = IssuerKey(key_id=new_id("issuer"), issuer_public_key=issuer_public_key, active=True)
-    session.add(key)
-    session.commit()
-    return key
-

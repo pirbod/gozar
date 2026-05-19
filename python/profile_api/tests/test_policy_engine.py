@@ -49,6 +49,18 @@ def test_blocked_previous_failure_denies_profile_in_phase_1() -> None:
     assert decision["selected_profile_type"] == "no_profile"
 
 
+def test_blocked_local_previous_failure_denies_profile_in_phase_1() -> None:
+    decision = select_profile_policy(
+        device=_device(),
+        requested_mode="demo_split_tunnel",
+        risk_tolerance="medium",
+        client_context={"previous_failure_class": "blocked_local"},
+        safety_pause_enabled=False,
+    )
+    assert decision["decision"] == "deny"
+    assert decision["selected_profile_type"] == "no_profile"
+
+
 def test_safety_pause_denies_profile() -> None:
     decision = select_profile_policy(
         device=_device(),
@@ -71,4 +83,3 @@ def test_low_risk_tolerance_uses_split_tunnel_note() -> None:
     )
     assert decision["routing_mode"] == "demo_split_tunnel"
     assert "split tunnel mode" in " ".join(decision["reasons"])
-
