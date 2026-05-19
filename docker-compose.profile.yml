@@ -1,0 +1,28 @@
+services:
+  profile-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.profile-api
+    environment:
+      PROFILE_DATABASE_URL: sqlite:////data/profile.sqlite3
+      PROFILE_SAFETY_MODE: local_only
+      PROFILE_DEFAULT_TTL_SECONDS: "900"
+    ports:
+      - "8095:8095"
+    volumes:
+      - profile-data:/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8095/api/profile/health', timeout=2)",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  profile-data:
+

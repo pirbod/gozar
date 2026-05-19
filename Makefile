@@ -1,8 +1,9 @@
 PYTHON ?= python3
 EVAL_RUNNER := eval/scripts/eval_runner.py
 GORZ_COMPOSE := docker compose -f docker-compose.gorz.yml
+PROFILE_COMPOSE := docker compose -f docker-compose.profile.yml
 
-.PHONY: eval eval-clean eval-baseline eval-adaptive eval-smoke eval-scenario gorz-install gorz-dev gorz-demo gorz-test gorz-lint gorz-validate gorz-clean gorz-cli-test gorz-homebrew-check gorz-release-check
+.PHONY: eval eval-clean eval-baseline eval-adaptive eval-smoke eval-scenario gorz-install gorz-dev gorz-demo gorz-test gorz-lint gorz-validate gorz-clean gorz-cli-test gorz-homebrew-check gorz-release-check profile-install profile-dev profile-demo profile-test profile-lint profile-validate profile-clean profile-audit-export profile-safety-check
 
 eval:
 	$(PYTHON) $(EVAL_RUNNER) run-all
@@ -96,3 +97,31 @@ gorz-release-check:
 	@test -f scripts/gorz/prepare_homebrew_release.py || (echo "scripts/gorz/prepare_homebrew_release.py is missing" >&2; exit 1)
 	@grep -q "brew install pirbod/tap/gorz" README.md || (echo "README.md is missing Homebrew install instructions" >&2; exit 1)
 	@test -f docs/gorz/homebrew-install.md || (echo "docs/gorz/homebrew-install.md is missing" >&2; exit 1)
+
+profile-install:
+	$(PYTHON) -m pip install -e "python/profile_api[dev]"
+
+profile-dev:
+	uvicorn profile_api.main:app --reload --host 0.0.0.0 --port 8095
+
+profile-demo:
+	$(PROFILE_COMPOSE) up --build
+
+profile-test:
+	cd python/profile_api && $(PYTHON) -m pytest
+
+profile-lint:
+	cd python/profile_api && $(PYTHON) -m ruff check .
+
+profile-validate:
+	$(PYTHON) scripts/profile/validate_profile_lifecycle.py
+
+profile-audit-export:
+	$(PYTHON) scripts/profile/export_demo_profile_audit.py
+
+profile-safety-check:
+	$(PYTHON) scripts/profile/check_safety_wording.py
+
+profile-clean:
+	$(PROFILE_COMPOSE) down -v
+	rm -rf runtime/profile

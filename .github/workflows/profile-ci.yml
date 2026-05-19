@@ -1,0 +1,42 @@
+name: profile-ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install profile API
+        run: python -m pip install -e "python/profile_api[dev]"
+
+      - name: Ruff
+        run: cd python/profile_api && ruff check .
+
+      - name: Pytest
+        run: cd python/profile_api && pytest
+
+      - name: Safety wording check
+        run: python scripts/profile/check_safety_wording.py
+
+      - name: Build profile Docker image
+        run: docker compose -f docker-compose.profile.yml build
+
+      - name: Start profile API
+        run: docker compose -f docker-compose.profile.yml up -d
+
+      - name: Validate profile lifecycle
+        run: python scripts/profile/validate_profile_lifecycle.py --api http://127.0.0.1:8095
+
+      - name: Stop profile API
+        if: always()
+        run: docker compose -f docker-compose.profile.yml down -v
