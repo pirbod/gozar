@@ -9,6 +9,8 @@ from profile_api.storage import session_factory
 
 from .conftest import profile_request
 
+ADMIN_HEADERS = {"x-profile-admin-token": "local-profile-admin-token"}
+
 
 def test_active_profile_validates(client: TestClient, registered_device: dict[str, object]) -> None:
     issued = client.post("/api/profile/session-profiles", json=profile_request(str(registered_device["device_id"])))
@@ -22,7 +24,11 @@ def test_active_profile_validates(client: TestClient, registered_device: dict[st
 def test_revoked_profile_fails(client: TestClient, registered_device: dict[str, object]) -> None:
     issued = client.post("/api/profile/session-profiles", json=profile_request(str(registered_device["device_id"])))
     profile_id = issued.json()["profile_id"]
-    revoked = client.post(f"/api/profile/session-profiles/{profile_id}/revoke", json={"reason": "manual_test"})
+    revoked = client.post(
+        f"/api/profile/session-profiles/{profile_id}/revoke",
+        headers=ADMIN_HEADERS,
+        json={"reason": "manual_test"},
+    )
     assert revoked.status_code == 200
     validation = client.post(f"/api/profile/session-profiles/{profile_id}/validate")
     assert validation.json()["valid"] is False

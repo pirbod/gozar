@@ -6,7 +6,10 @@ services:
     environment:
       PROFILE_DATABASE_URL: sqlite:////data/profile.sqlite3
       PROFILE_SAFETY_MODE: local_only
+      PROFILE_ALLOW_DEMO_PRIVATE_KEYS: "true"
+      PROFILE_ADMIN_TOKEN: local-profile-admin-token
       PROFILE_DEFAULT_TTL_SECONDS: "900"
+      PROFILE_AUDIT_TIMESTAMP_BUCKET_MINUTES: "60"
     ports:
       - "8095:8095"
     volumes:
@@ -25,4 +28,3 @@ services:
 
 volumes:
   profile-data:
-

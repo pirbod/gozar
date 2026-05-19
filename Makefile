@@ -2,8 +2,9 @@ PYTHON ?= python3
 EVAL_RUNNER := eval/scripts/eval_runner.py
 GORZ_COMPOSE := docker compose -f docker-compose.gorz.yml
 PROFILE_COMPOSE := docker compose -f docker-compose.profile.yml
+ANDROID_DIR := android/gorz
 
-.PHONY: eval eval-clean eval-baseline eval-adaptive eval-smoke eval-scenario gorz-install gorz-dev gorz-demo gorz-test gorz-lint gorz-validate gorz-clean gorz-cli-test gorz-homebrew-check gorz-release-check profile-install profile-dev profile-demo profile-test profile-lint profile-validate profile-clean profile-audit-export profile-safety-check profile-syntax-check profile-compose-check profile-release-check
+.PHONY: eval eval-clean eval-baseline eval-adaptive eval-smoke eval-scenario gorz-install gorz-dev gorz-demo gorz-test gorz-lint gorz-validate gorz-clean gorz-cli-test gorz-homebrew-check gorz-release-check profile-install profile-dev profile-demo profile-test profile-lint profile-validate profile-clean profile-audit-export profile-safety-check safety-wording-check profile-syntax-check profile-compose-check profile-release-check profile-full-check android-check android-test android-build android-clean android-safety-check phase2-check
 
 eval:
 	$(PYTHON) $(EVAL_RUNNER) run-all
@@ -129,7 +130,11 @@ profile-syntax-check:
 	python3 -m py_compile python/profile_api/tests/*.py
 
 profile-validate:
-	$(PYTHON) scripts/profile/validate_profile_lifecycle.py
+	@if $(PYTHON) -c "import httpx" >/dev/null 2>&1; then \
+		$(PYTHON) scripts/profile/validate_profile_lifecycle.py; \
+	else \
+		docker run --rm --network gozar_default -v "$(CURDIR):/workspace" -w /workspace gozar-profile-api python scripts/profile/validate_profile_lifecycle.py --api http://profile-api:8095; \
+	fi
 
 profile-audit-export:
 	$(PYTHON) scripts/profile/export_demo_profile_audit.py
@@ -137,8 +142,44 @@ profile-audit-export:
 profile-safety-check:
 	$(PYTHON) scripts/profile/check_safety_wording.py
 
+safety-wording-check:
+	$(PYTHON) scripts/check_safety_wording.py
+
 profile-compose-check:
 	$(PROFILE_COMPOSE) config
+
+profile-full-check:
+	$(MAKE) profile-lint
+	$(MAKE) profile-test
+	$(PROFILE_COMPOSE) config
+	$(PROFILE_COMPOSE) up -d --build
+	@if $(PYTHON) -c "import httpx" >/dev/null 2>&1; then \
+		$(PYTHON) scripts/profile/validate_profile_lifecycle.py --api http://127.0.0.1:8095; \
+	else \
+		docker run --rm --network gozar_default -v "$(CURDIR):/workspace" -w /workspace gozar-profile-api python scripts/profile/validate_profile_lifecycle.py --api http://profile-api:8095; \
+	fi
+	$(PROFILE_COMPOSE) down -v
+	$(MAKE) safety-wording-check
+
+android-check:
+	bash scripts/android/validate_android_project.sh
+
+android-test:
+	cd $(ANDROID_DIR) && ./gradlew test
+
+android-build:
+	cd $(ANDROID_DIR) && ./gradlew assembleDebug
+
+android-clean:
+	cd $(ANDROID_DIR) && ./gradlew clean
+
+android-safety-check:
+	$(PYTHON) scripts/android/check_android_safety_wording.py
+
+phase2-check:
+	$(MAKE) profile-full-check
+	$(MAKE) android-check
+	$(MAKE) android-safety-check
 
 profile-release-check:
 	@test -f Dockerfile.profile-api || (echo "Dockerfile.profile-api is missing" >&2; exit 1)

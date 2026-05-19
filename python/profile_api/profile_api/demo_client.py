@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
 from typing import Any
 
 import httpx
 
 from .crypto import decrypt_for_device_for_demo_client, generate_device_keypair, verify_envelope_signature
+
+ADMIN_TOKEN = os.getenv("PROFILE_ADMIN_TOKEN", "local-profile-admin-token")
 
 
 def run_lifecycle_demo(api_base: str, *, show_demo_payload: bool = False) -> dict[str, Any]:
@@ -68,6 +71,7 @@ def run_lifecycle_demo(api_base: str, *, show_demo_payload: bool = False) -> dic
         validation.raise_for_status()
         revoked = client.post(
             f"/api/profile/session-profiles/{envelope['profile_id']}/revoke",
+            headers=_admin_headers(),
             json={"reason": "manual_test"},
         )
         revoked.raise_for_status()
@@ -124,6 +128,10 @@ def _assert_redacted(bundle: dict[str, Any], private_key: str) -> None:
     leaked = [item for item in forbidden if item and item in raw]
     if leaked:
         raise RuntimeError(f"audit export contains non-redacted demo material: {leaked[0]}")
+
+
+def _admin_headers() -> dict[str, str]:
+    return {"x-profile-admin-token": ADMIN_TOKEN}
 
 
 def _wait_for_health(client: httpx.Client, *, wait_seconds: float) -> None:
