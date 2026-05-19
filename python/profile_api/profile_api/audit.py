@@ -112,31 +112,33 @@ def audit_event_response(event: AuditEvent) -> dict[str, Any]:
     }
 
 
-def export_audit_bundle(session: Session) -> dict[str, Any]:
+def export_audit_bundle(session: Session, *, timestamp_bucket_minutes: int = 60) -> dict[str, Any]:
     events = session.scalars(select(AuditEvent).order_by(AuditEvent.created_at, AuditEvent.event_id)).all()
     return {
         "bundle_id": new_id("bundle"),
         "created_at": utc_now(),
         "scope": "local_profile_lifecycle_demo",
-        "entries": [_export_event(event) for event in events],
+        "timestamp_bucket_minutes": timestamp_bucket_minutes,
+        "entries": [_export_event(event, timestamp_bucket_minutes=timestamp_bucket_minutes) for event in events],
         "redaction": REDACTION,
         "safety_notes": SAFETY_NOTES,
     }
 
 
-def _export_event(event: AuditEvent) -> dict[str, Any]:
+def _export_event(event: AuditEvent, *, timestamp_bucket_minutes: int) -> dict[str, Any]:
     return {
         "event_id": event.event_id,
         "event_type": event.event_type,
         "actor_id_hash": event.actor_id_hash,
         "summary": event.summary,
         "metadata": loads_json(event.metadata_json),
-        "created_at_bucket": _bucket_timestamp(event.created_at),
+        "created_at_bucket": _bucket_timestamp(event.created_at, bucket_minutes=timestamp_bucket_minutes),
     }
 
 
-def _bucket_timestamp(value: datetime) -> str:
-    bucket = value.replace(minute=0, second=0, microsecond=0)
+def _bucket_timestamp(value: datetime, *, bucket_minutes: int) -> str:
+    minute = value.minute - (value.minute % bucket_minutes)
+    bucket = value.replace(minute=minute, second=0, microsecond=0)
     return bucket.isoformat()
 
 

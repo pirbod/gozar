@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -14,6 +15,8 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "python" / "profile_api"))
 
 from profile_api.crypto import decrypt_for_device_for_demo_client, generate_device_keypair, verify_envelope_signature
+
+ADMIN_TOKEN = os.getenv("PROFILE_ADMIN_TOKEN", "local-profile-admin-token")
 
 
 def main() -> None:
@@ -54,6 +57,7 @@ def validate(api_base: str, *, wait_seconds: float = 60.0) -> None:
             client,
             "POST",
             f"/api/profile/session-profiles/{envelope['profile_id']}/revoke",
+            headers=_admin_headers(),
             json={"reason": "manual_test"},
         )
         assert revoked["status"] == "revoked"
@@ -67,14 +71,14 @@ def validate(api_base: str, *, wait_seconds: float = 60.0) -> None:
         assert expired["valid"] is False
         assert expired["status"] == "expired"
 
-        paused = _request(client, "POST", "/api/profile/safety/pause")
+        paused = _request(client, "POST", "/api/profile/safety/pause", headers=_admin_headers())
         assert paused["pause_enabled"] is True
         blocked = client.post(
             "/api/profile/session-profiles",
             json=_profile_request(device["device_id"]),
         )
         assert blocked.status_code == 423
-        resumed = _request(client, "POST", "/api/profile/safety/resume")
+        resumed = _request(client, "POST", "/api/profile/safety/resume", headers=_admin_headers())
         assert resumed["pause_enabled"] is False
         blocked_scenario = client.post(
             "/api/profile/session-profiles",
@@ -135,6 +139,10 @@ def _request(client: httpx.Client, method: str, path: str, **kwargs: Any) -> dic
     data = response.json()
     assert isinstance(data, dict)
     return data
+
+
+def _admin_headers() -> dict[str, str]:
+    return {"x-profile-admin-token": ADMIN_TOKEN}
 
 
 def _wait_for_health(client: httpx.Client, *, wait_seconds: float) -> None:

@@ -1,6 +1,6 @@
 # gozar
 
-`gozar` is a censorship-resilience research prototype for studying multi-path QUIC overlays in controlled environments. It is designed for lawful academic evaluation, lab simulation, and consent-based pilots only. It is not a production circumvention tool, not a field-deployment bypass product, and not offensive tooling.
+`gozar` is a censorship-resilience research prototype for studying multi-path QUIC overlays in controlled environments. It is designed for lawful academic evaluation, lab simulation, and consent-based pilots only. It is not a circumvention tool, not a field-deployment routing product, and not offensive tooling.
 
 ## Safety Disclaimer
 
@@ -155,7 +155,7 @@ After `make gorz-demo` starts services:
 - Local demo only.
 - Simulated diagnostics only.
 - Not production secure.
-- Not a bypass product.
+- Not a field-deployment routing product.
 - Not for real sensitive communication.
 - No public network scanning, bridge discovery, relay discovery, real IP collection, exact location
   collection, phone number collection, or automatic diagnostic upload.
@@ -201,10 +201,53 @@ Safety boundaries:
 - No real VPN tunnel.
 - No public gateways.
 - No public network probing.
+- No public relay discovery.
 - Not production secure.
 - Not for real sensitive communication.
 
 See [docs/vpn-product/phase-1-local-profile-lifecycle.md](docs/vpn-product/phase-1-local-profile-lifecycle.md).
+
+## Android Phase 2 Prototype
+
+Phase 2 adds a minimal Android app with Connect / Disconnect and Settings. It uses Android `VpnService` for local VPN lifecycle validation only and requests short-lived signed encrypted demo profiles from the local Profile API. It does not install a production VPN profile, does not forward traffic to public gateways, does not perform public network probing, and does not route `0.0.0.0/0` in Phase 2.
+
+Safety boundaries:
+
+- Android local VPN lifecycle prototype.
+- Adaptive session profile from the local Profile API.
+- Signed encrypted profile with short-lived demo config.
+- Deterministic policy engine.
+- Controlled lab gateway profile shape only.
+- No public gateway.
+- No public network probing.
+- No public relay discovery.
+- Not production secure.
+- Not for real sensitive communication.
+
+Run the local Profile API:
+
+```bash
+make profile-demo
+```
+
+Then in another terminal:
+
+```bash
+make android-check
+make phase2-check
+```
+
+Android Studio:
+
+- Open `android/gorz`.
+- Run the app on an emulator.
+- Use Profile API URL `http://10.0.2.2:8095`.
+- Tap Connect.
+- Grant VPN permission.
+- Confirm status becomes Connected.
+- Tap Disconnect.
+
+See [docs/vpn-product/phase-2-android-vpnservice.md](docs/vpn-product/phase-2-android-vpnservice.md).
 
 ## Install Gorz with Homebrew
 

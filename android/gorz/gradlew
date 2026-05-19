@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+set -eu
+
+if command -v gradle >/dev/null 2>&1; then
+  exec gradle "$@"
+fi
+
+echo "Gradle is not installed and a full Gradle wrapper distribution is not checked in." >&2
+echo "Open android/gorz in Android Studio or install Gradle plus the Android SDK, then rerun this command." >&2
+exit 127
