@@ -17,11 +17,11 @@ flowchart LR
 - `device_registry`: Stores public-key registration metadata and public key hashes.
 - `policy_engine`: Deterministic local policy selection.
 - `profile_issuer`: Builds short-lived demo config payloads, encrypts them to the device key, signs the envelope, and stores redacted metadata.
+- `issuer_keys`: Persists local demo signing keys, rotates them for tests, and keeps old public keys available for validation.
 - `revocation`: Records local profile revocation state.
 - `audit`: Records and exports redacted lifecycle evidence.
 - `safety`: Exposes local-only safety boundaries and pause controls.
 
 ## Storage
 
-SQLite stores devices, session profile metadata, revocation records, audit events, safety state, and issuer public key metadata. It does not store device private keys or plaintext profile payloads.
-
+SQLite stores devices, signed profile envelope metadata, revocation records, audit events, safety state, and local demo issuer keys. It does not store device private keys or plaintext profile payloads. The issuer private key column is local-demo-only and must be replaced by KMS, secure enclave, or HSM-backed signing before production.

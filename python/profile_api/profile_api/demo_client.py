@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 from typing import Any
 
 import httpx
@@ -13,8 +14,7 @@ def run_lifecycle_demo(api_base: str, *, show_demo_payload: bool = False) -> dic
     public_key, private_key = generate_device_keypair()
     # The demo client private key is held only in this local process for Phase 1 demonstration.
     with httpx.Client(base_url=api_base, timeout=10.0) as client:
-        health = client.get("/api/profile/health")
-        health.raise_for_status()
+        _wait_for_health(client, wait_seconds=60.0)
 
         registered = client.post(
             "/api/profile/devices/register",
@@ -104,19 +104,61 @@ def run_lifecycle_demo(api_base: str, *, show_demo_payload: bool = False) -> dic
 
 
 def _assert_redacted(bundle: dict[str, Any], private_key: str) -> None:
-    raw = json.dumps(bundle, sort_keys=True)
+    raw = _without_allowed_hash_names(json.dumps(bundle, sort_keys=True))
     forbidden = [
         private_key,
         "demo-server-public-key",
         "local-gateway:51820",
+        "local-relay:7443",
         "10.77.0.2/32",
+        "10.77.0.1",
         "encrypted_payload",
+        "signature",
         "device_public_key",
+        "private_key",
+        "private_key_demo",
         "device_private_key",
+        "local-gateway",
+        "local-relay",
     ]
     leaked = [item for item in forbidden if item and item in raw]
     if leaked:
         raise RuntimeError(f"audit export contains non-redacted demo material: {leaked[0]}")
+
+
+def _wait_for_health(client: httpx.Client, *, wait_seconds: float) -> None:
+    deadline = time.monotonic() + wait_seconds
+    last_error: Exception | None = None
+    while time.monotonic() < deadline:
+        try:
+            response = client.get("/api/profile/health")
+            response.raise_for_status()
+            body = response.json()
+        except (httpx.HTTPError, ValueError) as exc:
+            last_error = exc
+            time.sleep(1.0)
+            continue
+        if body.get("status") == "ok":
+            return
+        last_error = RuntimeError(f"unexpected health response: {body}")
+        time.sleep(1.0)
+    raise TimeoutError(f"Profile API did not become healthy within {wait_seconds:.0f}s: {last_error}")
+
+
+def _without_allowed_hash_names(raw: str) -> str:
+    allowed = [
+        "device_public_key_hash",
+        "device_public_keys_removed",
+        "encrypted_payload_hash",
+        "encrypted_payload_replaced_with_hash",
+        "private_keys_removed",
+        "signature_hash",
+        "signature_replaced_with_hash",
+    ]
+    sanitized = raw
+    for value in allowed:
+        sanitized = sanitized.replace(value, "")
+    return sanitized
 
 
 def main() -> None:

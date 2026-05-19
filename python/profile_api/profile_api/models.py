@@ -33,6 +33,7 @@ class SessionProfile(Base):
 
     profile_id: Mapped[str] = mapped_column(String(48), primary_key=True)
     device_id_hash: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    audience_hash: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
     profile_type: Mapped[str] = mapped_column(String(48), nullable=False)
     issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
@@ -41,7 +42,12 @@ class SessionProfile(Base):
     policy_version: Mapped[str] = mapped_column(String(48), nullable=False)
     redacted_routing_mode: Mapped[str] = mapped_column(String(48), nullable=False)
     safety_notes_json: Mapped[str] = mapped_column(Text, nullable=False)
+    signed_envelope_json: Mapped[str] = mapped_column(Text, nullable=False)
+    signature: Mapped[str] = mapped_column(Text, nullable=False)
+    issuer_key_id: Mapped[str] = mapped_column(String(48), nullable=False, index=True)
+    issuer_public_key: Mapped[str] = mapped_column(Text, nullable=False)
     envelope_hash: Mapped[str] = mapped_column(String(80), nullable=False)
+    encrypted_payload_hash: Mapped[str] = mapped_column(String(80), nullable=False)
     signature_hash: Mapped[str] = mapped_column(String(80), nullable=False)
     signature_format_valid: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
@@ -78,7 +84,15 @@ class IssuerKey(Base):
     __tablename__ = "issuer_keys"
 
     key_id: Mapped[str] = mapped_column(String(48), primary_key=True)
-    issuer_public_key: Mapped[str] = mapped_column(Text, nullable=False)
+    public_key: Mapped[str] = mapped_column(Text, nullable=False)
+    private_key_demo: Mapped[str] = mapped_column(Text, nullable=False)
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    rotation_reason: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    created_by: Mapped[str] = mapped_column(String(40), default="local-demo", nullable=False)
+    safety_note: Mapped[str] = mapped_column(
+        String(180),
+        default="Local demo signing key only. Production requires KMS/HSM-backed signing.",
+        nullable=False,
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
-

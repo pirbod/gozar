@@ -76,6 +76,14 @@ def validate(api_base: str, *, wait_seconds: float = 60.0) -> None:
         assert blocked.status_code == 423
         resumed = _request(client, "POST", "/api/profile/safety/resume")
         assert resumed["pause_enabled"] is False
+        blocked_scenario = client.post(
+            "/api/profile/session-profiles",
+            json=_profile_request(device["device_id"], previous_failure_class="blocked_local"),
+        )
+        assert blocked_scenario.status_code == 400
+        blocked_detail = blocked_scenario.json()["detail"]
+        assert blocked_detail["decision"] == "deny"
+        assert blocked_detail["selected_profile_type"] == "no_profile"
 
         audit_bundle = _request(client, "GET", "/api/profile/audit/export")
         _assert_audit_redacted(audit_bundle, private_key)
@@ -108,7 +116,7 @@ def _request_profile(client: httpx.Client, device_id: str, ttl_seconds: int | No
     return _request(client, "POST", "/api/profile/session-profiles", json=body)
 
 
-def _profile_request(device_id: str) -> dict[str, Any]:
+def _profile_request(device_id: str, *, previous_failure_class: str = "none") -> dict[str, Any]:
     return {
         "device_id": device_id,
         "requested_mode": "demo_split_tunnel",
@@ -116,7 +124,7 @@ def _profile_request(device_id: str) -> dict[str, Any]:
         "client_context": {
             "network_type": "wifi",
             "region_hint": "local-demo",
-            "previous_failure_class": "none",
+            "previous_failure_class": previous_failure_class,
         },
     }
 
@@ -149,18 +157,45 @@ def _wait_for_health(client: httpx.Client, *, wait_seconds: float) -> None:
 def _assert_audit_redacted(bundle: dict[str, Any], private_key: str) -> None:
     assert bundle["redaction"]["plaintext_profile_removed"] is True
     assert bundle["redaction"]["private_keys_removed"] is True
-    raw = json.dumps(bundle, sort_keys=True)
+    assert bundle["redaction"]["device_public_keys_removed"] is True
+    assert bundle["redaction"]["encrypted_payload_replaced_with_hash"] is True
+    assert bundle["redaction"]["signature_replaced_with_hash"] is True
+    assert bundle["redaction"]["local_endpoints_removed"] is True
+    raw = _without_allowed_hash_names(json.dumps(bundle, sort_keys=True))
     forbidden = [
         private_key,
         "demo-server-public-key",
         "local-gateway:51820",
+        "local-relay:7443",
         "10.77.0.2/32",
+        "10.77.0.1",
         "encrypted_payload",
+        "signature",
         "device_public_key",
+        "private_key",
+        "private_key_demo",
         "device_private_key",
+        "local-gateway",
+        "local-relay",
     ]
     leaked = [item for item in forbidden if item and item in raw]
     assert not leaked, f"audit export leaked {leaked[0]}"
+
+
+def _without_allowed_hash_names(raw: str) -> str:
+    allowed = [
+        "device_public_key_hash",
+        "device_public_keys_removed",
+        "encrypted_payload_hash",
+        "encrypted_payload_replaced_with_hash",
+        "private_keys_removed",
+        "signature_hash",
+        "signature_replaced_with_hash",
+    ]
+    sanitized = raw
+    for value in allowed:
+        sanitized = sanitized.replace(value, "")
+    return sanitized
 
 
 if __name__ == "__main__":

@@ -8,10 +8,10 @@ from pydantic import BaseModel, ConfigDict, Field
 Platform = Literal["macos", "linux", "windows", "android", "ios", "unknown"]
 RequestedMode = Literal["demo_full_tunnel", "demo_split_tunnel", "demo_messaging_only"]
 RiskTolerance = Literal["low", "medium"]
-PreviousFailureClass = Literal["none", "timeout", "blocked", "degraded"]
+PreviousFailureClass = Literal["none", "timeout", "blocked", "blocked_local", "degraded"]
 NetworkType = Literal["wifi", "mobile", "unknown"]
 ProfileType = Literal["wireguard_like_demo", "quic_like_demo", "no_profile"]
-ProfileStatus = Literal["active", "expired", "revoked", "unknown"]
+ProfileStatus = Literal["active", "expired", "revoked", "invalid_signature", "unknown"]
 RevokeReason = Literal["demo_rotation", "manual_test", "safety_pause", "compromised_demo"]
 DiagnosticScenario = Literal[
     "healthy",
@@ -89,6 +89,7 @@ class SessionProfileEnvelope(BaseModel):
     audience: str
     policy_version: str
     encrypted_payload: str
+    issuer_key_id: str
     signature: str
     issuer_public_key: str
     safety_notes: list[str]
@@ -173,3 +174,13 @@ class SafetyResponse(BaseModel):
     limitations: list[str]
     updated_at: datetime | None
 
+
+class IssuerRotateRequest(BaseModel):
+    reason: Literal["manual_test", "demo_rotation"]
+
+
+class IssuerRotateResponse(BaseModel):
+    old_key_id: str | None
+    new_key_id: str
+    active: bool
+    safety_note: str
