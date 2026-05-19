@@ -19,19 +19,24 @@ from profile_api.crypto import decrypt_for_device_for_demo_client, generate_devi
 def main() -> None:
     parser = argparse.ArgumentParser(description="Validate the local-only profile lifecycle API.")
     parser.add_argument("--api", default="http://127.0.0.1:8095", help="Profile API base URL.")
+    parser.add_argument(
+        "--wait-seconds",
+        type=float,
+        default=60.0,
+        help="Seconds to wait for the Profile API health endpoint before running lifecycle checks.",
+    )
     args = parser.parse_args()
     try:
-        validate(args.api)
+        validate(args.api, wait_seconds=args.wait_seconds)
     except Exception as exc:
         print(f"profile lifecycle validation failed: {exc}", file=sys.stderr)
         raise SystemExit(1) from exc
 
 
-def validate(api_base: str) -> None:
+def validate(api_base: str, *, wait_seconds: float = 60.0) -> None:
     public_key, private_key = generate_device_keypair()
     with httpx.Client(base_url=api_base, timeout=10.0) as client:
-        health = _request(client, "GET", "/api/profile/health")
-        assert health["status"] == "ok"
+        _wait_for_health(client, wait_seconds=wait_seconds)
 
         device = _register_device(client, public_key)
         envelope = _request_profile(client, device["device_id"])
@@ -122,6 +127,23 @@ def _request(client: httpx.Client, method: str, path: str, **kwargs: Any) -> dic
     data = response.json()
     assert isinstance(data, dict)
     return data
+
+
+def _wait_for_health(client: httpx.Client, *, wait_seconds: float) -> None:
+    deadline = time.monotonic() + wait_seconds
+    last_error: Exception | None = None
+    while time.monotonic() < deadline:
+        try:
+            health = _request(client, "GET", "/api/profile/health")
+        except (httpx.HTTPError, AssertionError) as exc:
+            last_error = exc
+            time.sleep(1.0)
+            continue
+        if health.get("status") == "ok":
+            return
+        last_error = RuntimeError(f"unexpected health response: {health}")
+        time.sleep(1.0)
+    raise TimeoutError(f"Profile API did not become healthy within {wait_seconds:.0f}s: {last_error}")
 
 
 def _assert_audit_redacted(bundle: dict[str, Any], private_key: str) -> None:
