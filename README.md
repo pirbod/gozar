@@ -177,6 +177,34 @@ trail, enable emergency pause, confirm sends are blocked, then resume.
 - [Prototype safety boundaries](docs/gorz/prototype-safety-boundaries.md)
 - [Homebrew install](docs/gorz/homebrew-install.md)
 
+## Adaptive Session Profile Phase 1
+
+Phase 1 adds a local-only adaptive session profile service in `python/profile_api`. It demonstrates
+short-lived signed encrypted demo profiles, deterministic policy selection, profile validation,
+revocation, redacted audit export, and safety pause handling.
+
+```bash
+make profile-install
+make profile-demo
+```
+
+After `make profile-demo` starts the service:
+
+- Profile API: `http://localhost:8095/api/profile/health`
+- API docs: `http://localhost:8095/docs`
+
+Safety boundaries:
+
+- Local-only Docker demo.
+- Signed encrypted demo profiles only.
+- No OS VPN install.
+- No public gateways.
+- No public network probing.
+- Not production secure.
+- Not for real sensitive communication.
+
+See [docs/vpn-product/phase-1-local-profile-lifecycle.md](docs/vpn-product/phase-1-local-profile-lifecycle.md).
+
 ## Install Gorz with Homebrew
 
 ```bash
