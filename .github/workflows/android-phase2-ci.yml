@@ -1,0 +1,61 @@
+name: android-phase2-ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  profile-phase2:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install profile API
+        run: python -m pip install -e "python/profile_api[dev]"
+
+      - name: Profile lint
+        run: make profile-lint
+
+      - name: Profile tests
+        run: make profile-test
+
+      - name: Safety wording
+        run: make safety-wording-check
+
+      - name: Compose config
+        run: docker compose -f docker-compose.profile.yml config
+
+      - name: Compose build
+        run: docker compose -f docker-compose.profile.yml build
+
+  android-static:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate Android structure
+        run: bash scripts/android/validate_android_project.sh
+
+      - name: Android safety wording
+        run: python scripts/android/check_android_safety_wording.py
+
+      - name: Optional Android Gradle checks
+        run: |
+          if command -v java >/dev/null 2>&1 && command -v gradle >/dev/null 2>&1 && { [ -n "${ANDROID_HOME:-}" ] || [ -n "${ANDROID_SDK_ROOT:-}" ]; }; then
+            cd android/gorz
+            ./gradlew test assembleDebug
+          else
+            echo "Android Gradle toolchain not available; static validation already completed."
+          fi

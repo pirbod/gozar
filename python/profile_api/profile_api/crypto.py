@@ -3,11 +3,15 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import secrets
 from typing import Any
 
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from nacl.exceptions import BadSignatureError, CryptoError
 from nacl.public import PrivateKey, PublicKey, SealedBox
 from nacl.signing import SigningKey, VerifyKey
+
+ANDROID_LOCAL_DEMO_AEAD_LABEL = b"gorz-android-local-demo-profile-v1"
 
 
 def _b64encode(raw: bytes) -> str:
@@ -60,6 +64,37 @@ def encrypt_for_device(plaintext_json: dict, device_public_key: str) -> str:
         raise ValueError("device public key must be 32 bytes")
     sealed_box = SealedBox(PublicKey(raw_public_key))
     return _b64encode(sealed_box.encrypt(canonical_json(plaintext_json)))
+
+
+def encrypt_for_android_local_demo(plaintext_json: dict, device_public_key: str) -> str:
+    """Encrypt a local Android prototype profile with AES-GCM.
+
+    This compatibility mode is only for the Android local VPN lifecycle prototype. It keeps the existing
+    PyNaCl sealed-box path unchanged and is not production secure.
+    """
+
+    raw_public_key = _b64decode(device_public_key)
+    if len(raw_public_key) != 32:
+        raise ValueError("device public key must be 32 bytes")
+    key = hashlib.sha256(raw_public_key + ANDROID_LOCAL_DEMO_AEAD_LABEL).digest()
+    nonce = secrets.token_bytes(12)
+    ciphertext = AESGCM(key).encrypt(nonce, canonical_json(plaintext_json), None)
+    return _b64encode(nonce + ciphertext)
+
+
+def decrypt_android_local_demo_for_tests(encrypted_payload: str, device_public_key: str) -> dict:
+    raw_public_key = _b64decode(device_public_key)
+    if len(raw_public_key) != 32:
+        raise ValueError("device public key must be 32 bytes")
+    sealed = _b64decode(encrypted_payload)
+    if len(sealed) <= 12:
+        raise ValueError("encrypted payload is too short")
+    key = hashlib.sha256(raw_public_key + ANDROID_LOCAL_DEMO_AEAD_LABEL).digest()
+    plaintext = AESGCM(key).decrypt(sealed[:12], sealed[12:], None)
+    parsed = json.loads(plaintext.decode("utf-8"))
+    if not isinstance(parsed, dict):
+        raise ValueError("decrypted payload must be a JSON object")
+    return parsed
 
 
 def decrypt_for_device_for_demo_client(encrypted_payload: str, device_private_key: str) -> dict:

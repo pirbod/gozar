@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gorz</string>
+    <string name="main_subtitle">Local adaptive profile prototype</string>
+    <string name="safety_footer">Local demo only. No public gateway or public probing.</string>
+</resources>

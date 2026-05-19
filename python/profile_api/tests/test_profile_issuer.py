@@ -14,6 +14,8 @@ from profile_api.storage import session_factory
 
 from .conftest import profile_request
 
+ADMIN_HEADERS = {"x-profile-admin-token": "local-profile-admin-token"}
+
 
 def test_profile_has_ttl_and_signed_envelope(
     client: TestClient,
@@ -90,7 +92,11 @@ def test_old_profile_validates_after_issuer_rotation(client: TestClient, registe
     first = client.post("/api/profile/session-profiles", json=profile_request(str(registered_device["device_id"])))
     assert first.status_code == 200
     first_envelope = first.json()
-    rotated = client.post("/api/profile/issuer/rotate-demo-key", json={"reason": "manual_test"})
+    rotated = client.post(
+        "/api/profile/issuer/rotate-demo-key",
+        headers=ADMIN_HEADERS,
+        json={"reason": "manual_test"},
+    )
     assert rotated.status_code == 200
     assert rotated.json()["old_key_id"] == first_envelope["issuer_key_id"]
     second = client.post("/api/profile/session-profiles", json=profile_request(str(registered_device["device_id"])))

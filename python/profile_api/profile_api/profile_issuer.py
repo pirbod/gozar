@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from .audit import record_audit
 from .crypto import (
     canonical_json_text,
+    encrypt_for_android_local_demo,
     encrypt_for_device,
     sha256_json,
     sha256_text,
@@ -105,10 +106,15 @@ def issue_session_profile(
         policy_reasons=list(decision["reasons"]),
         safety_notes=safety_notes,
     )
-    encrypted_payload = encrypt_for_device(payload, device.device_public_key)
+    envelope_mode = request.envelope_mode
+    if envelope_mode == "android_local_demo":
+        encrypted_payload = encrypt_for_android_local_demo(payload, device.device_public_key)
+    else:
+        encrypted_payload = encrypt_for_device(payload, device.device_public_key)
     envelope_without_signature = {
         "profile_id": profile_id,
         "profile_type": profile_type,
+        "envelope_mode": envelope_mode,
         "issued_at": issued_at_text,
         "expires_at": expires_at_text,
         "ttl_seconds": ttl_seconds,
@@ -159,6 +165,7 @@ def issue_session_profile(
             "profile_id": profile_id,
             "device_id": device.device_id,
             "profile_type": profile_type,
+            "envelope_mode": envelope_mode,
             "ttl_seconds": ttl_seconds,
             "routing_mode": payload["config"]["routing"]["mode"],
             "policy_version": decision["policy_version"],
