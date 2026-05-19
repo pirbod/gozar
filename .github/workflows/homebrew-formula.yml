@@ -1,0 +1,32 @@
+name: homebrew-formula
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, for example v0.1.0"
+        required: true
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  formula:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Prepare formula
+        run: |
+          GITHUB_REF_NAME="${{ github.event.inputs.tag || github.ref_name }}"
+          python scripts/gorz/prepare_homebrew_release.py --tag "${GITHUB_REF_NAME}" --output gorz.rb
+
+      - name: Upload formula artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gorz-homebrew-formula
+          path: gorz.rb
