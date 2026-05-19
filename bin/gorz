@@ -1,0 +1,339 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+GORZ_CLI_VERSION="0.1.0"
+GOZAR_HOME="${GOZAR_HOME:-$HOME/.gorz/gozar}"
+GOZAR_REPO_URL="${GOZAR_REPO_URL:-https://github.com/pirbod/gozar.git}"
+GORZ_COMPOSE_FILE="docker-compose.gorz.yml"
+GORZ_WEB_URL="http://localhost:5174"
+GORZ_API_HEALTH_URL="http://localhost:8090/api/gorz/health"
+GORZ_API_DOCS_URL="http://localhost:8090/docs"
+
+die() {
+  printf 'ERROR: %s\n' "$*" >&2
+  exit 1
+}
+
+info() {
+  printf '%s\n' "$*"
+}
+
+warn() {
+  printf 'WARN: %s\n' "$*" >&2
+}
+
+have() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+docker_compose() {
+  docker compose "$@"
+}
+
+docker_daemon_reachable() {
+  docker info >/dev/null 2>&1
+}
+
+docker_compose_available() {
+  docker compose version >/dev/null 2>&1
+}
+
+ensure_tool() {
+  local tool="$1"
+  have "$tool" || die "Required tool not found: $tool"
+}
+
+ensure_docker() {
+  ensure_tool docker
+  docker compose version >/dev/null 2>&1 || die "Docker Compose plugin is missing. Install Docker Compose v2; legacy docker-compose is not supported."
+  docker info >/dev/null 2>&1 || die "Docker daemon is not reachable. Start Docker Desktop or Docker Engine and try again."
+}
+
+ensure_repo() {
+  ensure_tool git
+
+  if [ -d "$GOZAR_HOME/.git" ]; then
+    return 0
+  fi
+
+  if [ -e "$GOZAR_HOME" ]; then
+    die "$GOZAR_HOME exists but is not a git checkout. Move it aside or set GOZAR_HOME to another path."
+  fi
+
+  info "Cloning Gozar into $GOZAR_HOME"
+  mkdir -p "$(dirname "$GOZAR_HOME")"
+  git clone --depth 1 "$GOZAR_REPO_URL" "$GOZAR_HOME"
+}
+
+update_repo() {
+  ensure_repo
+  info "Updating Gozar checkout"
+  if git -C "$GOZAR_HOME" pull --ff-only; then
+    return 0
+  fi
+  warn "Could not fast-forward update; continuing with the existing checkout."
+}
+
+run_compose_up() {
+  ensure_docker
+  (
+    cd "$GOZAR_HOME"
+    docker_compose -f "$GORZ_COMPOSE_FILE" up --build -d
+  )
+}
+
+print_urls() {
+  info "Gorz local prototype is starting."
+  info "Web:      $GORZ_WEB_URL"
+  info "API:      $GORZ_API_HEALTH_URL"
+  info "API docs: $GORZ_API_DOCS_URL"
+}
+
+run_python_script() {
+  local script="$1"
+  shift || true
+  ensure_tool python3
+  ensure_repo
+  (
+    cd "$GOZAR_HOME"
+    python3 "$script" "$@"
+  )
+}
+
+compose_down() {
+  ensure_docker
+  ensure_repo
+  (
+    cd "$GOZAR_HOME"
+    docker_compose -f "$GORZ_COMPOSE_FILE" down "$@"
+  )
+}
+
+cmd_help() {
+  cat <<'EOF'
+gorz local prototype CLI
+
+Usage:
+  gorz <command>
+
+Commands:
+  help                  Show this help.
+  version               Show CLI and checkout details.
+  doctor                Check local runtime dependencies.
+  demo                  Update and launch the local Gorz demo stack.
+  up                    Update and launch the local Gorz demo stack.
+  down                  Stop the local Gorz demo stack.
+  restart               Restart the local Gorz demo stack.
+  validate              Run the local Gorz validation flow.
+  seed                  Seed local demo data.
+  export-demo-incident  Export a redacted demo incident package.
+  update                Clone or update the local Gozar checkout.
+  clean                 Stop the stack and remove local demo volumes.
+  path                  Print the local Gozar checkout path.
+  logs                  Follow local Gorz demo logs.
+  open                  Open the local Gorz web UI.
+EOF
+}
+
+doctor_check() {
+  local label="$1"
+  shift
+  if "$@"; then
+    printf 'PASS %s\n' "$label"
+    return 0
+  fi
+  printf 'FAIL %s\n' "$label"
+  return 1
+}
+
+checkout_path_writable() {
+  local probe="$GOZAR_HOME"
+  local parent
+
+  if [ -d "$probe" ]; then
+    [ -w "$probe" ]
+    return
+  fi
+
+  parent="$(dirname "$probe")"
+  while [ ! -d "$parent" ] && [ "$parent" != "/" ]; do
+    parent="$(dirname "$parent")"
+  done
+
+  [ -d "$parent" ] && [ -w "$parent" ]
+}
+
+cmd_doctor() {
+  local failures=0
+
+  info "Gorz doctor"
+  info "GOZAR_HOME=$GOZAR_HOME"
+
+  doctor_check "git is installed" have git || failures=$((failures + 1))
+  doctor_check "docker is installed" have docker || failures=$((failures + 1))
+
+  if have docker; then
+    doctor_check "Docker daemon is reachable" docker_daemon_reachable || failures=$((failures + 1))
+    doctor_check "docker compose plugin works" docker_compose_available || failures=$((failures + 1))
+  else
+    printf 'FAIL Docker daemon is reachable\n'
+    printf 'FAIL docker compose plugin works\n'
+    failures=$((failures + 2))
+  fi
+
+  doctor_check "python3 is installed" have python3 || failures=$((failures + 1))
+  doctor_check "curl is installed" have curl || failures=$((failures + 1))
+  doctor_check "local checkout path is writable" checkout_path_writable || failures=$((failures + 1))
+
+  if [ "$failures" -eq 0 ]; then
+    info "All required local checks passed."
+  else
+    warn "$failures check(s) failed. Install missing tools or start Docker, then run gorz doctor again."
+  fi
+
+  return "$failures"
+}
+
+cmd_demo() {
+  ensure_tool git
+  update_repo
+  run_compose_up
+  print_urls
+}
+
+cmd_down() {
+  compose_down "$@"
+}
+
+cmd_clean() {
+  info "Removing local Gorz demo containers and local demo volumes only."
+  compose_down -v
+}
+
+cmd_validate() {
+  run_python_script "scripts/gorz/validate_gorz.py" "$@"
+}
+
+cmd_seed() {
+  run_python_script "scripts/gorz/seed_demo.py" "$@"
+}
+
+cmd_export_demo_incident() {
+  run_python_script "scripts/gorz/export_demo_incident.py" "$@"
+}
+
+cmd_logs() {
+  ensure_docker
+  ensure_repo
+  (
+    cd "$GOZAR_HOME"
+    docker_compose -f "$GORZ_COMPOSE_FILE" logs -f "$@"
+  )
+}
+
+cmd_open() {
+  case "$(uname -s)" in
+    Darwin)
+      open "$GORZ_WEB_URL" || {
+        warn "Could not open browser automatically."
+        info "$GORZ_WEB_URL"
+      }
+      ;;
+    Linux)
+      if have xdg-open; then
+        xdg-open "$GORZ_WEB_URL" >/dev/null 2>&1 || {
+          warn "Could not open browser automatically."
+          info "$GORZ_WEB_URL"
+        }
+      else
+        info "$GORZ_WEB_URL"
+      fi
+      ;;
+    *)
+      info "$GORZ_WEB_URL"
+      ;;
+  esac
+}
+
+cmd_version() {
+  info "gorz CLI version: $GORZ_CLI_VERSION"
+  info "GOZAR_HOME: $GOZAR_HOME"
+
+  if [ -d "$GOZAR_HOME/.git" ]; then
+    info "Gozar commit: $(git -C "$GOZAR_HOME" rev-parse --short HEAD 2>/dev/null || printf 'unknown')"
+  else
+    info "Gozar commit: unavailable; checkout will be created by 'gorz demo'"
+  fi
+
+  info "Homebrew: brew install pirbod/tap/gorz"
+}
+
+cmd_update() {
+  update_repo
+  if [ -d "$GOZAR_HOME/.git" ]; then
+    info "Gozar checkout ready at $GOZAR_HOME"
+  fi
+}
+
+cmd_path() {
+  info "$GOZAR_HOME"
+}
+
+main() {
+  local command="${1:-help}"
+  if [ "$#" -gt 0 ]; then
+    shift
+  fi
+
+  case "$command" in
+    help|-h|--help)
+      cmd_help
+      ;;
+    version|--version)
+      cmd_version
+      ;;
+    doctor)
+      cmd_doctor
+      ;;
+    demo|up)
+      cmd_demo "$@"
+      ;;
+    down)
+      cmd_down "$@"
+      ;;
+    restart)
+      cmd_down
+      cmd_demo "$@"
+      ;;
+    validate)
+      cmd_validate "$@"
+      ;;
+    seed)
+      cmd_seed "$@"
+      ;;
+    export-demo-incident)
+      cmd_export_demo_incident "$@"
+      ;;
+    update)
+      cmd_update
+      ;;
+    clean)
+      cmd_clean
+      ;;
+    path)
+      cmd_path
+      ;;
+    logs)
+      cmd_logs "$@"
+      ;;
+    open)
+      cmd_open
+      ;;
+    *)
+      cmd_help >&2
+      die "Unknown command: $command"
+      ;;
+  esac
+}
+
+main "$@"

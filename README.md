@@ -175,6 +175,33 @@ trail, enable emergency pause, confirm sends are blocked, then resume.
 - [Redaction policy](docs/gorz/redaction-policy.md)
 - [Demo script](docs/gorz/demo-script.md)
 - [Prototype safety boundaries](docs/gorz/prototype-safety-boundaries.md)
+- [Homebrew install](docs/gorz/homebrew-install.md)
+
+## Install Gorz with Homebrew
+
+```bash
+brew install pirbod/tap/gorz
+gorz doctor
+gorz demo
+```
+
+After `gorz demo` starts the local prototype:
+
+```text
+Web:      http://localhost:5174
+API:      http://localhost:8090/api/gorz/health
+API docs: http://localhost:8090/docs
+```
+
+Caveats:
+
+- Requires Docker Desktop or Docker Engine with the Compose plugin.
+- Installs a CLI launcher that manages the local prototype.
+- Does not install a production messenger.
+- Does not enable public relay or external probing.
+
+See [docs/gorz/homebrew-install.md](docs/gorz/homebrew-install.md) for tap setup and release
+instructions.
 
 ## CI Coverage
 
