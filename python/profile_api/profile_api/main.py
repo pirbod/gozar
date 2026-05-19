@@ -7,9 +7,9 @@ from sqlalchemy.orm import Session
 
 from .audit import audit_page, export_audit_bundle, record_audit
 from .config import Settings, get_settings
-from .crypto import generate_issuer_signing_keypair
 from .device_registry import device_response, register_device
 from .diagnostics import simulate_diagnostic
+from .issuer_keys import get_or_create_active_issuer_key, rotate_issuer_key
 from .models import Device, SessionProfile, utc_now
 from .openapi_tags import OPENAPI_TAGS
 from .profile_issuer import ProfileIssueDenied, issue_session_profile, profile_metadata, validate_profile
@@ -24,6 +24,8 @@ from .schemas import (
     DiagnosticRequest,
     DiagnosticResponse,
     HealthResponse,
+    IssuerRotateRequest,
+    IssuerRotateResponse,
     ProfileValidationResponse,
     RevokeProfileRequest,
     RevokeProfileResponse,
@@ -32,15 +34,15 @@ from .schemas import (
     SessionProfileMetadata,
     SessionProfileRequest,
 )
-from .storage import get_session, init_db, session_factory, store_issuer_public_key
+from .storage import get_session, init_db, session_factory
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     init_db(settings)
-    issuer_public_key, issuer_private_key = generate_issuer_signing_keypair()
     with session_factory()() as session:
-        store_issuer_public_key(session, issuer_public_key)
+        get_or_create_active_issuer_key(session)
+        session.commit()
 
     app = FastAPI(
         title="Gozar Profile API",
@@ -52,8 +54,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         openapi_tags=OPENAPI_TAGS,
     )
     app.state.settings = settings
-    app.state.issuer_public_key = issuer_public_key
-    app.state.issuer_private_key = issuer_private_key
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -105,8 +105,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 session=session,
                 device=device,
                 request=payload,
-                issuer_private_key=request.app.state.issuer_private_key,
-                issuer_public_key=request.app.state.issuer_public_key,
                 default_ttl_seconds=request.app.state.settings.default_ttl_seconds,
             )
         except ProfileIssueDenied as exc:
@@ -161,6 +159,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         session.commit()
         return result
 
+    @app.post("/api/profile/issuer/rotate-demo-key", response_model=IssuerRotateResponse, tags=["issuer"])
+    def rotate_demo_key(payload: IssuerRotateRequest, session: Session = Depends(get_session)) -> IssuerRotateResponse:
+        old_key, new_key = rotate_issuer_key(session, payload.reason)
+        session.commit()
+        return IssuerRotateResponse(
+            old_key_id=old_key.key_id if old_key else None,
+            new_key_id=new_key.key_id,
+            active=new_key.active,
+            safety_note=new_key.safety_note,
+        )
+
     @app.get("/api/profile/audit", response_model=AuditPage, tags=["audit"])
     def audit(limit: int = 100, offset: int = 0, session: Session = Depends(get_session)) -> dict[str, object]:
         return audit_page(session, limit=min(max(limit, 1), 500), offset=max(offset, 0))
@@ -201,4 +210,3 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
 
 app = create_app()
-

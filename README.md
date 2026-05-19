@@ -198,6 +198,7 @@ Safety boundaries:
 - Local-only Docker demo.
 - Signed encrypted demo profiles only.
 - No OS VPN install.
+- No real VPN tunnel.
 - No public gateways.
 - No public network probing.
 - Not production secure.

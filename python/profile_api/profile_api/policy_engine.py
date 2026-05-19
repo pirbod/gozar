@@ -26,7 +26,7 @@ def select_profile_policy(
     if diagnostics_scenario == "safety_pause":
         return _deny("diagnostic scenario recommends no profile during safety pause", "high", 0.9, safety_notes)
 
-    if previous_failure_class == "blocked" or diagnostics_scenario == "blocked_local":
+    if previous_failure_class in {"blocked", "blocked_local"} or diagnostics_scenario == "blocked_local":
         return _deny(
             "blocked scenarios are denied in Phase 1 instead of attempting adaptive routing behavior",
             "high",
@@ -98,4 +98,3 @@ def _deny(reason: str, risk: str, confidence: float, safety_notes: list[str]) ->
         "safety_notes": safety_notes,
         "policy_version": POLICY_VERSION,
     }
-

@@ -25,8 +25,16 @@ def canonical_json(data: dict[str, Any]) -> bytes:
     return json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
 
 
+def canonical_json_text(data: dict[str, Any]) -> str:
+    return canonical_json(data).decode("utf-8")
+
+
 def sha256_json(data: dict) -> str:
     return hashlib.sha256(canonical_json(data)).hexdigest()
+
+
+def sha256_text(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
 def generate_device_keypair() -> tuple[str, str]:
@@ -96,4 +104,3 @@ def verify_envelope_signature(envelope: dict, issuer_public_key: str) -> bool:
 
 def _without_signature(envelope: dict) -> dict:
     return {key: value for key, value in envelope.items() if key != "signature"}
-

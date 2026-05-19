@@ -14,19 +14,22 @@ When issuance is allowed, the profile issuer:
 2. Adds `issued_at`, `expires_at`, and TTL.
 3. Builds a simulated WireGuard-like or QUIC-like payload from templates.
 4. Encrypts only the payload to the device public key.
-5. Signs the envelope with the issuer signing key.
-6. Stores redacted metadata.
+5. Signs the envelope with the active local demo issuer signing key.
+6. Stores canonical signed envelope fields, issuer key ID, issuer public key, and hashes for the envelope, encrypted payload, and signature.
 7. Records audit events.
 
 ## Validation
 
-Validation checks signature format, TTL, revocation state, and audience. Expired, revoked, unknown, or wrong-audience profiles fail validation.
+Validation checks profile existence, cryptographic signature, envelope hash, encrypted payload hash, TTL, revocation state, and audience. Expired, revoked, unknown, invalid-signature, or wrong-audience profiles fail validation.
 
 ## Revocation
 
 Revocation records the profile ID, reason, and timestamp. Revoked profiles are not valid even if their TTL has not expired.
 
+## Issuer Rotation
+
+The demo issuer key can be rotated locally. Old profiles keep validating because the signed envelope metadata stores the issuer key ID and issuer public key used at issuance time.
+
 ## Audit Export
 
 Audit export creates a redacted JSON bundle under the `local_profile_lifecycle_demo` scope. It removes plaintext profile material, private keys, raw device public keys, and unredacted device identifiers.
-

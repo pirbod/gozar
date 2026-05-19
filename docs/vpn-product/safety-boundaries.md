@@ -5,7 +5,9 @@ Phase 1 is local-only and Docker-only. It demonstrates signed encrypted profile 
 ## Boundaries
 
 - No OS VPN installation.
+- No real VPN tunnel creation.
 - No public gateways.
+- No public relay discovery.
 - No public network probing.
 - No endpoint scraping.
 - No automatic platform adapter.
@@ -20,4 +22,3 @@ Phase 1 is local-only and Docker-only. It demonstrates signed encrypted profile 
 ## Diagnostics
 
 Diagnostics are simulated. They do not run public network checks, collect location, or discover endpoints.
-
