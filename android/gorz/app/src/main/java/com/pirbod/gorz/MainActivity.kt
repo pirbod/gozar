@@ -9,6 +9,8 @@ import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.RadioButton
+import android.widget.RadioGroup
 import android.widget.TextView
 
 class MainActivity : Activity() {
@@ -16,6 +18,7 @@ class MainActivity : Activity() {
     private lateinit var statusText: TextView
     private lateinit var mainButton: Button
     private lateinit var settingsButton: Button
+    private lateinit var requestedModeGroup: RadioGroup
     private lateinit var controller: VpnSessionController
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -78,6 +81,17 @@ class MainActivity : Activity() {
             text = "Settings"
             setOnClickListener { startActivity(Intent(this@MainActivity, SettingsActivity::class.java)) }
         }
+        val modeLabel = TextView(this).apply {
+            text = "Requested mode"
+            textSize = 14f
+            gravity = Gravity.CENTER
+        }
+        requestedModeGroup = RadioGroup(this).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(modeButton("demo_full_tunnel", checked = true))
+            addView(modeButton("demo_split_tunnel"))
+            addView(modeButton("demo_messaging_only"))
+        }
         val footer = TextView(this).apply {
             text = getString(R.string.safety_footer)
             textSize = 13f
@@ -88,9 +102,20 @@ class MainActivity : Activity() {
         container.addView(subtitle, matchWidthWrap())
         container.addView(statusText, matchWidthWrap())
         container.addView(mainButton, matchWidthWrap())
+        container.addView(modeLabel, matchWidthWrap())
+        container.addView(requestedModeGroup, matchWidthWrap())
         container.addView(settingsButton, matchWidthWrap())
         container.addView(footer, matchWidthWrap())
         return container
+    }
+
+    private fun modeButton(mode: String, checked: Boolean = false): RadioButton {
+        return RadioButton(this).apply {
+            id = ViewGroup.generateViewId()
+            tag = mode
+            text = mode
+            isChecked = checked
+        }
     }
 
     private fun requestVpnPermission() {
@@ -104,6 +129,7 @@ class MainActivity : Activity() {
 
     private fun connectAfterPermission() {
         renderStatus("Requesting profile")
+        val requestedMode = selectedRequestedMode()
         Thread {
             try {
                 val api = ProfileApiClient(store.apiUrl, store.adminToken)
@@ -124,7 +150,7 @@ class MainActivity : Activity() {
                         safetyNotice = "Local demo registration only.",
                     )
                 }
-                val envelope = api.requestSessionProfile(registered.deviceId)
+                val envelope = api.requestSessionProfile(registered.deviceId, requestedMode)
                 if (!crypto.verifyIssuerSignature(envelope)) {
                     throw IllegalStateException("invalid signature")
                 }
@@ -135,10 +161,11 @@ class MainActivity : Activity() {
                     payload = payload,
                     validation = validation,
                     expectedAudience = registered.devicePublicKeyHash,
+                    requestedMode = requestedMode,
                 )
                 store.saveProfileMetadata(envelope)
                 renderStatus("Profile active")
-                controller.start(envelope.profileId)
+                controller.start(envelope.profileId, requestedMode)
                 renderStatus("Connected")
             } catch (exc: Throwable) {
                 failWith(exc)
@@ -167,7 +194,13 @@ class MainActivity : Activity() {
             statusText.text = status
             mainButton.text = if (status == "Connected") "Disconnect" else "Connect"
             settingsButton.isEnabled = status != "Requesting profile" && status != "Disconnecting"
+            requestedModeGroup.isEnabled = status != "Requesting profile" && status != "Connected"
         }
+    }
+
+    private fun selectedRequestedMode(): String {
+        val selected = requestedModeGroup.findViewById<RadioButton>(requestedModeGroup.checkedRadioButtonId)
+        return selected?.tag as? String ?: "demo_full_tunnel"
     }
 
     private fun matchWidthWrap(): LinearLayout.LayoutParams {
