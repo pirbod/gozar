@@ -11,12 +11,14 @@ from .storage import new_id
 ISSUER_SAFETY_NOTE = "Local demo key rotation only. Production requires KMS/HSM-backed signing."
 
 
-def get_or_create_active_issuer_key(session: Session) -> IssuerKey:
+def get_or_create_active_issuer_key(session: Session, *, allow_demo_private_keys: bool = True) -> IssuerKey:
     key = session.scalar(
         select(IssuerKey).where(IssuerKey.active.is_(True)).order_by(IssuerKey.created_at.desc(), IssuerKey.key_id)
     )
     if key is not None:
         return key
+    if not allow_demo_private_keys:
+        raise RuntimeError("demo issuer private key storage is disabled")
     public_key, private_key = generate_issuer_signing_keypair()
     key = IssuerKey(
         key_id=new_id("issuer"),
@@ -31,8 +33,15 @@ def get_or_create_active_issuer_key(session: Session) -> IssuerKey:
     return key
 
 
-def rotate_issuer_key(session: Session, reason: str) -> tuple[IssuerKey | None, IssuerKey]:
-    old_key = get_or_create_active_issuer_key(session)
+def rotate_issuer_key(
+    session: Session,
+    reason: str,
+    *,
+    allow_demo_private_keys: bool = True,
+) -> tuple[IssuerKey | None, IssuerKey]:
+    old_key = get_or_create_active_issuer_key(session, allow_demo_private_keys=allow_demo_private_keys)
+    if not allow_demo_private_keys:
+        raise RuntimeError("demo issuer private key storage is disabled")
     old_key.active = False
     old_key.expires_at = utc_now()
     old_key.rotation_reason = reason

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from profile_api.crypto import (
+    decrypt_android_local_demo_for_tests,
     decrypt_for_device_for_demo_client,
+    encrypt_for_android_local_demo,
     encrypt_for_device,
     generate_device_keypair,
     generate_issuer_signing_keypair,
@@ -25,6 +27,15 @@ def test_encrypt_decrypt_demo_payload() -> None:
     assert decrypt_for_device_for_demo_client(encrypted, private_key) == payload
 
 
+def test_android_local_demo_envelope_encrypts_and_decrypts_for_tests() -> None:
+    public_key, _private_key = generate_device_keypair()
+    payload = {"profile_id": "prof_android", "routing": {"mode": "demo_split_tunnel"}}
+    encrypted = encrypt_for_android_local_demo(payload, public_key)
+
+    assert "demo_split_tunnel" not in encrypted
+    assert decrypt_android_local_demo_for_tests(encrypted, public_key) == payload
+
+
 def test_sign_verify_envelope() -> None:
     issuer_public_key, issuer_private_key = generate_issuer_signing_keypair()
     envelope = {"profile_id": "prof_demo", "encrypted_payload": "abc", "issuer_public_key": issuer_public_key}
@@ -38,4 +49,3 @@ def test_tampered_envelope_fails_verification() -> None:
     signature = sign_envelope(envelope, issuer_private_key)
     tampered = {**envelope, "encrypted_payload": "changed", "signature": signature}
     assert verify_envelope_signature(tampered, issuer_public_key) is False
-

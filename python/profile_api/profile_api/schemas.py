@@ -12,6 +12,7 @@ PreviousFailureClass = Literal["none", "timeout", "blocked", "blocked_local", "d
 NetworkType = Literal["wifi", "mobile", "unknown"]
 ProfileType = Literal["wireguard_like_demo", "quic_like_demo", "no_profile"]
 ProfileStatus = Literal["active", "expired", "revoked", "invalid_signature", "unknown"]
+EnvelopeMode = Literal["sealed_box", "android_local_demo"]
 RevokeReason = Literal["demo_rotation", "manual_test", "safety_pause", "compromised_demo"]
 DiagnosticScenario = Literal[
     "healthy",
@@ -78,11 +79,13 @@ class SessionProfileRequest(BaseModel):
     risk_tolerance: RiskTolerance
     client_context: ClientContext = Field(default_factory=ClientContext)
     ttl_seconds: int | None = Field(default=None, ge=1, le=900)
+    envelope_mode: EnvelopeMode = "sealed_box"
 
 
 class SessionProfileEnvelope(BaseModel):
     profile_id: str
     profile_type: Literal["wireguard_like_demo", "quic_like_demo"]
+    envelope_mode: EnvelopeMode = "sealed_box"
     issued_at: datetime
     expires_at: datetime
     ttl_seconds: int
@@ -158,6 +161,7 @@ class AuditExportBundle(BaseModel):
     bundle_id: str
     created_at: datetime
     scope: str
+    timestamp_bucket_minutes: int
     entries: list[dict[str, Any]]
     redaction: dict[str, bool]
     safety_notes: list[str]
@@ -184,3 +188,13 @@ class IssuerRotateResponse(BaseModel):
     new_key_id: str
     active: bool
     safety_note: str
+
+
+class MobileBootstrapResponse(BaseModel):
+    service: str
+    mode: str
+    issuer_public_key: str
+    default_ttl_seconds: int
+    supported_profile_types: list[Literal["wireguard_like_demo", "quic_like_demo"]]
+    android_emulator_api_url_hint: str
+    safety_notes: list[str]

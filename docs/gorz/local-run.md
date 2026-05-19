@@ -40,6 +40,5 @@ tests, linting, and validation.
 
 ## Limits
 
-The prototype does not perform external probing, public relay discovery, public network scanning,
+The prototype uses no public network probing, no public relay discovery, no public network scanning,
 automatic upload, or production secure messaging. Diagnostics are simulated and local-only.
-

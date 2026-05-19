@@ -26,6 +26,7 @@ from .schemas import (
     HealthResponse,
     IssuerRotateRequest,
     IssuerRotateResponse,
+    MobileBootstrapResponse,
     ProfileValidationResponse,
     RevokeProfileRequest,
     RevokeProfileResponse,
@@ -41,7 +42,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     init_db(settings)
     with session_factory()() as session:
-        get_or_create_active_issuer_key(session)
+        get_or_create_active_issuer_key(session, allow_demo_private_keys=settings.allow_demo_private_keys)
         session.commit()
 
     app = FastAPI(
@@ -61,6 +62,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    def require_admin_token(request: Request) -> None:
+        token = request.headers.get("x-profile-admin-token")
+        if token != settings.admin_token:
+            raise HTTPException(status_code=401, detail="Profile admin token is required for this local demo action")
 
     @app.get("/api/profile/health", response_model=HealthResponse, tags=["health"])
     def health() -> HealthResponse:
@@ -121,6 +127,30 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail="Profile not found")
         return profile_metadata(profile)
 
+    @app.get("/api/profile/mobile/bootstrap", response_model=MobileBootstrapResponse, tags=["profiles"])
+    def mobile_bootstrap(session: Session = Depends(get_session)) -> MobileBootstrapResponse:
+        issuer_key = get_or_create_active_issuer_key(
+            session,
+            allow_demo_private_keys=settings.allow_demo_private_keys,
+        )
+        session.commit()
+        return MobileBootstrapResponse(
+            service="profile-api",
+            mode="local-demo",
+            issuer_public_key=issuer_key.public_key,
+            default_ttl_seconds=settings.default_ttl_seconds,
+            supported_profile_types=["wireguard_like_demo", "quic_like_demo"],
+            android_emulator_api_url_hint="http://10.0.2.2:8095",
+            safety_notes=[
+                "local_demo_only",
+                "signed_encrypted_profile",
+                "short_lived_demo_config",
+                "no_public_gateway",
+                "no_external_probing",
+                "android_local_demo_envelope_mode",
+            ],
+        )
+
     @app.post(
         "/api/profile/session-profiles/{profile_id}/validate",
         response_model=ProfileValidationResponse,
@@ -139,6 +169,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def revoke(
         profile_id: str,
         payload: RevokeProfileRequest,
+        _: None = Depends(require_admin_token),
         session: Session = Depends(get_session),
     ) -> RevokeProfileResponse:
         try:
@@ -160,8 +191,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return result
 
     @app.post("/api/profile/issuer/rotate-demo-key", response_model=IssuerRotateResponse, tags=["issuer"])
-    def rotate_demo_key(payload: IssuerRotateRequest, session: Session = Depends(get_session)) -> IssuerRotateResponse:
-        old_key, new_key = rotate_issuer_key(session, payload.reason)
+    def rotate_demo_key(
+        payload: IssuerRotateRequest,
+        _: None = Depends(require_admin_token),
+        session: Session = Depends(get_session),
+    ) -> IssuerRotateResponse:
+        old_key, new_key = rotate_issuer_key(
+            session,
+            payload.reason,
+            allow_demo_private_keys=settings.allow_demo_private_keys,
+        )
         session.commit()
         return IssuerRotateResponse(
             old_key_id=old_key.key_id if old_key else None,
@@ -176,14 +215,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/profile/audit/export", response_model=AuditExportBundle, tags=["audit"])
     def audit_export(session: Session = Depends(get_session)) -> dict[str, object]:
-        return export_audit_bundle(session)
+        return export_audit_bundle(
+            session,
+            timestamp_bucket_minutes=settings.audit_timestamp_bucket_minutes,
+        )
 
     @app.get("/api/profile/safety", response_model=SafetyResponse, tags=["safety"])
     def safety(session: Session = Depends(get_session)) -> dict[str, object]:
         return safety_response(get_safety_state(session))
 
     @app.post("/api/profile/safety/pause", response_model=SafetyResponse, tags=["safety"])
-    def pause(session: Session = Depends(get_session)) -> dict[str, object]:
+    def pause(
+        _: None = Depends(require_admin_token),
+        session: Session = Depends(get_session),
+    ) -> dict[str, object]:
         state = set_pause(session, True)
         record_audit(
             session,
@@ -195,7 +240,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return safety_response(state)
 
     @app.post("/api/profile/safety/resume", response_model=SafetyResponse, tags=["safety"])
-    def resume(session: Session = Depends(get_session)) -> dict[str, object]:
+    def resume(
+        _: None = Depends(require_admin_token),
+        session: Session = Depends(get_session),
+    ) -> dict[str, object]:
         state = set_pause(session, False)
         record_audit(
             session,
