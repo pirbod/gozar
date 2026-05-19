@@ -3,7 +3,6 @@ package com.pirbod.gorz
 import java.time.Instant
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.content
 
 object SafetyGuards {
     private val allowedProfileTypes = setOf("wireguard_like_demo", "quic_like_demo")
