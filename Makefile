@@ -3,7 +3,7 @@ EVAL_RUNNER := eval/scripts/eval_runner.py
 GORZ_COMPOSE := docker compose -f docker-compose.gorz.yml
 PROFILE_COMPOSE := docker compose -f docker-compose.profile.yml
 
-.PHONY: eval eval-clean eval-baseline eval-adaptive eval-smoke eval-scenario gorz-install gorz-dev gorz-demo gorz-test gorz-lint gorz-validate gorz-clean gorz-cli-test gorz-homebrew-check gorz-release-check profile-install profile-dev profile-demo profile-test profile-lint profile-validate profile-clean profile-audit-export profile-safety-check
+.PHONY: eval eval-clean eval-baseline eval-adaptive eval-smoke eval-scenario gorz-install gorz-dev gorz-demo gorz-test gorz-lint gorz-validate gorz-clean gorz-cli-test gorz-homebrew-check gorz-release-check profile-install profile-dev profile-demo profile-test profile-lint profile-validate profile-clean profile-audit-export profile-safety-check profile-syntax-check profile-compose-check profile-release-check
 
 eval:
 	$(PYTHON) $(EVAL_RUNNER) run-all
@@ -108,10 +108,25 @@ profile-demo:
 	$(PROFILE_COMPOSE) up --build
 
 profile-test:
-	cd python/profile_api && $(PYTHON) -m pytest
+	@if $(PYTHON) -m pytest --version >/dev/null 2>&1; then \
+		cd python/profile_api && $(PYTHON) -m pytest; \
+	else \
+		$(PROFILE_COMPOSE) build profile-api; \
+		docker run --rm -v "$(CURDIR)/python/profile_api:/workspace/python/profile_api" gozar-profile-api sh -lc 'python -m pip install -e "/workspace/python/profile_api[dev]" >/tmp/profile-pip.log && cd /workspace/python/profile_api && pytest'; \
+	fi
 
 profile-lint:
-	cd python/profile_api && $(PYTHON) -m ruff check .
+	@if $(PYTHON) -m ruff --version >/dev/null 2>&1; then \
+		cd python/profile_api && $(PYTHON) -m ruff check .; \
+	else \
+		$(PROFILE_COMPOSE) build profile-api; \
+		docker run --rm -v "$(CURDIR)/python/profile_api:/workspace/python/profile_api" gozar-profile-api sh -lc 'python -m pip install -e "/workspace/python/profile_api[dev]" >/tmp/profile-pip.log && cd /workspace/python/profile_api && ruff check .'; \
+	fi
+
+profile-syntax-check:
+	python3 -m py_compile python/profile_api/profile_api/*.py
+	python3 -m py_compile scripts/profile/*.py
+	python3 -m py_compile python/profile_api/tests/*.py
 
 profile-validate:
 	$(PYTHON) scripts/profile/validate_profile_lifecycle.py
@@ -121,6 +136,23 @@ profile-audit-export:
 
 profile-safety-check:
 	$(PYTHON) scripts/profile/check_safety_wording.py
+
+profile-compose-check:
+	$(PROFILE_COMPOSE) config
+
+profile-release-check:
+	@test -f Dockerfile.profile-api || (echo "Dockerfile.profile-api is missing" >&2; exit 1)
+	@test -f docker-compose.profile.yml || (echo "docker-compose.profile.yml is missing" >&2; exit 1)
+	@test -f python/profile_api/pyproject.toml || (echo "python/profile_api/pyproject.toml is missing" >&2; exit 1)
+	@test -f python/profile_api/profile_api/main.py || (echo "profile API app is missing" >&2; exit 1)
+	@test -f scripts/profile/validate_profile_lifecycle.py || (echo "profile validator is missing" >&2; exit 1)
+	@test -f scripts/profile/run_profile_lifecycle_demo.py || (echo "profile lifecycle demo is missing" >&2; exit 1)
+	@test -f scripts/profile/export_demo_profile_audit.py || (echo "profile audit exporter is missing" >&2; exit 1)
+	@test -f docs/vpn-product/phase-1-local-profile-lifecycle.md || (echo "Phase 1 docs are missing" >&2; exit 1)
+	$(MAKE) profile-syntax-check
+	$(MAKE) profile-safety-check
+	$(MAKE) profile-test
+	$(MAKE) profile-compose-check
 
 profile-clean:
 	$(PROFILE_COMPOSE) down -v

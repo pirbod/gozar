@@ -14,14 +14,28 @@ from .storage import dumps_json, loads_json, new_id
 REDACTION = {
     "plaintext_profile_removed": True,
     "private_keys_removed": True,
+    "device_public_keys_removed": True,
+    "encrypted_payload_replaced_with_hash": True,
+    "signature_replaced_with_hash": True,
     "device_ids_hashed": True,
     "timestamps_bucketed": True,
+    "local_endpoints_removed": True,
+}
+
+SAFE_HASH_KEYS = {
+    "device_public_key_hash",
+    "encrypted_payload_hash",
+    "signature_hash",
+    "envelope_hash",
+    "profile_id_hash",
+    "device_id_hash",
 }
 
 SENSITIVE_KEY_FRAGMENTS = (
     "private_key",
     "plaintext",
     "encrypted_payload",
+    "signature",
     "device_public_key",
     "raw_device_public_key",
     "payload",
@@ -61,7 +75,9 @@ def redact_metadata(value: Any) -> Any:
         redacted: dict[str, Any] = {}
         for key, item in value.items():
             lowered = key.lower()
-            if any(fragment in lowered for fragment in SENSITIVE_KEY_FRAGMENTS):
+            if lowered in SAFE_HASH_KEYS or lowered.endswith("_hash"):
+                redacted[key] = redact_metadata(item)
+            elif any(fragment in lowered for fragment in SENSITIVE_KEY_FRAGMENTS):
                 redacted[_redacted_key_name(lowered)] = "[redacted]"
             elif lowered.endswith("_id") or lowered.endswith("_ids") or lowered == "device_id":
                 redacted[key] = _hash_value_or_list(item)
@@ -133,6 +149,8 @@ def _hash_value_or_list(value: Any) -> Any:
 def _redacted_key_name(lowered_key: str) -> str:
     if "private_key" in lowered_key:
         return "redacted_key_material"
+    if lowered_key == "signature":
+        return "redacted_crypto_check"
     if "device_public_key" in lowered_key or "raw_device_public_key" in lowered_key:
         return "redacted_device_key"
     if "plaintext" in lowered_key:

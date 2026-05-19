@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   profile:
@@ -25,8 +26,14 @@ jobs:
       - name: Pytest
         run: cd python/profile_api && pytest
 
+      - name: Python syntax check
+        run: make profile-syntax-check
+
       - name: Safety wording check
         run: python scripts/profile/check_safety_wording.py
+
+      - name: Compose config
+        run: docker compose -f docker-compose.profile.yml config
 
       - name: Build profile Docker image
         run: docker compose -f docker-compose.profile.yml build
