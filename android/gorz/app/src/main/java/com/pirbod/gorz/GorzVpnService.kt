@@ -21,7 +21,10 @@ class GorzVpnService : VpnService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_STOP -> stopControlledSession()
-            ACTION_START -> startControlledSession(intent.getStringExtra(EXTRA_PROFILE_ID).orEmpty())
+            ACTION_START -> startControlledSession(
+                intent.getStringExtra(EXTRA_PROFILE_ID).orEmpty(),
+                intent.getStringExtra(EXTRA_REQUESTED_MODE) ?: "demo_split_tunnel",
+            )
         }
         return START_STICKY
     }
@@ -31,7 +34,7 @@ class GorzVpnService : VpnService() {
         super.onDestroy()
     }
 
-    private fun startControlledSession(profileId: String) {
+    private fun startControlledSession(profileId: String, requestedMode: String) {
         if (running.get()) {
             return
         }
@@ -39,14 +42,16 @@ class GorzVpnService : VpnService() {
         val builder = Builder()
             .setSession("Gorz Android local VPN lifecycle prototype")
             .addAddress("10.77.0.2", 32)
-            .addRoute("10.77.0.0", 24)
             .setBlocking(true)
+        if (requestedMode != "demo_messaging_only") {
+            builder.addRoute("10.77.0.0", 24)
+        }
         // Phase 2 opens a controlled local VPN interface for lifecycle validation only.
         // It does not implement production traffic forwarding.
         tunInterface = builder.establish()
         running.set(true)
         packetThread = Thread({ packetLoop() }, "gorz-demo-vpn-packets").also { it.start() }
-        writeStatus(profileId, "Connected")
+        writeStatus(profileId, "Connected", requestedMode)
     }
 
     private fun packetLoop() {
@@ -75,7 +80,7 @@ class GorzVpnService : VpnService() {
         packetThread = null
         tunInterface?.close()
         tunInterface = null
-        writeStatus("", "Disconnected")
+        writeStatus("", "Disconnected", "")
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -103,10 +108,11 @@ class GorzVpnService : VpnService() {
             .build()
     }
 
-    private fun writeStatus(profileId: String, status: String) {
+    private fun writeStatus(profileId: String, status: String, requestedMode: String) {
         getSharedPreferences("gorz_vpn_diagnostics", MODE_PRIVATE).edit()
             .putString("profile_id", profileId)
             .putString("status", status)
+            .putString("requested_mode", requestedMode)
             .apply()
     }
 
@@ -121,6 +127,7 @@ class GorzVpnService : VpnService() {
         const val ACTION_START = "com.pirbod.gorz.START_VPN"
         const val ACTION_STOP = "com.pirbod.gorz.STOP_VPN"
         const val EXTRA_PROFILE_ID = "profile_id"
+        const val EXTRA_REQUESTED_MODE = "requested_mode"
         private const val CHANNEL_ID = "gorz_local_vpn_lifecycle"
         private const val NOTIFICATION_ID = 7702
     }
