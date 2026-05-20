@@ -32,10 +32,10 @@ class ProfileApiClient(
         return post("/api/profile/devices/register", request, RegisterDeviceResponse.serializer())
     }
 
-    fun requestSessionProfile(deviceId: String): SessionProfileResponse {
+    fun requestSessionProfile(deviceId: String, requestedMode: String): SessionProfileResponse {
         return post(
             "/api/profile/session-profiles",
-            SessionProfileRequest(deviceId = deviceId),
+            SessionProfileRequest(deviceId = deviceId, requestedMode = requestedMode),
             SessionProfileResponse.serializer(),
         )
     }

@@ -20,7 +20,13 @@ class SafetyGuardsTest {
         )
 
         assertThrows(IllegalArgumentException::class.java) {
-            SafetyGuards.validateEnvelope(sampleEnvelope(), payload, sampleValidation(), "pkh_android")
+            SafetyGuards.validateEnvelope(
+                sampleEnvelope(),
+                payload,
+                sampleValidation(),
+                "pkh_android",
+                requestedMode = "demo_full_tunnel",
+            )
         }
     }
 
@@ -29,7 +35,13 @@ class SafetyGuardsTest {
         val payload = samplePayload(safetyNotes = listOf("no_public_gateway"))
 
         assertThrows(IllegalArgumentException::class.java) {
-            SafetyGuards.validateEnvelope(sampleEnvelope(), payload, sampleValidation(), "pkh_android")
+            SafetyGuards.validateEnvelope(
+                sampleEnvelope(),
+                payload,
+                sampleValidation(),
+                "pkh_android",
+                requestedMode = "demo_full_tunnel",
+            )
         }
     }
 
@@ -46,7 +58,13 @@ class SafetyGuardsTest {
         )
 
         assertThrows(IllegalArgumentException::class.java) {
-            SafetyGuards.validateEnvelope(sampleEnvelope(), payload, sampleValidation(), "pkh_android")
+            SafetyGuards.validateEnvelope(
+                sampleEnvelope(),
+                payload,
+                sampleValidation(),
+                "pkh_android",
+                requestedMode = "demo_split_tunnel",
+            )
         }
     }
 
@@ -57,6 +75,7 @@ class SafetyGuardsTest {
             samplePayload(),
             sampleValidation(),
             "pkh_android",
+            requestedMode = "demo_full_tunnel",
             now = Instant.parse("2026-05-19T12:00:00Z"),
         )
     }
@@ -78,8 +97,23 @@ class SafetyGuardsTest {
             payload,
             sampleValidation(),
             "pkh_android",
+            requestedMode = "demo_messaging_only",
             now = Instant.parse("2026-05-19T12:00:00Z"),
         )
+    }
+
+    @Test
+    fun rejectsMessagingOnlyRequestWithVpnProfile() {
+        assertThrows(IllegalArgumentException::class.java) {
+            SafetyGuards.validateEnvelope(
+                sampleEnvelope(),
+                samplePayload(),
+                sampleValidation(),
+                "pkh_android",
+                requestedMode = "demo_messaging_only",
+                now = Instant.parse("2026-05-19T12:00:00Z"),
+            )
+        }
     }
 
     private fun sampleEnvelope(): SessionProfileResponse {

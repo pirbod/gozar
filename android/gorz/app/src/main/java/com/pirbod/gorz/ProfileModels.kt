@@ -49,7 +49,7 @@ data class ClientContext(
 @Serializable
 data class SessionProfileRequest(
     @SerialName("device_id") val deviceId: String,
-    @SerialName("requested_mode") val requestedMode: String = "demo_split_tunnel",
+    @SerialName("requested_mode") val requestedMode: String = "demo_full_tunnel",
     @SerialName("risk_tolerance") val riskTolerance: String = "low",
     @SerialName("client_context") val clientContext: ClientContext = ClientContext(),
     @SerialName("ttl_seconds") val ttlSeconds: Int = 900,
