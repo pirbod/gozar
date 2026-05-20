@@ -19,11 +19,12 @@ class VpnSessionController(private val context: Context? = null) {
         }
     }
 
-    fun start(profileId: String) {
+    fun start(profileId: String, requestedMode: String) {
         val appContext = requireNotNull(context) { "Android context is required to start VPN session" }
         val intent = Intent(appContext, GorzVpnService::class.java)
             .setAction(GorzVpnService.ACTION_START)
             .putExtra(GorzVpnService.EXTRA_PROFILE_ID, profileId)
+            .putExtra(GorzVpnService.EXTRA_REQUESTED_MODE, requestedMode)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             appContext.startForegroundService(intent)
         } else {

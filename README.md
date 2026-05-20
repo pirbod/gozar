@@ -247,6 +247,9 @@ Android Studio:
 - Confirm status becomes Connected.
 - Tap Disconnect.
 
+Prototype screenshot:
+[docs/vpn-product/images/android-phase2-screenshot.png](docs/vpn-product/images/android-phase2-screenshot.png)
+
 See [docs/vpn-product/phase-2-android-vpnservice.md](docs/vpn-product/phase-2-android-vpnservice.md).
 
 ## Install Gorz with Homebrew
