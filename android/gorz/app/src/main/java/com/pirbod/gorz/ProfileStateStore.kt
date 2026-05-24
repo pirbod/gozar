@@ -100,6 +100,26 @@ class ProfileStateStore(private val store: KeyValueStore) {
         get() = store.getString(KEY_SAFETY_MODE) ?: "unknown"
         set(value) = store.putString(KEY_SAFETY_MODE, value)
 
+    var selectedDemoMode: String
+        get() = store.getString(KEY_SELECTED_DEMO_MODE) ?: DEFAULT_DEMO_MODE
+        set(value) = store.putString(KEY_SELECTED_DEMO_MODE, value.ifBlank { DEFAULT_DEMO_MODE })
+
+    var offlineDemoMode: Boolean
+        get() = store.getString(KEY_OFFLINE_DEMO_MODE)?.toBooleanStrictOrNull() ?: false
+        set(value) = store.putString(KEY_OFFLINE_DEMO_MODE, value.toString())
+
+    var onboardingComplete: Boolean
+        get() = store.getString(KEY_ONBOARDING_COMPLETE)?.toBooleanStrictOrNull() ?: false
+        set(value) = store.putString(KEY_ONBOARDING_COMPLETE, value.toString())
+
+    var localSafetyPauseEnabled: Boolean
+        get() = store.getString(KEY_LOCAL_SAFETY_PAUSE_ENABLED)?.toBooleanStrictOrNull() ?: false
+        set(value) = store.putString(KEY_LOCAL_SAFETY_PAUSE_ENABLED, value.toString())
+
+    var localSafetyPauseReason: String
+        get() = store.getString(KEY_LOCAL_SAFETY_PAUSE_REASON) ?: ""
+        set(value) = store.putString(KEY_LOCAL_SAFETY_PAUSE_REASON, value)
+
     fun ensureDemoDeviceKeyMaterial(): String {
         demoDeviceKeyMaterial?.let { return it }
         val raw = ByteArray(32)
@@ -140,6 +160,7 @@ class ProfileStateStore(private val store: KeyValueStore) {
     companion object {
         const val DEFAULT_API_URL = "http://10.0.2.2:8095"
         const val DEFAULT_ADMIN_TOKEN = "local-profile-admin-token"
+        const val DEFAULT_DEMO_MODE = "demo_split_tunnel"
 
         private const val KEY_API_URL = "api_url"
         private const val KEY_ADMIN_TOKEN = "admin_token"
@@ -153,5 +174,10 @@ class ProfileStateStore(private val store: KeyValueStore) {
         private const val KEY_CONNECTION_STATUS = "connection_status"
         private const val KEY_LAST_ERROR = "last_error"
         private const val KEY_SAFETY_MODE = "safety_mode"
+        private const val KEY_SELECTED_DEMO_MODE = "selected_demo_mode"
+        private const val KEY_OFFLINE_DEMO_MODE = "offline_demo_mode"
+        private const val KEY_ONBOARDING_COMPLETE = "onboarding_complete"
+        private const val KEY_LOCAL_SAFETY_PAUSE_ENABLED = "local_safety_pause_enabled"
+        private const val KEY_LOCAL_SAFETY_PAUSE_REASON = "local_safety_pause_reason"
     }
 }
