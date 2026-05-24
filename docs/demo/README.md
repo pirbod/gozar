@@ -1,7 +1,22 @@
 # Phase 4 Demo Video
 
-The demo video is pending. Use the script, shot list, and checklist in this folder to record a 5 to 7 minute controlled release candidate walkthrough.
+The demo video is pending. Recording plan is complete for a 5 to 7 minute controlled prototype release candidate walkthrough.
 
-Expected output path:
+## Status
+
+- Video file: `PARTIAL` until `docs/demo/gozar-gorz-phase4-demo.mp4` exists.
+- Placeholder: `docs/demo/gozar-gorz-phase4-demo.placeholder.md`
+- Link file: `docs/demo/demo-video-link.md`
+
+## Package
+
+- Script: `docs/demo/demo-video-script.md`
+- Shot list: `docs/demo/demo-video-shot-list.md`
+- Checklist: `docs/demo/demo-video-checklist.md`
+- Recording commands: `docs/demo/demo-video-recording-commands.md`
+- Subtitles: `docs/demo/demo-video-subtitles.srt`
+- Reviewer walkthrough: `docs/demo/reviewer-walkthrough.md`
+
+## Expected Output
 
 `docs/demo/gozar-gorz-phase4-demo.mp4`

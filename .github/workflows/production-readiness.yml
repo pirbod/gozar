@@ -24,11 +24,17 @@ jobs:
       - name: Screenshot reports
         run: make phase4-screenshot-report
 
-      - name: Release candidate manifest
-        run: make release-candidate-manifest
+      - name: Demo video package check
+        run: make demo-video-check
 
       - name: Production readiness report
         run: python scripts/production_readiness_check.py
+
+      - name: Release candidate manifest
+        run: make release-candidate-manifest
+
+      - name: Example reports
+        run: make phase4-example-reports
 
       - name: Android manifest permissions
         run: python scripts/check_android_manifest_permissions.py

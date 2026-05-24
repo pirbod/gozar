@@ -2,30 +2,21 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import shutil
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
+import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 DOCS_DIR = ROOT / "docs" / "vpn-product" / "images" / "phase4"
 RUNTIME_DIR = ROOT / "runtime" / "reports" / "screenshots" / "phase4"
+sys.path.insert(0, str(ROOT / "scripts" / "reports"))
+from phase4_artifact_utils import ANDROID_SCREENSHOTS, PLACEHOLDER_LABEL, write_placeholder_png, write_screenshot_readme
 
-REQUIRED_SCREENSHOTS = [
-    "phase4-home.png",
-    "phase4-connect-flow.png",
-    "phase4-session.png",
-    "phase4-confidence.png",
-    "phase4-route-policy.png",
-    "phase4-diagnostics.png",
-    "phase4-evidence.png",
-    "phase4-safety-pause.png",
-    "phase4-audit.png",
-    "phase4-settings.png",
-    "phase4-storage-mode.png",
-    "phase4-emulator-smoke-result.png",
-]
+REQUIRED_SCREENSHOTS = [name for name, _related in ANDROID_SCREENSHOTS]
 
 MANUAL_INSTRUCTIONS = """From repository root:
 
@@ -53,7 +44,10 @@ def main() -> int:
     adb = shutil.which("adb")
     devices: list[str] = []
     captured: list[str] = []
+    placeholder: list[str] = []
     reason = ""
+    generated = datetime.now(UTC).isoformat()
+    previous_placeholder = previous_placeholder_names()
 
     if adb:
         devices = connected_devices(adb)
@@ -71,24 +65,79 @@ def main() -> int:
     elif args.report_only:
         reason = "Report-only mode did not attempt screenshot capture."
 
-    existing = [name for name in REQUIRED_SCREENSHOTS if (DOCS_DIR / name).exists()]
+    existing = [name for name in REQUIRED_SCREENSHOTS if (DOCS_DIR / name).exists() and name not in previous_placeholder]
     captured = sorted(set(captured + existing))
-    missing = [name for name in REQUIRED_SCREENSHOTS if name not in captured]
-    status = "PASS" if not missing else "PARTIAL" if captured else "SKIPPED"
-    if adb and devices and not captured and not args.report_only:
+
+    for name, related in ANDROID_SCREENSHOTS:
+        path = DOCS_DIR / name
+        if path.exists():
+            if name in previous_placeholder and name not in placeholder:
+                placeholder.append(name)
+            continue
+        write_placeholder_png(path, "Android screenshot placeholder", related)
+        shutil.copy2(path, RUNTIME_DIR / name)
+        placeholder.append(name)
+
+    missing = [name for name in REQUIRED_SCREENSHOTS if not (DOCS_DIR / name).exists()]
+    captured = [name for name in captured if name not in placeholder]
+    screenshot_records = []
+    for name, related in ANDROID_SCREENSHOTS:
+        if name in placeholder:
+            screenshot_records.append(
+                {
+                    "filename": name,
+                    "status": "PLACEHOLDER",
+                    "captureMethod": PLACEHOLDER_LABEL,
+                    "lastUpdated": generated,
+                    "related": related,
+                }
+            )
+        elif (DOCS_DIR / name).exists():
+            screenshot_records.append(
+                {
+                    "filename": name,
+                    "status": "REAL",
+                    "captureMethod": "adb screencap" if name == "phase4-home.png" and name in captured else "existing real capture",
+                    "lastUpdated": generated,
+                    "related": related,
+                }
+            )
+        else:
+            screenshot_records.append(
+                {
+                    "filename": name,
+                    "status": "MISSING",
+                    "captureMethod": "n/a",
+                    "lastUpdated": "n/a",
+                    "related": related,
+                }
+            )
+
+    if missing:
         status = "FAIL"
+    elif any(item["status"] == "PLACEHOLDER" for item in screenshot_records):
+        status = "PARTIAL"
+    else:
+        status = "PASS"
+    if adb and devices and not captured and not placeholder and not args.report_only:
+        status = "FAIL"
+    if placeholder and not reason:
+        reason = "Screenshot capture was unavailable or incomplete; visibly labelled placeholders were generated."
 
     payload = {
-        "generatedAt": datetime.now(UTC).isoformat(),
+        "generatedAt": generated,
         "adbAvailability": "available" if adb else "missing",
         "connectedDevices": devices,
         "screenshotsCaptured": captured,
+        "screenshotsPlaceholder": placeholder,
         "screenshotsMissing": missing,
+        "screenshots": screenshot_records,
         "status": status,
         "reason": "" if status == "PASS" else reason,
         "manualCaptureInstructions": MANUAL_INSTRUCTIONS.strip(),
     }
     write_reports(payload)
+    write_screenshot_readme(ROOT)
     print(f"Phase 4 screenshot capture status: {status}")
     if reason and status != "PASS":
         print(reason)
@@ -101,8 +150,25 @@ def connected_devices(adb: str) -> list[str]:
     for line in output.splitlines()[1:]:
         parts = line.split()
         if len(parts) >= 2 and parts[1] == "device":
-            devices.append(parts[0])
+            devices.append(redact_device_id(parts[0]))
     return devices
+
+
+def redact_device_id(value: str) -> str:
+    digest = hashlib.sha256(value.encode("utf-8")).hexdigest()[:12]
+    return f"redacted-device-{digest}"
+
+
+def previous_placeholder_names() -> set[str]:
+    report = RUNTIME_DIR / "screenshot-capture-report.json"
+    if not report.exists():
+        return set()
+    payload = json.loads(report.read_text(encoding="utf-8"))
+    return {
+        str(item.get("filename"))
+        for item in payload.get("screenshots", [])
+        if str(item.get("status")) == "PLACEHOLDER"
+    }
 
 
 def capture_current_home(adb: str) -> bool:
@@ -134,6 +200,10 @@ def write_reports(payload: dict[str, object]) -> None:
     ]
     lines.extend(f"- {name}" for name in payload["screenshotsCaptured"])
     if not payload["screenshotsCaptured"]:
+        lines.append("- none")
+    lines.extend(["", "## Placeholder Screenshots", ""])
+    lines.extend(f"- {name}: {PLACEHOLDER_LABEL}" for name in payload["screenshotsPlaceholder"])
+    if not payload["screenshotsPlaceholder"]:
         lines.append("- none")
     lines.extend(["", "## Screenshots Missing", ""])
     lines.extend(f"- {name}" for name in payload["screenshotsMissing"])
