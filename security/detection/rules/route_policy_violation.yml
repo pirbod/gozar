@@ -1,0 +1,17 @@
+id: GOZAR-ROUTE-001
+title: Route Policy Violation
+severity: high
+description: Detects a blocked route policy event in the controlled Android demo.
+event_source: android.route_policy
+condition:
+  field: event_type
+  equals: route_policy_violation
+fields:
+  - event_type
+  - route_scope
+  - component
+false_positives:
+  - Operator intentionally tested blocked route handling.
+response_action: Keep safety pause available, preserve evidence, and review route guard changes.
+mitre_mapping: []
+safety_note: Local-only detection; no external SIEM call is made.

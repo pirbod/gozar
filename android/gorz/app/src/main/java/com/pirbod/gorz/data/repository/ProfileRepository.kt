@@ -9,6 +9,8 @@ import com.pirbod.gorz.RegisterDeviceResponse
 import com.pirbod.gorz.SafetyGuards
 import com.pirbod.gorz.SessionProfileResponse
 import com.pirbod.gorz.data.model.DemoMode
+import com.pirbod.gorz.data.model.SafetyPauseHistoryEntry
+import com.pirbod.gorz.data.model.SafetyPauseReason
 import com.pirbod.gorz.data.model.SafetyState
 import com.pirbod.gorz.data.model.SessionProfile
 import java.time.Clock
@@ -114,26 +116,32 @@ class AdaptiveProfileRepository(
     override fun getSafetyState(settings: AppSettings): SafetyState {
         if (settings.offlineDemoMode) {
             return SafetyState(
-                paused = settingsRepository.localSafetyPaused(),
-                reason = settingsRepository.localSafetyReason(),
+                active = settingsRepository.localSafetyPaused(),
+                reason = SafetyPauseReason.fromOperatorText(settingsRepository.localSafetyReason()),
                 source = "local",
-                updatedAt = clock.instant().toString(),
+                operatorNote = settingsRepository.localSafetyReason(),
+                createdAt = clock.instant().toString(),
+                history = pauseHistory(settingsRepository.localSafetyPaused(), settingsRepository.localSafetyReason(), "local"),
             )
         }
         return try {
             val remote = clientFactory(settings).getSafetyState()
             SafetyState(
-                paused = remote.pauseEnabled || settingsRepository.localSafetyPaused(),
-                reason = settingsRepository.localSafetyReason(),
+                active = remote.pauseEnabled || settingsRepository.localSafetyPaused(),
+                reason = SafetyPauseReason.fromOperatorText(settingsRepository.localSafetyReason()),
                 source = "profile_api",
-                updatedAt = remote.updatedAt ?: clock.instant().toString(),
+                operatorNote = settingsRepository.localSafetyReason(),
+                createdAt = remote.updatedAt ?: clock.instant().toString(),
+                history = pauseHistory(remote.pauseEnabled || settingsRepository.localSafetyPaused(), settingsRepository.localSafetyReason(), "profile_api"),
             )
         } catch (_: Throwable) {
             SafetyState(
-                paused = settingsRepository.localSafetyPaused(),
-                reason = settingsRepository.localSafetyReason(),
+                active = settingsRepository.localSafetyPaused(),
+                reason = SafetyPauseReason.fromOperatorText(settingsRepository.localSafetyReason()),
                 source = "local",
-                updatedAt = clock.instant().toString(),
+                operatorNote = settingsRepository.localSafetyReason(),
+                createdAt = clock.instant().toString(),
+                history = pauseHistory(settingsRepository.localSafetyPaused(), settingsRepository.localSafetyReason(), "local"),
             )
         }
     }
@@ -143,11 +151,36 @@ class AdaptiveProfileRepository(
         if (!settings.offlineDemoMode) {
             runCatching { clientFactory(settings).setSafetyPause(paused) }
         }
+        val timestamp = clock.instant().toString()
         return SafetyState(
-            paused = paused,
-            reason = if (paused) reason else "",
+            active = paused,
+            reason = SafetyPauseReason.fromOperatorText(reason),
             source = if (settings.offlineDemoMode) "local" else "profile_api_or_local",
-            updatedAt = clock.instant().toString(),
+            operatorNote = if (paused) reason else "",
+            createdAt = if (paused) timestamp else "",
+            resumedAt = if (paused) "" else timestamp,
+            history = listOf(
+                SafetyPauseHistoryEntry(
+                    action = if (paused) "pause" else "resume",
+                    reason = if (paused) SafetyPauseReason.fromOperatorText(reason).label else "Resumed",
+                    source = if (settings.offlineDemoMode) "local" else "profile_api_or_local",
+                    operatorNote = if (paused) reason else "",
+                    at = timestamp,
+                ),
+            ),
+        )
+    }
+
+    private fun pauseHistory(active: Boolean, reason: String, source: String): List<SafetyPauseHistoryEntry> {
+        if (!active) return emptyList()
+        return listOf(
+            SafetyPauseHistoryEntry(
+                action = "pause",
+                reason = SafetyPauseReason.fromOperatorText(reason).label,
+                source = source,
+                operatorNote = reason,
+                at = clock.instant().toString(),
+            ),
         )
     }
 

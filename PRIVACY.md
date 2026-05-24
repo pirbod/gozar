@@ -39,3 +39,7 @@ On Android, use Settings to reset local identity, clear audit history, and clear
 ## Production Privacy Policy Gap
 
 A reviewed privacy policy, data map, retention policy, and deletion workflow are required before real alpha pilots.
+
+## Phase 4 Privacy Review
+
+The Android Phase 4 privacy review is documented in `docs/privacy/android-phase-4-privacy-review.md`. Evidence export remains user initiated, diagnostics remain local-only, and screenshots are operator-managed artifacts that require review before sharing.

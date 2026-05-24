@@ -1,0 +1,36 @@
+name: release-candidate
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release-candidate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Safety checks
+        run: make android-safety-check backend-safety-check
+      - name: Android debug build
+        working-directory: android/gorz
+        run: ./gradlew assembleDebug
+      - name: Screenshot report
+        run: make phase4-screenshot-report
+      - name: Release candidate manifest
+        run: make release-candidate-manifest
+      - name: Upload reports and APK
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase4-release-candidate
+          path: |
+            android/gorz/app/build/outputs/apk/debug/*.apk
+            runtime/reports

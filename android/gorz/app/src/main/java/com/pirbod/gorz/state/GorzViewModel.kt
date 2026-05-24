@@ -7,6 +7,7 @@ import com.pirbod.gorz.Diagnostics
 import com.pirbod.gorz.ProfileStateStore
 import com.pirbod.gorz.VpnSessionController
 import com.pirbod.gorz.data.model.DemoMode
+import com.pirbod.gorz.data.model.SafetyPauseReason
 import com.pirbod.gorz.data.model.SafetyState
 import com.pirbod.gorz.data.repository.AdaptiveProfileRepository
 import com.pirbod.gorz.data.repository.AuditRepository
@@ -20,6 +21,9 @@ import com.pirbod.gorz.domain.ConnectSessionUseCase
 import com.pirbod.gorz.domain.GenerateEvidenceUseCase
 import com.pirbod.gorz.domain.RunDiagnosticsUseCase
 import com.pirbod.gorz.domain.ValidateProfileUseCase
+import com.pirbod.gorz.security.DemoSecureValueStore
+import com.pirbod.gorz.security.SecureValueStore
+import com.pirbod.gorz.security.SecureValueStoreFactory
 import java.time.Clock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +36,10 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
     private val clock = Clock.systemUTC()
     private val profileStore = ProfileStateStore(application)
     private val settingsRepository = SettingsRepository(profileStore)
+    private var secureValueStore: SecureValueStore = SecureValueStoreFactory.create(
+        application,
+        settingsRepository.current().experimentalKeystoreStorage,
+    )
     private val auditRepository = AuditRepository(application)
     private val diagnosticsRepository = DiagnosticsRepository(application, clock)
     private val validateProfileUseCase = ValidateProfileUseCase(clock)
@@ -106,6 +114,14 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
             }
             try {
                 val result = connectSessionUseCase.connect(settingsRepository.current(), ::updateStage)
+                val confidence = calculateConfidenceUseCase.calculate(
+                    validation = result.validation,
+                    safetyState = _state.value.safetyState,
+                    storageHealth = secureValueStore.health(),
+                    diagnostics = _state.value.diagnostics,
+                    evidenceGenerated = _state.value.evidenceJson.isNotBlank(),
+                    offlineDemoMode = result.offlineReason != null,
+                )
                 _state.update {
                     it.copy(
                         settings = settingsRepository.current(),
@@ -113,8 +129,12 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
                         statusMessage = "Demo session active. Local VPN lifecycle only.",
                         profile = result.profile,
                         validation = result.validation,
-                        confidenceScore = result.confidence.score,
-                        confidenceSignals = result.confidence.signals,
+                        confidenceScore = confidence.score,
+                        confidenceStatus = confidence.status,
+                        confidenceExplanation = confidence.explanation,
+                        confidenceRecommendedAction = confidence.recommendedAction,
+                        confidenceBlockingReasons = confidence.blockingReasons,
+                        confidenceSignals = confidence.signals,
                         offlineDemoActive = result.offlineReason != null,
                         offlineReason = result.offlineReason.orEmpty(),
                         packetCount = diagnosticsRepository.packetCounters().packetsRead,
@@ -162,6 +182,10 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
                     profile = null,
                     validation = null,
                     confidenceScore = 0,
+                    confidenceStatus = "BLOCKED",
+                    confidenceExplanation = "No validated profile is available.",
+                    confidenceRecommendedAction = "Request or generate a controlled prototype profile before connecting.",
+                    confidenceBlockingReasons = emptyList(),
                     confidenceSignals = emptyList(),
                     offlineDemoActive = false,
                     offlineReason = "",
@@ -175,11 +199,30 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
     fun runDiagnostics() {
         viewModelScope.launch {
             recordAudit("profile_api_health_checked")
-            val result = runDiagnosticsUseCase.run(settingsRepository.current(), _state.value.validation)
+            val result = runDiagnosticsUseCase.run(
+                settings = settingsRepository.current(),
+                validation = _state.value.validation,
+                safetyState = _state.value.safetyState,
+                storageHealth = secureValueStore.health(),
+            )
             recordAudit("diagnostics_run", metadata = mapOf("path_quality" to result.pathQuality))
+            val confidence = calculateConfidenceUseCase.calculate(
+                validation = _state.value.validation,
+                safetyState = _state.value.safetyState,
+                storageHealth = secureValueStore.health(),
+                diagnostics = result,
+                evidenceGenerated = _state.value.evidenceJson.isNotBlank(),
+                offlineDemoMode = _state.value.offlineDemoActive || !result.apiAvailable,
+            )
             _state.update {
                 it.copy(
                     diagnostics = result,
+                    confidenceScore = confidence.score,
+                    confidenceStatus = confidence.status,
+                    confidenceExplanation = confidence.explanation,
+                    confidenceRecommendedAction = confidence.recommendedAction,
+                    confidenceBlockingReasons = confidence.blockingReasons,
+                    confidenceSignals = confidence.signals,
                     packetCount = result.packetsRead,
                     packetsDropped = result.packetsDropped,
                     offlineDemoActive = it.offlineDemoActive || !result.apiAvailable,
@@ -195,15 +238,46 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
         val generated = generateEvidenceUseCase.generate(
             sessionStatus = _state.value.sessionStatus.label,
             confidenceScore = _state.value.confidenceScore,
+            confidenceStatus = _state.value.confidenceStatus,
+            confidenceSignals = _state.value.confidenceSignals,
             profile = _state.value.profile,
             validation = _state.value.validation,
             diagnostics = _state.value.diagnostics,
+            safetyState = _state.value.safetyState,
+            storageMode = secureValueStore.storageLabel(),
             auditEventCount = auditRepository.events().size,
+            operatorNote = _state.value.safetyState.operatorNote,
+            screenshotReferences = phase4ScreenshotReferences(),
+        )
+        val confidence = calculateConfidenceUseCase.calculate(
+            validation = _state.value.validation,
+            safetyState = _state.value.safetyState,
+            storageHealth = secureValueStore.health(),
+            diagnostics = _state.value.diagnostics,
+            evidenceGenerated = true,
+            offlineDemoMode = _state.value.offlineDemoActive,
         )
         _state.update {
             it.copy(
                 evidencePackage = generated.first,
                 evidenceJson = generated.second,
+                confidenceScore = confidence.score,
+                confidenceStatus = confidence.status,
+                confidenceExplanation = confidence.explanation,
+                confidenceRecommendedAction = confidence.recommendedAction,
+                confidenceBlockingReasons = confidence.blockingReasons,
+                confidenceSignals = confidence.signals,
+                auditEvents = auditRepository.events(),
+            )
+        }
+    }
+
+    fun clearEvidence() {
+        recordAudit("evidence_cleared")
+        _state.update {
+            it.copy(
+                evidencePackage = null,
+                evidenceJson = "",
                 auditEvents = auditRepository.events(),
             )
         }
@@ -214,7 +288,7 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
             val safety = applySafetyPauseUseCase.apply(settingsRepository.current(), reason)
             withContext(Dispatchers.IO) { VpnSessionController(getApplication()).stop() }
             settingsRepository.clearProfile()
-            recordAudit("safety_pause_enabled", metadata = mapOf("reason" to safety.reason))
+            recordAudit("safety_pause_enabled", metadata = mapOf("reason" to safety.reasonLabel))
             _state.update {
                 it.copy(
                     settings = settingsRepository.current(),
@@ -223,6 +297,11 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
                     safetyState = safety,
                     profile = null,
                     validation = null,
+                    confidenceScore = 0,
+                    confidenceStatus = "BLOCKED",
+                    confidenceExplanation = "Active safety pause blocks connect.",
+                    confidenceRecommendedAction = "Resume safety pause only after operator review.",
+                    confidenceBlockingReasons = listOf("Active safety pause blocks connect."),
                     auditEvents = auditRepository.events(),
                 )
             }
@@ -265,6 +344,12 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
         refreshSafetyState()
     }
 
+    fun updateExperimentalKeystoreStorage(enabled: Boolean) {
+        settingsRepository.updateExperimentalKeystoreStorage(enabled)
+        secureValueStore = SecureValueStoreFactory.create(getApplication(), enabled)
+        syncSettings()
+    }
+
     fun resetLocalIdentity() {
         settingsRepository.resetLocalIdentity()
         recordAudit("device_identity_ready", status = "reset")
@@ -273,9 +358,13 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
                 settings = settingsRepository.current(),
                 sessionStatus = SessionStatus.Disconnected,
                 profile = null,
-                validation = null,
-                confidenceScore = 0,
-                confidenceSignals = emptyList(),
+                    validation = null,
+                    confidenceScore = 0,
+                    confidenceStatus = "BLOCKED",
+                    confidenceExplanation = "No validated profile is available.",
+                    confidenceRecommendedAction = "Request or generate a controlled prototype profile before connecting.",
+                    confidenceBlockingReasons = emptyList(),
+                    confidenceSignals = emptyList(),
                 auditEvents = auditRepository.events(),
             )
         }
@@ -289,6 +378,36 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
     fun clearDiagnostics() {
         diagnosticsRepository.reset()
         _state.update { it.copy(diagnostics = null, packetCount = 0, packetsDropped = 0) }
+    }
+
+    fun clearSecureStorage() {
+        secureValueStore.clear()
+        recordAudit("secure_storage_cleared", metadata = mapOf("storage_mode" to secureValueStore.storageLabel()))
+        _state.update {
+            it.copy(
+                storageLabel = secureValueStore.storageLabel(),
+                storageHealth = secureValueStore.health(),
+                localReadinessSummary = "Secure storage cleared locally. ${DemoSecureValueStore.DEMO_WARNING}",
+                auditEvents = auditRepository.events(),
+            )
+        }
+    }
+
+    fun exportLocalReadinessSummary() {
+        val summary = buildString {
+            appendLine("Phase 4 local readiness summary")
+            appendLine("Storage mode: ${secureValueStore.storageLabel()}")
+            appendLine("Storage health: ${secureValueStore.health().status}")
+            appendLine("Controlled prototype. Do not use for real sensitive communication.")
+            appendLine("Production gap: Android Keystore-backed storage is required before real sensitive usage.")
+        }
+        recordAudit("local_readiness_summary_exported")
+        _state.update {
+            it.copy(
+                localReadinessSummary = summary.trim(),
+                auditEvents = auditRepository.events(),
+            )
+        }
     }
 
     fun refreshSafetyState() {
@@ -314,7 +433,13 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun syncSettings() {
-        _state.update { it.copy(settings = settingsRepository.current()) }
+        _state.update {
+            it.copy(
+                settings = settingsRepository.current(),
+                storageLabel = secureValueStore.storageLabel(),
+                storageHealth = secureValueStore.health(),
+            )
+        }
     }
 
     private fun updateStage(label: String, status: String, details: String) {
@@ -367,13 +492,31 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
         _state.update { it.copy(auditEvents = auditRepository.events()) }
     }
 
+    private fun phase4ScreenshotReferences(): List<String> {
+        return listOf(
+            "docs/vpn-product/images/phase4/phase4-home.png",
+            "docs/vpn-product/images/phase4/phase4-connect-flow.png",
+            "docs/vpn-product/images/phase4/phase4-session.png",
+            "docs/vpn-product/images/phase4/phase4-confidence.png",
+            "docs/vpn-product/images/phase4/phase4-route-policy.png",
+            "docs/vpn-product/images/phase4/phase4-diagnostics.png",
+            "docs/vpn-product/images/phase4/phase4-evidence.png",
+            "docs/vpn-product/images/phase4/phase4-safety-pause.png",
+            "docs/vpn-product/images/phase4/phase4-audit.png",
+            "docs/vpn-product/images/phase4/phase4-settings.png",
+            "docs/vpn-product/images/phase4/phase4-storage-mode.png",
+            "docs/vpn-product/images/phase4/phase4-emulator-smoke-result.png",
+        )
+    }
+
     private fun initialState(): GorzAppState {
         val settings = settingsRepository.current()
         val safety = SafetyState(
-            paused = settingsRepository.localSafetyPaused(),
-            reason = settingsRepository.localSafetyReason(),
+            active = settingsRepository.localSafetyPaused(),
+            reason = SafetyPauseReason.fromOperatorText(settingsRepository.localSafetyReason()),
             source = "local",
-            updatedAt = clock.instant().toString(),
+            operatorNote = settingsRepository.localSafetyReason(),
+            createdAt = clock.instant().toString(),
         )
         val counters = diagnosticsRepository.packetCounters()
         return GorzAppState(
@@ -382,6 +525,8 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
             sessionStatus = if (safety.paused) SessionStatus.SafetyPaused else SessionStatus.Disconnected,
             auditEvents = auditRepository.events(),
             safetyState = safety,
+            storageLabel = secureValueStore.storageLabel(),
+            storageHealth = secureValueStore.health(),
             offlineDemoActive = settings.offlineDemoMode,
             offlineReason = if (settings.offlineDemoMode) "Offline demo mode enabled." else "",
             packetCount = counters.packetsRead,

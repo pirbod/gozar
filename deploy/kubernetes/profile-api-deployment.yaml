@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: profile-api
+  namespace: gozar-controlled-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: profile-api
+  template:
+    metadata:
+      labels:
+        app: profile-api
+    spec:
+      containers:
+        - name: profile-api
+          image: gozar-profile-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8095
+              name: http
+          env:
+            - name: PROFILE_SAFETY_MODE
+              value: local_only
+            - name: PROFILE_ADMIN_TOKEN
+              value: local-profile-admin-token-placeholder
+          readinessProbe:
+            httpGet:
+              path: /api/profile/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/profile/health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1000

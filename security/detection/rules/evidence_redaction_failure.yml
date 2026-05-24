@@ -1,0 +1,17 @@
+id: GOZAR-EVIDENCE-001
+title: Evidence Redaction Failure
+severity: critical
+description: Detects evidence export with failed redaction status.
+event_source: android.evidence
+condition:
+  field: event_type
+  equals: evidence_redaction_failure
+fields:
+  - event_type
+  - redaction_status
+  - component
+false_positives:
+  - Synthetic redaction test fixture.
+response_action: Stop sharing evidence, clear local export, and inspect redaction code.
+mitre_mapping: []
+safety_note: Rule must not store raw identifiers.

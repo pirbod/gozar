@@ -9,6 +9,10 @@ The safe alpha demonstrates local-first messaging, adaptive demo profiles, Andro
 - No production VPN.
 - No public routing product.
 - No real secure messenger claim.
+
+## Phase 4 Controlled Release Readiness
+
+Phase 4 closes the roadmap as a controlled release candidate, not as public production readiness. Alpha work after Phase 4 requires independent security review, privacy policy completion, tenant auth, storage hardening, release signing, retention policy, and pilot governance.
 - No public network probing.
 - No field deployment.
 - No production cryptographic claims.

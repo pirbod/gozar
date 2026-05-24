@@ -25,6 +25,10 @@ There is no bug bounty program.
 - No automatic diagnostic upload.
 - No collection of contacts, phone numbers, exact location, or public IP history.
 
+## Phase 4 Security Review
+
+Phase 4 adds a controlled Android threat model at `docs/security/android-phase-4-threat-model.md`. Remaining gaps include demo storage default, experimental Android Keystore validation, release signing, tenant auth, independent review, and release artifact governance.
+
 ## Responsible Disclosure
 
 Do not post working exploit steps, credentials, private keys, sensitive personal data, or real-world targeting details in public issues.

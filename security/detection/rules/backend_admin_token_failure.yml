@@ -1,0 +1,17 @@
+id: GOZAR-BACKEND-001
+title: Backend Admin Token Failure
+severity: medium
+description: Detects failed local admin token checks.
+event_source: profile_api.auth
+condition:
+  field: event_type
+  equals: backend_admin_token_failure
+fields:
+  - event_type
+  - status
+  - component
+false_positives:
+  - Negative auth regression tests.
+response_action: Preserve audit event and rotate demo token if exposed.
+mitre_mapping: []
+safety_note: Do not include token values in events.

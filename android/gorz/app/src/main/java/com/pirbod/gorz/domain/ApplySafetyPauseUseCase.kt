@@ -17,5 +17,5 @@ class ApplySafetyPauseUseCase(
         profileRepository.setSafetyPause(settings, paused = false, reason = "")
     }
 
-    fun blocksConnect(state: SafetyState): Boolean = state.paused
+    fun blocksConnect(state: SafetyState): Boolean = state.active
 }
