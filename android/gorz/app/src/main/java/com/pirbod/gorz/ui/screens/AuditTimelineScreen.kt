@@ -7,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.pirbod.gorz.state.GorzAppState
 import com.pirbod.gorz.ui.components.TimelineItem
@@ -14,7 +15,9 @@ import com.pirbod.gorz.ui.components.TimelineItem
 @Composable
 fun AuditTimelineScreen(state: GorzAppState) {
     LazyColumn(
-        modifier = Modifier.padding(16.dp),
+        modifier = Modifier
+            .padding(16.dp)
+            .testTag("screen_audit"),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         item {

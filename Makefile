@@ -4,7 +4,7 @@ GORZ_COMPOSE := docker compose -f docker-compose.gorz.yml
 PROFILE_COMPOSE := docker compose -f docker-compose.profile.yml
 ANDROID_DIR := android/gorz
 
-.PHONY: eval eval-clean eval-baseline eval-adaptive eval-smoke eval-scenario gorz-install gorz-dev gorz-demo gorz-test gorz-lint gorz-validate gorz-clean gorz-cli-test gorz-homebrew-check gorz-release-check profile-install profile-dev profile-demo profile-test profile-lint profile-validate profile-clean profile-audit-export profile-safety-check safety-wording-check profile-syntax-check profile-compose-check profile-release-check profile-full-check android-check android-test android-build android-clean android-safety-check phase2-check phase3-check
+.PHONY: eval eval-clean eval-baseline eval-adaptive eval-smoke eval-scenario gorz-install gorz-dev gorz-demo gorz-test gorz-lint gorz-validate gorz-clean gorz-cli-test gorz-homebrew-check gorz-release-check profile-install profile-dev profile-demo profile-test profile-lint profile-validate profile-clean profile-audit-export profile-safety-check safety-wording-check profile-syntax-check profile-compose-check profile-release-check profile-full-check android-check android-test android-build android-clean android-safety-check android-emulator-smoke backend-safety-check docs-check safety-check production-readiness-check local-health-report phase2-check phase3-check
 
 eval:
 	$(PYTHON) $(EVAL_RUNNER) run-all
@@ -175,6 +175,35 @@ android-clean:
 
 android-safety-check:
 	$(PYTHON) scripts/android/check_android_safety_wording.py
+	$(PYTHON) scripts/check_android_manifest_permissions.py
+	$(PYTHON) scripts/check_android_route_safety.py
+
+android-emulator-smoke:
+	cd $(ANDROID_DIR) && ./gradlew pixel2api30DebugAndroidTest
+
+backend-safety-check:
+	$(PYTHON) scripts/check_backend_safety.py
+
+docs-check:
+	@test -f docs/product/one-page-overview.md || (echo "docs/product/one-page-overview.md is missing" >&2; exit 1)
+	@test -f docs/product/system-map.md || (echo "docs/product/system-map.md is missing" >&2; exit 1)
+	@test -f docs/product/production-gap-analysis.md || (echo "docs/product/production-gap-analysis.md is missing" >&2; exit 1)
+	@test -f docs/product/release-blocker-checklist.md || (echo "docs/product/release-blocker-checklist.md is missing" >&2; exit 1)
+	@test -f docs/product/risk-register.md || (echo "docs/product/risk-register.md is missing" >&2; exit 1)
+	@test -f SECURITY.md || (echo "SECURITY.md is missing" >&2; exit 1)
+	@test -f PRIVACY.md || (echo "PRIVACY.md is missing" >&2; exit 1)
+
+safety-check:
+	$(MAKE) safety-wording-check
+	$(MAKE) android-safety-check
+	$(MAKE) backend-safety-check
+	@if test -f scripts/check_phase3_safety.py; then $(PYTHON) scripts/check_phase3_safety.py; fi
+
+production-readiness-check:
+	$(PYTHON) scripts/production_readiness_check.py
+
+local-health-report:
+	$(PYTHON) scripts/local_health_report.py
 
 phase2-check:
 	$(MAKE) profile-full-check

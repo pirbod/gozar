@@ -1,0 +1,45 @@
+name: production-readiness
+
+on:
+  pull_request:
+  push:
+    branches: [main, "codex/**", "ci-node24-actions"]
+  workflow_dispatch:
+
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Production readiness report
+        run: python scripts/production_readiness_check.py
+
+      - name: Android manifest permissions
+        run: python scripts/check_android_manifest_permissions.py
+
+      - name: Android route safety
+        run: python scripts/check_android_route_safety.py
+
+      - name: Backend safety
+        run: python scripts/check_backend_safety.py
+
+      - name: Phase 3 safety
+        run: |
+          if [ -f scripts/check_phase3_safety.py ]; then
+            python scripts/check_phase3_safety.py
+          else
+            echo "Phase 3 safety checker not present."
+          fi
+
+      - name: Upload readiness reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-readiness-report
+          path: |
+            runtime/reports/production-readiness-report.json
+            runtime/reports/production-readiness-report.md
