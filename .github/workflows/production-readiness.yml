@@ -15,11 +15,20 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Production readiness report
-        run: python scripts/production_readiness_check.py
-
       - name: Platform checks
         run: make platform-check
+
+      - name: Android emulator smoke report
+        run: make android-emulator-smoke-report
+
+      - name: Screenshot reports
+        run: make phase4-screenshot-report
+
+      - name: Release candidate manifest
+        run: make release-candidate-manifest
+
+      - name: Production readiness report
+        run: python scripts/production_readiness_check.py
 
       - name: Android manifest permissions
         run: python scripts/check_android_manifest_permissions.py
