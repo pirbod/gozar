@@ -4,7 +4,7 @@ GORZ_COMPOSE := docker compose -f docker-compose.gorz.yml
 PROFILE_COMPOSE := docker compose -f docker-compose.profile.yml
 ANDROID_DIR := android/gorz
 
-.PHONY: eval eval-clean eval-baseline eval-adaptive eval-smoke eval-scenario gorz-install gorz-dev gorz-demo gorz-test gorz-lint gorz-validate gorz-clean gorz-cli-test gorz-homebrew-check gorz-release-check profile-install profile-dev profile-demo profile-test profile-lint profile-validate profile-clean profile-audit-export profile-safety-check safety-wording-check profile-syntax-check profile-compose-check profile-release-check profile-full-check android-check android-test android-build android-clean android-safety-check phase2-check
+.PHONY: eval eval-clean eval-baseline eval-adaptive eval-smoke eval-scenario gorz-install gorz-dev gorz-demo gorz-test gorz-lint gorz-validate gorz-clean gorz-cli-test gorz-homebrew-check gorz-release-check profile-install profile-dev profile-demo profile-test profile-lint profile-validate profile-clean profile-audit-export profile-safety-check safety-wording-check profile-syntax-check profile-compose-check profile-release-check profile-full-check android-check android-test android-build android-clean android-safety-check phase2-check phase3-check
 
 eval:
 	$(PYTHON) $(EVAL_RUNNER) run-all
@@ -180,6 +180,16 @@ phase2-check:
 	$(MAKE) profile-full-check
 	$(MAKE) android-check
 	$(MAKE) android-safety-check
+
+phase3-check:
+	@if command -v gradle >/dev/null 2>&1 && (cd $(ANDROID_DIR) && ./gradlew -v >/dev/null 2>&1); then \
+		cd $(ANDROID_DIR) && ./gradlew test; \
+	else \
+		echo "Warning: Gradle or Android SDK not available; skipped Android Gradle unit tests." >&2; \
+	fi
+	$(MAKE) android-check
+	$(MAKE) phase2-check
+	$(PYTHON) scripts/check_phase3_safety.py
 
 profile-release-check:
 	@test -f Dockerfile.profile-api || (echo "Dockerfile.profile-api is missing" >&2; exit 1)

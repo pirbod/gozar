@@ -252,6 +252,41 @@ Prototype screenshot:
 
 See [docs/vpn-product/phase-2-android-vpnservice.md](docs/vpn-product/phase-2-android-vpnservice.md).
 
+## Android Phase 3 Clickable Prototype
+
+Phase 3 adds a polished Android Compose experience for the Gorz prototype. It keeps the same safety boundaries as Phase 1 and Phase 2 while making the adaptive session journey clickable with or without the local backend.
+
+What it demonstrates:
+
+- Onboarding, Home, staged Connect, Session, Confidence, Route Policy, Diagnostics, Evidence, Audit, Safety Pause, and Settings.
+- Offline Demo Mode with deterministic mock profile data when the Profile API is not running.
+- Backend-connected mode against `http://10.0.2.2:8095` on the Android emulator.
+- Redacted incident evidence JSON.
+- Local audit timeline.
+- No public gateway.
+- No public gateway discovery.
+- No public network probing.
+- No public relay discovery.
+- No public traffic forwarding.
+- No full-device routing.
+
+Run checks:
+
+```bash
+make phase3-check
+```
+
+Read more:
+
+- [Phase 3 Android clickable prototype](docs/vpn-product/phase-3-android-clickable-prototype.md)
+- [Phase 3 demo script](docs/vpn-product/phase-3-demo-script.md)
+
+Prototype screenshots:
+
+- [Home screen](docs/vpn-product/images/android-phase3-home.svg)
+- [Connect flow](docs/vpn-product/images/android-phase3-connect-flow.svg)
+- [Evidence and safety pause](docs/vpn-product/images/android-phase3-evidence-safety.svg)
+
 ## Install Gorz with Homebrew
 
 ```bash

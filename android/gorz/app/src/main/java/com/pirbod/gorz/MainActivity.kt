@@ -1,218 +1,47 @@
 package com.pirbod.gorz
 
 import android.app.Activity
-import android.content.Intent
-import android.graphics.Typeface
 import android.net.VpnService
 import android.os.Bundle
-import android.view.Gravity
-import android.view.ViewGroup
-import android.widget.Button
-import android.widget.LinearLayout
-import android.widget.RadioButton
-import android.widget.RadioGroup
-import android.widget.TextView
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import com.pirbod.gorz.state.GorzViewModel
 
-class MainActivity : Activity() {
-    private lateinit var store: ProfileStateStore
-    private lateinit var statusText: TextView
-    private lateinit var mainButton: Button
-    private lateinit var settingsButton: Button
-    private lateinit var requestedModeGroup: RadioGroup
-    private lateinit var controller: VpnSessionController
+class MainActivity : ComponentActivity() {
+    private val viewModel: GorzViewModel by viewModels()
+    private val vpnPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            viewModel.connectAfterVpnPermission()
+        } else {
+            viewModel.onVpnPermissionDenied()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        store = ProfileStateStore(this)
-        controller = VpnSessionController(this)
-        setContentView(buildContentView())
-        renderStatus(store.connectionStatus)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode != VPN_PERMISSION_REQUEST) {
-            return
-        }
-        if (resultCode == RESULT_OK) {
-            connectAfterPermission()
-        } else {
-            failWith(IllegalStateException("VPN permission denied"))
-        }
-    }
-
-    private fun buildContentView(): LinearLayout {
-        val container = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(48, 80, 48, 48)
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT,
+        setContent {
+            GorzApp(
+                viewModel = viewModel,
+                onConnectRequested = ::requestVpnPermissionThenConnect,
             )
         }
-        val title = TextView(this).apply {
-            text = "Gorz"
-            textSize = 34f
-            typeface = Typeface.DEFAULT_BOLD
-            gravity = Gravity.CENTER
-        }
-        val subtitle = TextView(this).apply {
-            text = getString(R.string.main_subtitle)
-            textSize = 16f
-            gravity = Gravity.CENTER
-        }
-        statusText = TextView(this).apply {
-            textSize = 20f
-            gravity = Gravity.CENTER
-            setPadding(0, 64, 0, 32)
-        }
-        mainButton = Button(this).apply {
-            text = "Connect"
-            setOnClickListener {
-                if (store.connectionStatus == "Connected") {
-                    disconnect()
-                } else {
-                    requestVpnPermission()
-                }
-            }
-        }
-        settingsButton = Button(this).apply {
-            text = "Settings"
-            setOnClickListener { startActivity(Intent(this@MainActivity, SettingsActivity::class.java)) }
-        }
-        val modeLabel = TextView(this).apply {
-            text = "Requested mode"
-            textSize = 14f
-            gravity = Gravity.CENTER
-        }
-        requestedModeGroup = RadioGroup(this).apply {
-            orientation = LinearLayout.VERTICAL
-            addView(modeButton("demo_full_tunnel", checked = true))
-            addView(modeButton("demo_split_tunnel"))
-            addView(modeButton("demo_messaging_only"))
-        }
-        val footer = TextView(this).apply {
-            text = getString(R.string.safety_footer)
-            textSize = 13f
-            gravity = Gravity.CENTER
-            setPadding(0, 48, 0, 0)
-        }
-        container.addView(title, matchWidthWrap())
-        container.addView(subtitle, matchWidthWrap())
-        container.addView(statusText, matchWidthWrap())
-        container.addView(mainButton, matchWidthWrap())
-        container.addView(modeLabel, matchWidthWrap())
-        container.addView(requestedModeGroup, matchWidthWrap())
-        container.addView(settingsButton, matchWidthWrap())
-        container.addView(footer, matchWidthWrap())
-        return container
     }
 
-    private fun modeButton(mode: String, checked: Boolean = false): RadioButton {
-        return RadioButton(this).apply {
-            id = ViewGroup.generateViewId()
-            tag = mode
-            text = mode
-            isChecked = checked
-        }
-    }
-
-    private fun requestVpnPermission() {
-        val permissionIntent = VpnService.prepare(this)
-        if (permissionIntent != null) {
-            startActivityForResult(permissionIntent, VPN_PERMISSION_REQUEST)
+    private fun requestVpnPermissionThenConnect() {
+        if (viewModel.state.value.safetyState.paused) {
+            viewModel.markVpnPermissionRequested()
             return
         }
-        connectAfterPermission()
-    }
-
-    private fun connectAfterPermission() {
-        renderStatus("Requesting profile")
-        val requestedMode = selectedRequestedMode()
-        Thread {
-            try {
-                val api = ProfileApiClient(store.apiUrl, store.adminToken)
-                val crypto = ProfileCrypto()
-                val deviceKey = store.ensureDemoDeviceKeyMaterial()
-                api.health().also { store.safetyMode = it.safetyMode }
-                api.bootstrap()
-                val registered = if (store.deviceId == null) {
-                    api.registerDevice(deviceKey).also {
-                        store.deviceId = it.deviceId
-                        store.devicePublicKeyHash = it.devicePublicKeyHash
-                    }
-                } else {
-                    RegisterDeviceResponse(
-                        deviceId = requireNotNull(store.deviceId),
-                        devicePublicKeyHash = requireNotNull(store.devicePublicKeyHash),
-                        registrationStatus = "already_registered",
-                        safetyNotice = "Local demo registration only.",
-                    )
-                }
-                val envelope = api.requestSessionProfile(registered.deviceId, requestedMode)
-                if (!crypto.verifyIssuerSignature(envelope)) {
-                    throw IllegalStateException("invalid signature")
-                }
-                val payload = crypto.decryptAndroidLocalDemoPayload(envelope, deviceKey)
-                val validation = api.validateProfile(envelope.profileId)
-                SafetyGuards.validateEnvelope(
-                    envelope = envelope,
-                    payload = payload,
-                    validation = validation,
-                    expectedAudience = registered.devicePublicKeyHash,
-                    requestedMode = requestedMode,
-                )
-                store.saveProfileMetadata(envelope)
-                renderStatus("Profile active")
-                controller.start(envelope.profileId, requestedMode)
-                renderStatus("Connected")
-            } catch (exc: Throwable) {
-                failWith(exc)
-            }
-        }.start()
-    }
-
-    private fun disconnect() {
-        renderStatus("Disconnecting")
-        Thread {
-            controller.stop()
-            store.clearProfile()
-            renderStatus("Disconnected")
-        }.start()
-    }
-
-    private fun failWith(error: Throwable) {
-        val message = Diagnostics.userMessage(error)
-        store.lastError = message
-        renderStatus("Error")
-    }
-
-    private fun renderStatus(status: String) {
-        runOnUiThread {
-            store.connectionStatus = status
-            statusText.text = status
-            mainButton.text = if (status == "Connected") "Disconnect" else "Connect"
-            settingsButton.isEnabled = status != "Requesting profile" && status != "Disconnecting"
-            requestedModeGroup.isEnabled = status != "Requesting profile" && status != "Connected"
+        viewModel.markVpnPermissionRequested()
+        val permissionIntent = VpnService.prepare(this)
+        if (permissionIntent != null) {
+            vpnPermissionLauncher.launch(permissionIntent)
+            return
         }
-    }
-
-    private fun selectedRequestedMode(): String {
-        val selected = requestedModeGroup.findViewById<RadioButton>(requestedModeGroup.checkedRadioButtonId)
-        return selected?.tag as? String ?: "demo_full_tunnel"
-    }
-
-    private fun matchWidthWrap(): LinearLayout.LayoutParams {
-        return LinearLayout.LayoutParams(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.WRAP_CONTENT,
-        ).apply {
-            setMargins(0, 12, 0, 12)
-        }
-    }
-
-    companion object {
-        private const val VPN_PERMISSION_REQUEST = 2002
+        viewModel.connectAfterVpnPermission()
     }
 }

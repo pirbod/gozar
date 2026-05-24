@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="390" height="844" viewBox="0 0 390 844" role="img" aria-label="Gorz Phase 3 connect flow prototype screenshot">
+  <defs>
+    <style>
+      .bg { fill: #071018; }
+      .card { fill: #172431; stroke: #314454; stroke-width: 1; }
+      .title { font: 700 28px "Ubuntu Sans", "DejaVu Sans", Arial, sans-serif; fill: #eaf6ff; }
+      .h2 { font: 700 15px "Ubuntu Sans", "DejaVu Sans", Arial, sans-serif; fill: #eaf6ff; }
+      .body { font: 500 12px "Ubuntu Sans", "DejaVu Sans", Arial, sans-serif; fill: #afc4d5; }
+      .status { font: 700 11px "Ubuntu Sans", "DejaVu Sans", Arial, sans-serif; }
+      .cyan { fill: #23c7ff; }
+      .green { fill: #42e686; }
+      .amber { fill: #ffbf47; }
+      .muted { fill: #314454; }
+    </style>
+  </defs>
+  <rect class="bg" width="390" height="844"/>
+  <rect x="18" y="20" width="354" height="804" rx="34" fill="none" stroke="#263545" stroke-width="3"/>
+  <text class="title" x="30" y="72">Connect flow</text>
+  <text class="body" x="30" y="96">Phase 3: Adaptive Session Experience Prototype</text>
+  <rect x="30" y="124" width="330" height="44" rx="8" fill="#263545"/>
+  <text class="body" x="48" y="151">View details: redacted technical data</text>
+  <g transform="translate(30 190)">
+    <line x1="18" y1="18" x2="18" y2="472" stroke="#314454" stroke-width="3"/>
+    <g transform="translate(0 0)">
+      <circle cx="18" cy="18" r="12" fill="#42e686"/>
+      <rect class="card" x="42" y="0" width="288" height="52" rx="8"/>
+      <text class="h2" x="58" y="22">Preparing device identity</text>
+      <text class="green status" x="274" y="22">SUCCESS</text>
+      <text class="body" x="58" y="42">demo-device-a83c... ready</text>
+    </g>
+    <g transform="translate(0 68)">
+      <circle cx="18" cy="18" r="12" fill="#42e686"/>
+      <rect class="card" x="42" y="0" width="288" height="52" rx="8"/>
+      <text class="h2" x="58" y="22">Registering device</text>
+      <text class="green status" x="274" y="22">SUCCESS</text>
+      <text class="body" x="58" y="42">Offline demo device registered locally</text>
+    </g>
+    <g transform="translate(0 136)">
+      <circle cx="18" cy="18" r="12" fill="#42e686"/>
+      <rect class="card" x="42" y="0" width="288" height="52" rx="8"/>
+      <text class="h2" x="58" y="22">Requesting adaptive profile</text>
+      <text class="green status" x="274" y="22">SUCCESS</text>
+      <text class="body" x="58" y="42">deterministic demo_split_tunnel profile</text>
+    </g>
+    <g transform="translate(0 204)">
+      <circle cx="18" cy="18" r="12" fill="#42e686"/>
+      <rect class="card" x="42" y="0" width="288" height="52" rx="8"/>
+      <text class="h2" x="58" y="22">Verifying issuer signature</text>
+      <text class="green status" x="274" y="22">SUCCESS</text>
+      <text class="body" x="58" y="42">demo signature status: demo_verified</text>
+    </g>
+    <g transform="translate(0 272)">
+      <circle cx="18" cy="18" r="12" fill="#42e686"/>
+      <rect class="card" x="42" y="0" width="288" height="52" rx="8"/>
+      <text class="h2" x="58" y="22">Decrypting local profile</text>
+      <text class="green status" x="274" y="22">SUCCESS</text>
+      <text class="body" x="58" y="42">demo profile material stays local</text>
+    </g>
+    <g transform="translate(0 340)">
+      <circle cx="18" cy="18" r="12" fill="#42e686"/>
+      <rect class="card" x="42" y="0" width="288" height="52" rx="8"/>
+      <text class="h2" x="58" y="22">Validating safety policy</text>
+      <text class="green status" x="274" y="22">SUCCESS</text>
+      <text class="body" x="58" y="42">TTL, audience, route, endpoint pass</text>
+    </g>
+    <g transform="translate(0 408)">
+      <circle cx="18" cy="18" r="12" fill="#23c7ff"/>
+      <rect class="card" x="42" y="0" width="288" height="52" rx="8"/>
+      <text class="h2" x="58" y="22">Starting local VPN lifecycle</text>
+      <text class="cyan status" x="274" y="22">RUNNING</text>
+      <text class="body" x="58" y="42">packets counted and dropped locally</text>
+    </g>
+    <g transform="translate(0 476)">
+      <circle cx="18" cy="18" r="12" fill="#314454"/>
+      <rect class="card" x="42" y="0" width="288" height="52" rx="8"/>
+      <text class="h2" x="58" y="22">Session ready</text>
+      <text class="amber status" x="274" y="22">PENDING</text>
+      <text class="body" x="58" y="42">Demo session active</text>
+    </g>
+  </g>
+  <rect x="30" y="750" width="330" height="50" rx="8" fill="#12384a"/>
+  <text class="body" x="48" y="779">Controlled prototype: no internet traffic forwarding.</text>
+</svg>
