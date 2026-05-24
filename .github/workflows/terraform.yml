@@ -12,9 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: hashicorp/setup-terraform@v3
-      - name: Terraform fmt
-        working-directory: infra/terraform
-        run: terraform fmt -check -recursive
-      - name: Terraform validate
-        working-directory: infra/terraform
-        run: terraform init -backend=false && terraform validate
+      - name: Terraform report
+        run: python3 scripts/platform/run_terraform_check.py
+      - name: Upload Terraform report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-check-report
+          path: |
+            runtime/reports/terraform-check-report.md
+            runtime/reports/terraform-check-report.json

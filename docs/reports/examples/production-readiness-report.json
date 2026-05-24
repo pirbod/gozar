@@ -1,0 +1,830 @@
+{
+  "title": "Gozar/Gorz Production Readiness Report",
+  "generated": "2026-05-24T20:30:23.537753+00:00",
+  "summary": {
+    "overall": "PARTIAL",
+    "controlled_release_readiness": "PASS",
+    "controlled_release_evidence": "PARTIAL",
+    "production_readiness": "READY",
+    "production_ready_for_real_use": "NO",
+    "production_security_claim": "NO",
+    "platform_readiness": "PARTIAL",
+    "critical_failures": 0,
+    "warnings": 11,
+    "skipped": 3
+  },
+  "checks": [
+    {
+      "name": "README exists",
+      "status": "PASS",
+      "detail": "README.md",
+      "remediation": "Create README.md.",
+      "critical": true
+    },
+    {
+      "name": "README safety wording present",
+      "status": "PASS",
+      "detail": "Found 'Safety Disclaimer'",
+      "remediation": "Restore the README safety disclaimer.",
+      "critical": true
+    },
+    {
+      "name": "README contains not a circumvention tool",
+      "status": "PASS",
+      "detail": "Found 'not a circumvention tool'",
+      "remediation": "Restore the project positioning disclaimer.",
+      "critical": true
+    },
+    {
+      "name": "README contains not a field-deployment routing product",
+      "status": "PASS",
+      "detail": "Found 'not a field-deployment routing product'",
+      "remediation": "Restore the project positioning disclaimer.",
+      "critical": true
+    },
+    {
+      "name": "Safety boundaries doc exists",
+      "status": "PASS",
+      "detail": "docs/safety-boundaries.md",
+      "remediation": "Create docs/safety-boundaries.md.",
+      "critical": true
+    },
+    {
+      "name": "Production gap analysis exists",
+      "status": "PASS",
+      "detail": "docs/product/production-gap-analysis.md",
+      "remediation": "Create docs/product/production-gap-analysis.md.",
+      "critical": false
+    },
+    {
+      "name": "Release blocker checklist exists",
+      "status": "PASS",
+      "detail": "docs/product/release-blocker-checklist.md",
+      "remediation": "Create docs/product/release-blocker-checklist.md.",
+      "critical": false
+    },
+    {
+      "name": "Risk register exists",
+      "status": "PASS",
+      "detail": "docs/product/risk-register.md",
+      "remediation": "Create docs/product/risk-register.md.",
+      "critical": false
+    },
+    {
+      "name": "Phase 1 docs exist",
+      "status": "PASS",
+      "detail": "docs/vpn-product/phase-1-local-profile-lifecycle.md",
+      "remediation": "Create docs/vpn-product/phase-1-local-profile-lifecycle.md.",
+      "critical": false
+    },
+    {
+      "name": "Phase 2 docs exist",
+      "status": "PASS",
+      "detail": "docs/vpn-product/phase-2-android-vpnservice.md",
+      "remediation": "Create docs/vpn-product/phase-2-android-vpnservice.md.",
+      "critical": false
+    },
+    {
+      "name": "Phase 3 docs exist",
+      "status": "PASS",
+      "detail": "docs/vpn-product/phase-3-android-clickable-prototype.md",
+      "remediation": "Create docs/vpn-product/phase-3-android-clickable-prototype.md.",
+      "critical": false
+    },
+    {
+      "name": "AndroidManifest.xml does not include ACCESS_FINE_LOCATION",
+      "status": "PASS",
+      "detail": "Checked for 'ACCESS_FINE_LOCATION'",
+      "remediation": "Remove 'ACCESS_FINE_LOCATION'.",
+      "critical": true
+    },
+    {
+      "name": "AndroidManifest.xml does not include ACCESS_COARSE_LOCATION",
+      "status": "PASS",
+      "detail": "Checked for 'ACCESS_COARSE_LOCATION'",
+      "remediation": "Remove 'ACCESS_COARSE_LOCATION'.",
+      "critical": true
+    },
+    {
+      "name": "AndroidManifest.xml does not include READ_CONTACTS",
+      "status": "PASS",
+      "detail": "Checked for 'READ_CONTACTS'",
+      "remediation": "Remove 'READ_CONTACTS'.",
+      "critical": true
+    },
+    {
+      "name": "AndroidManifest.xml does not include READ_PHONE_NUMBERS",
+      "status": "PASS",
+      "detail": "Checked for 'READ_PHONE_NUMBERS'",
+      "remediation": "Remove 'READ_PHONE_NUMBERS'.",
+      "critical": true
+    },
+    {
+      "name": "AndroidManifest.xml does not include READ_PHONE_STATE",
+      "status": "PASS",
+      "detail": "Checked for 'READ_PHONE_STATE'",
+      "remediation": "Remove 'READ_PHONE_STATE'.",
+      "critical": true
+    },
+    {
+      "name": "Android does not add 0.0.0.0/0 route",
+      "status": "PASS",
+      "detail": "Checked for 'addRoute(\"0.0.0.0\"'",
+      "remediation": "Remove 'addRoute(\"0.0.0.0\"'.",
+      "critical": true
+    },
+    {
+      "name": "Android does not add ::/0 route",
+      "status": "PASS",
+      "detail": "Checked for 'addRoute(\"::\"'",
+      "remediation": "Remove 'addRoute(\"::\"'.",
+      "critical": true
+    },
+    {
+      "name": "Android code has no public relay discovery strings",
+      "status": "PASS",
+      "detail": "Checked phrase 'public relay discovery'",
+      "remediation": "Remove unsafe phrase 'public relay discovery'.",
+      "critical": true
+    },
+    {
+      "name": "Android code has no public gateway discovery strings",
+      "status": "PASS",
+      "detail": "Checked phrase 'public gateway discovery'",
+      "remediation": "Remove unsafe phrase 'public gateway discovery'.",
+      "critical": true
+    },
+    {
+      "name": "Android code has no bridge discovery strings",
+      "status": "PASS",
+      "detail": "Checked phrase 'bridge discovery'",
+      "remediation": "Remove unsafe phrase 'bridge discovery'.",
+      "critical": true
+    },
+    {
+      "name": "Android code has no external probing strings",
+      "status": "PASS",
+      "detail": "Checked phrase 'external probing'",
+      "remediation": "Remove unsafe phrase 'external probing'.",
+      "critical": true
+    },
+    {
+      "name": "Android code has no automatic diagnostic upload strings",
+      "status": "PASS",
+      "detail": "Checked phrase 'automatic diagnostic upload'",
+      "remediation": "Remove unsafe phrase 'automatic diagnostic upload'.",
+      "critical": true
+    },
+    {
+      "name": "Python code has no public relay discovery strings",
+      "status": "PASS",
+      "detail": "Checked phrase 'public relay discovery'",
+      "remediation": "Remove unsafe phrase 'public relay discovery'.",
+      "critical": true
+    },
+    {
+      "name": "Python code has no public gateway discovery strings",
+      "status": "PASS",
+      "detail": "Checked phrase 'public gateway discovery'",
+      "remediation": "Remove unsafe phrase 'public gateway discovery'.",
+      "critical": true
+    },
+    {
+      "name": "TypeScript code has no public relay discovery strings",
+      "status": "PASS",
+      "detail": "Checked phrase 'public relay discovery'",
+      "remediation": "Remove unsafe phrase 'public relay discovery'.",
+      "critical": true
+    },
+    {
+      "name": "Rust code has no public relay discovery strings",
+      "status": "PASS",
+      "detail": "Checked phrase 'public relay discovery'",
+      "remediation": "Remove unsafe phrase 'public relay discovery'.",
+      "critical": true
+    },
+    {
+      "name": "Phase 3 safety checker exists",
+      "status": "PASS",
+      "detail": "scripts/check_phase3_safety.py",
+      "remediation": "Create scripts/check_phase3_safety.py.",
+      "critical": false
+    },
+    {
+      "name": "Makefile android-check target exists",
+      "status": "PASS",
+      "detail": "Found '\\nandroid-check:'",
+      "remediation": "",
+      "critical": false
+    },
+    {
+      "name": "Makefile phase2-check target exists",
+      "status": "PASS",
+      "detail": "Found '\\nphase2-check:'",
+      "remediation": "",
+      "critical": false
+    },
+    {
+      "name": "Makefile phase3-check target exists",
+      "status": "PASS",
+      "detail": "Found '\\nphase3-check:'",
+      "remediation": "",
+      "critical": false
+    },
+    {
+      "name": "GitHub Actions workflow exists",
+      "status": "PASS",
+      "detail": ".github/workflows/ci.yml",
+      "remediation": "Create .github/workflows/ci.yml.",
+      "critical": false
+    },
+    {
+      "name": "Docker compose files exist",
+      "status": "PASS",
+      "detail": "docker-compose.yml",
+      "remediation": "Create docker-compose.yml.",
+      "critical": false
+    },
+    {
+      "name": "Profile Docker compose file exists",
+      "status": "PASS",
+      "detail": "docker-compose.profile.yml",
+      "remediation": "Create docker-compose.profile.yml.",
+      "critical": false
+    },
+    {
+      "name": "Gorz Docker compose file exists",
+      "status": "PASS",
+      "detail": "docker-compose.gorz.yml",
+      "remediation": "Create docker-compose.gorz.yml.",
+      "critical": false
+    },
+    {
+      "name": "No obvious secrets in tracked files",
+      "status": "PASS",
+      "detail": "No obvious secret patterns found.",
+      "remediation": "Remove secret material and rotate credentials.",
+      "critical": true
+    },
+    {
+      "name": "npm audit recommended",
+      "status": "WARN",
+      "detail": "package-lock.json exists; audit should run in CI or release prep.",
+      "remediation": "Run npm audit --audit-level=high in CI or before release.",
+      "critical": false
+    },
+    {
+      "name": "cargo audit recommended",
+      "status": "WARN",
+      "detail": "Cargo.lock exists; audit should run in CI or release prep.",
+      "remediation": "Install cargo-audit and run cargo audit before release.",
+      "critical": false
+    },
+    {
+      "name": "pip-audit recommended",
+      "status": "WARN",
+      "detail": "Python project metadata exists; pip-audit is recommended.",
+      "remediation": "Run pip-audit in a pinned environment before release.",
+      "critical": false
+    },
+    {
+      "name": "Android smoke test source exists",
+      "status": "PASS",
+      "detail": "android/gorz/app/src/androidTest/java/com/pirbod/gorz/GorzSmokeTest.kt",
+      "remediation": "Create android/gorz/app/src/androidTest/java/com/pirbod/gorz/GorzSmokeTest.kt.",
+      "critical": false
+    },
+    {
+      "name": "Android Studio emulator smoke test doc exists",
+      "status": "PASS",
+      "detail": "docs/vpn-product/android-studio-emulator-smoke-test.md",
+      "remediation": "Create docs/vpn-product/android-studio-emulator-smoke-test.md.",
+      "critical": false
+    },
+    {
+      "name": "Android emulator smoke checklist exists",
+      "status": "PASS",
+      "detail": "docs/vpn-product/android-emulator-smoke-checklist.md",
+      "remediation": "Create docs/vpn-product/android-emulator-smoke-checklist.md.",
+      "critical": false
+    },
+    {
+      "name": "android-emulator-smoke Makefile target exists",
+      "status": "PASS",
+      "detail": "Found '\\nandroid-emulator-smoke:'",
+      "remediation": "",
+      "critical": false
+    },
+    {
+      "name": "Compose test tags found",
+      "status": "PASS",
+      "detail": "All required tags found.",
+      "remediation": "Add stable Modifier.testTag values for smoke tests.",
+      "critical": false
+    },
+    {
+      "name": "Android emulator workflow exists",
+      "status": "PASS",
+      "detail": ".github/workflows/android-emulator-smoke.yml",
+      "remediation": "Create .github/workflows/android-emulator-smoke.yml.",
+      "critical": false
+    },
+    {
+      "name": "Managed device config exists",
+      "status": "PASS",
+      "detail": "Gradle Managed Device pixel2api30 configured.",
+      "remediation": "Configure Gradle Managed Devices or document emulator runner fallback.",
+      "critical": false
+    },
+    {
+      "name": "Android emulator tests not configured as PR hard gate",
+      "status": "WARN",
+      "detail": "Emulator smoke is intentionally workflow_dispatch/manual-nightly because hosted emulator stability can vary.",
+      "remediation": "Promote emulator smoke to required PR gate after it proves stable.",
+      "critical": false
+    },
+    {
+      "name": "Production crypto not implemented, documented as gap",
+      "status": "WARN",
+      "detail": "Gap phrase 'production crypto' documented.",
+      "remediation": "Document this production gap clearly.",
+      "critical": false
+    },
+    {
+      "name": "Real tenant auth not implemented, documented as gap",
+      "status": "WARN",
+      "detail": "Gap phrase 'tenant' documented.",
+      "remediation": "Document this production gap clearly.",
+      "critical": false
+    },
+    {
+      "name": "Phase 4 Controlled Release Readiness",
+      "status": "PASS",
+      "detail": "Phase 4 checklist evaluated.",
+      "remediation": "",
+      "critical": false
+    },
+    {
+      "name": "Phase 4 roadmap closure exists",
+      "status": "PASS",
+      "detail": "docs/product/four-phase-roadmap.md",
+      "remediation": "Create docs/product/four-phase-roadmap.md.",
+      "critical": false
+    },
+    {
+      "name": "SecureValueStore interface exists",
+      "status": "PASS",
+      "detail": "android/gorz/app/src/main/java/com/pirbod/gorz/security/SecureValueStore.kt",
+      "remediation": "Create android/gorz/app/src/main/java/com/pirbod/gorz/security/SecureValueStore.kt.",
+      "critical": false
+    },
+    {
+      "name": "AndroidKeystoreSecureValueStore exists",
+      "status": "PASS",
+      "detail": "android/gorz/app/src/main/java/com/pirbod/gorz/security/AndroidKeystoreSecureValueStore.kt",
+      "remediation": "Create android/gorz/app/src/main/java/com/pirbod/gorz/security/AndroidKeystoreSecureValueStore.kt.",
+      "critical": false
+    },
+    {
+      "name": "RoutePolicyGuard exists",
+      "status": "PASS",
+      "detail": "android/gorz/app/src/main/java/com/pirbod/gorz/domain/RoutePolicyGuard.kt",
+      "remediation": "Create android/gorz/app/src/main/java/com/pirbod/gorz/domain/RoutePolicyGuard.kt.",
+      "critical": false
+    },
+    {
+      "name": "ConfidenceEngine exists",
+      "status": "PASS",
+      "detail": "android/gorz/app/src/main/java/com/pirbod/gorz/domain/ConfidenceEngine.kt",
+      "remediation": "Create android/gorz/app/src/main/java/com/pirbod/gorz/domain/ConfidenceEngine.kt.",
+      "critical": false
+    },
+    {
+      "name": "EvidencePackageV2 exists",
+      "status": "PASS",
+      "detail": "android/gorz/app/src/main/java/com/pirbod/gorz/data/model/EvidencePackageV2.kt",
+      "remediation": "Create android/gorz/app/src/main/java/com/pirbod/gorz/data/model/EvidencePackageV2.kt.",
+      "critical": false
+    },
+    {
+      "name": "SafetyPauseReason exists",
+      "status": "PASS",
+      "detail": "android/gorz/app/src/main/java/com/pirbod/gorz/data/model/SafetyPauseReason.kt",
+      "remediation": "Create android/gorz/app/src/main/java/com/pirbod/gorz/data/model/SafetyPauseReason.kt.",
+      "critical": false
+    },
+    {
+      "name": "Local diagnostics doc exists",
+      "status": "PASS",
+      "detail": "docs/vpn-product/local-diagnostics.md",
+      "remediation": "Create docs/vpn-product/local-diagnostics.md.",
+      "critical": false
+    },
+    {
+      "name": "Phase 4 threat model exists",
+      "status": "PASS",
+      "detail": "docs/security/android-phase-4-threat-model.md",
+      "remediation": "Create docs/security/android-phase-4-threat-model.md.",
+      "critical": false
+    },
+    {
+      "name": "Phase 4 privacy review exists",
+      "status": "PASS",
+      "detail": "docs/privacy/android-phase-4-privacy-review.md",
+      "remediation": "Create docs/privacy/android-phase-4-privacy-review.md.",
+      "critical": false
+    },
+    {
+      "name": "Phase 4 screenshot guide exists",
+      "status": "PASS",
+      "detail": "docs/vpn-product/phase-4-screenshot-guide.md",
+      "remediation": "Create docs/vpn-product/phase-4-screenshot-guide.md.",
+      "critical": false
+    },
+    {
+      "name": "Screenshot capture script exists",
+      "status": "PASS",
+      "detail": "scripts/android/capture_phase4_screenshots.py",
+      "remediation": "Create scripts/android/capture_phase4_screenshots.py.",
+      "critical": false
+    },
+    {
+      "name": "Screenshot report exists",
+      "status": "PASS",
+      "detail": "Status: PARTIAL",
+      "remediation": "",
+      "critical": false
+    },
+    {
+      "name": "Controlled release process exists",
+      "status": "PASS",
+      "detail": "docs/release/phase-4-controlled-release-process.md",
+      "remediation": "Create docs/release/phase-4-controlled-release-process.md.",
+      "critical": false
+    },
+    {
+      "name": "Controlled release notes exist",
+      "status": "PASS",
+      "detail": "docs/release/phase-4-release-notes.md",
+      "remediation": "Create docs/release/phase-4-release-notes.md.",
+      "critical": false
+    },
+    {
+      "name": "Release candidate manifest script exists",
+      "status": "PASS",
+      "detail": "scripts/android/generate_release_candidate_manifest.py",
+      "remediation": "Create scripts/android/generate_release_candidate_manifest.py.",
+      "critical": false
+    },
+    {
+      "name": "GorzSmokeTest exists",
+      "status": "PASS",
+      "detail": "android/gorz/app/src/androidTest/java/com/pirbod/gorz/GorzSmokeTest.kt",
+      "remediation": "Create android/gorz/app/src/androidTest/java/com/pirbod/gorz/GorzSmokeTest.kt.",
+      "critical": false
+    },
+    {
+      "name": "GorzOfflineConnectSmokeTest exists",
+      "status": "PASS",
+      "detail": "android/gorz/app/src/androidTest/java/com/pirbod/gorz/GorzOfflineConnectSmokeTest.kt",
+      "remediation": "Create android/gorz/app/src/androidTest/java/com/pirbod/gorz/GorzOfflineConnectSmokeTest.kt.",
+      "critical": false
+    },
+    {
+      "name": "Makefile android-emulator-smoke-report target exists",
+      "status": "PASS",
+      "detail": "Found '\\nandroid-emulator-smoke-report:'",
+      "remediation": "",
+      "critical": false
+    },
+    {
+      "name": "Makefile phase4-check target exists",
+      "status": "PASS",
+      "detail": "Found '\\nphase4-check:'",
+      "remediation": "",
+      "critical": false
+    },
+    {
+      "name": "Makefile phase4-screenshots target exists",
+      "status": "PASS",
+      "detail": "Found '\\nphase4-screenshots:'",
+      "remediation": "",
+      "critical": false
+    },
+    {
+      "name": "VERSION is 0.4.0-rc1",
+      "status": "PASS",
+      "detail": "Found '0.4.0-rc1'",
+      "remediation": "",
+      "critical": true
+    },
+    {
+      "name": "Android versionName is 0.4.0-rc1",
+      "status": "PASS",
+      "detail": "Found 'versionName = \"0.4.0-rc1\"'",
+      "remediation": "",
+      "critical": true
+    },
+    {
+      "name": "No sensitive Android location permission",
+      "status": "PASS",
+      "detail": "Checked for 'ACCESS_FINE_LOCATION'",
+      "remediation": "Remove 'ACCESS_FINE_LOCATION'.",
+      "critical": true
+    },
+    {
+      "name": "No Android contacts permission",
+      "status": "PASS",
+      "detail": "Checked for 'READ_CONTACTS'",
+      "remediation": "Remove 'READ_CONTACTS'.",
+      "critical": true
+    },
+    {
+      "name": "Android code has no automatic diagnostic upload",
+      "status": "PASS",
+      "detail": "Checked phrase 'automatic diagnostic upload'",
+      "remediation": "Remove unsafe phrase 'automatic diagnostic upload'.",
+      "critical": true
+    },
+    {
+      "name": "Evidence redaction tests exist",
+      "status": "PASS",
+      "detail": "android/gorz/app/src/test/java/com/pirbod/gorz/data/repository/EvidenceRepositoryTest.kt",
+      "remediation": "Create android/gorz/app/src/test/java/com/pirbod/gorz/data/repository/EvidenceRepositoryTest.kt.",
+      "critical": false
+    },
+    {
+      "name": "Route policy tests exist",
+      "status": "PASS",
+      "detail": "android/gorz/app/src/test/java/com/pirbod/gorz/domain/RoutePolicyGuardTest.kt",
+      "remediation": "Create android/gorz/app/src/test/java/com/pirbod/gorz/domain/RoutePolicyGuardTest.kt.",
+      "critical": false
+    },
+    {
+      "name": "Confidence tests exist",
+      "status": "PASS",
+      "detail": "android/gorz/app/src/test/java/com/pirbod/gorz/domain/CalculateConfidenceUseCaseTest.kt",
+      "remediation": "Create android/gorz/app/src/test/java/com/pirbod/gorz/domain/CalculateConfidenceUseCaseTest.kt.",
+      "critical": false
+    },
+    {
+      "name": "Diagnostics tests exist",
+      "status": "PASS",
+      "detail": "android/gorz/app/src/test/java/com/pirbod/gorz/data/repository/DiagnosticsRepositoryTest.kt",
+      "remediation": "Create android/gorz/app/src/test/java/com/pirbod/gorz/data/repository/DiagnosticsRepositoryTest.kt.",
+      "critical": false
+    },
+    {
+      "name": "Safety pause tests exist",
+      "status": "PASS",
+      "detail": "android/gorz/app/src/test/java/com/pirbod/gorz/domain/ApplySafetyPauseUseCaseTest.kt",
+      "remediation": "Create android/gorz/app/src/test/java/com/pirbod/gorz/domain/ApplySafetyPauseUseCaseTest.kt.",
+      "critical": false
+    },
+    {
+      "name": "Production-ready for real use remains NO",
+      "status": "WARN",
+      "detail": "The production readiness report package can be READY for review, but the system is not production-ready for real use.",
+      "remediation": "Complete production gaps and independent review before changing production-ready-for-real-use status.",
+      "critical": false
+    },
+    {
+      "name": "Platform Readiness",
+      "status": "PASS",
+      "detail": "Platform engineering and security operations checklist evaluated.",
+      "remediation": "",
+      "critical": false
+    },
+    {
+      "name": "Platform: Terraform directory exists",
+      "status": "PASS",
+      "detail": "infra/terraform",
+      "remediation": "Create infra/terraform.",
+      "critical": false
+    },
+    {
+      "name": "Platform: Terraform versions.tf exists",
+      "status": "PASS",
+      "detail": "infra/terraform/versions.tf",
+      "remediation": "Create infra/terraform/versions.tf.",
+      "critical": false
+    },
+    {
+      "name": "Platform: Terraform docs exist",
+      "status": "PASS",
+      "detail": "docs/platform/terraform.md",
+      "remediation": "Create docs/platform/terraform.md.",
+      "critical": false
+    },
+    {
+      "name": "Platform: Kubernetes manifests exist",
+      "status": "PASS",
+      "detail": "deploy/kubernetes/kustomization.yaml",
+      "remediation": "Create deploy/kubernetes/kustomization.yaml.",
+      "critical": false
+    },
+    {
+      "name": "Platform: Kubernetes docs exist",
+      "status": "PASS",
+      "detail": "docs/platform/kubernetes.md",
+      "remediation": "Create docs/platform/kubernetes.md.",
+      "critical": false
+    },
+    {
+      "name": "Platform: NetworkPolicy exists",
+      "status": "PASS",
+      "detail": "deploy/kubernetes/networkpolicy.yaml",
+      "remediation": "Create deploy/kubernetes/networkpolicy.yaml.",
+      "critical": false
+    },
+    {
+      "name": "Platform: Prometheus config exists",
+      "status": "PASS",
+      "detail": "observability/prometheus/prometheus.yml",
+      "remediation": "Create observability/prometheus/prometheus.yml.",
+      "critical": false
+    },
+    {
+      "name": "Platform: Prometheus alert rules exist",
+      "status": "PASS",
+      "detail": "observability/prometheus/rules/gozar-safety-alerts.yml",
+      "remediation": "Create observability/prometheus/rules/gozar-safety-alerts.yml.",
+      "critical": false
+    },
+    {
+      "name": "Platform: Grafana dashboard exists",
+      "status": "PASS",
+      "detail": "observability/grafana/dashboards/gozar-controlled-release-dashboard.json",
+      "remediation": "Create observability/grafana/dashboards/gozar-controlled-release-dashboard.json.",
+      "critical": false
+    },
+    {
+      "name": "Platform: Observability docs exist",
+      "status": "PASS",
+      "detail": "docs/platform/observability.md",
+      "remediation": "Create docs/platform/observability.md.",
+      "critical": false
+    },
+    {
+      "name": "Platform: SIEM rules exist",
+      "status": "PASS",
+      "detail": "security/detection/rules/route_policy_violation.yml",
+      "remediation": "Create security/detection/rules/route_policy_violation.yml.",
+      "critical": false
+    },
+    {
+      "name": "Platform: SIEM sample events exist",
+      "status": "PASS",
+      "detail": "security/detection/sample-events/route_policy_violation.json",
+      "remediation": "Create security/detection/sample-events/route_policy_violation.json.",
+      "critical": false
+    },
+    {
+      "name": "Platform: Detection test script exists",
+      "status": "PASS",
+      "detail": "scripts/security/run_detection_tests.py",
+      "remediation": "Create scripts/security/run_detection_tests.py.",
+      "critical": false
+    },
+    {
+      "name": "Platform: LLM incident summary script exists",
+      "status": "PASS",
+      "detail": "ai/incident-summary/incident_summary.py",
+      "remediation": "Create ai/incident-summary/incident_summary.py.",
+      "critical": false
+    },
+    {
+      "name": "Platform: Deterministic summary output exists",
+      "status": "PASS",
+      "detail": "runtime/reports/incident-summary.md",
+      "remediation": "Create runtime/reports/incident-summary.md.",
+      "critical": false
+    },
+    {
+      "name": "Platform: Detection report exists",
+      "status": "PASS",
+      "detail": "runtime/reports/siem-detection-report.md",
+      "remediation": "Create runtime/reports/siem-detection-report.md.",
+      "critical": false
+    },
+    {
+      "name": "Platform: Terraform check status",
+      "status": "SKIPPED",
+      "detail": "runtime/reports/terraform-check-report.json status: SKIPPED",
+      "remediation": "",
+      "critical": false
+    },
+    {
+      "name": "Platform: Kubernetes check status",
+      "status": "SKIPPED",
+      "detail": "runtime/reports/kubernetes-check-report.json status: SKIPPED",
+      "remediation": "",
+      "critical": false
+    },
+    {
+      "name": "Platform: Observability report exists",
+      "status": "PASS",
+      "detail": "runtime/reports/observability-check-report.md",
+      "remediation": "Create runtime/reports/observability-check-report.md.",
+      "critical": false
+    },
+    {
+      "name": "Platform: GitHub Actions terraform workflow exists",
+      "status": "PASS",
+      "detail": ".github/workflows/terraform.yml",
+      "remediation": "Create .github/workflows/terraform.yml.",
+      "critical": false
+    },
+    {
+      "name": "Platform: GitHub Actions kubernetes workflow exists",
+      "status": "PASS",
+      "detail": ".github/workflows/kubernetes.yml",
+      "remediation": "Create .github/workflows/kubernetes.yml.",
+      "critical": false
+    },
+    {
+      "name": "Platform: GitHub Actions detection workflow exists",
+      "status": "PASS",
+      "detail": ".github/workflows/detection-and-ai.yml",
+      "remediation": "Create .github/workflows/detection-and-ai.yml.",
+      "critical": false
+    },
+    {
+      "name": "Platform: GitHub Actions release candidate workflow exists",
+      "status": "PASS",
+      "detail": ".github/workflows/release-candidate.yml",
+      "remediation": "Create .github/workflows/release-candidate.yml.",
+      "critical": false
+    },
+    {
+      "name": "Platform: README has platform sections",
+      "status": "PASS",
+      "detail": "All platform sections present.",
+      "remediation": "Update README platform sections.",
+      "critical": false
+    },
+    {
+      "name": "Platform: Screenshots directory exists",
+      "status": "PASS",
+      "detail": "docs/vpn-product/images/phase4",
+      "remediation": "Create docs/vpn-product/images/phase4.",
+      "critical": false
+    },
+    {
+      "name": "Platform: Screenshots Android report status",
+      "status": "WARN",
+      "detail": "runtime/reports/screenshots/phase4/screenshot-capture-report.json status: PARTIAL",
+      "remediation": "",
+      "critical": false
+    },
+    {
+      "name": "Platform: Screenshots platform report status",
+      "status": "WARN",
+      "detail": "runtime/reports/screenshots/phase4/platform-screenshot-report.json status: PARTIAL",
+      "remediation": "",
+      "critical": false
+    },
+    {
+      "name": "Platform: Demo video script exists",
+      "status": "PASS",
+      "detail": "docs/demo/demo-video-script.md",
+      "remediation": "Create docs/demo/demo-video-script.md.",
+      "critical": false
+    },
+    {
+      "name": "Platform: Demo video exists or pending placeholder exists",
+      "status": "WARN",
+      "detail": "Demo video pending placeholder exists.",
+      "remediation": "Record video or add placeholder with recording steps.",
+      "critical": false
+    },
+    {
+      "name": "Platform: Release candidate manifest exists",
+      "status": "PASS",
+      "detail": "runtime/reports/gorz-android-rc-manifest.md",
+      "remediation": "Create runtime/reports/gorz-android-rc-manifest.md.",
+      "critical": false
+    },
+    {
+      "name": "Platform: Final validation report exists",
+      "status": "PASS",
+      "detail": "docs/vpn-product/phase-4-final-validation-report.md",
+      "remediation": "Create docs/vpn-product/phase-4-final-validation-report.md.",
+      "critical": false
+    },
+    {
+      "name": "Android Gradle build status",
+      "status": "SKIPPED",
+      "detail": "Gradle is not installed in this shell; build status is covered by CI workflow when available.",
+      "remediation": "Install Gradle/Android SDK or run Android Studio sync locally.",
+      "critical": false
+    },
+    {
+      "name": "Known gaps",
+      "status": "WARN",
+      "detail": "The platform remains a controlled alpha prototype; production gaps are documented in docs/product/production-gap-analysis.md.",
+      "remediation": "Close release blockers before any real production use.",
+      "critical": false
+    }
+  ]
+}

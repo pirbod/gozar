@@ -1,0 +1,78 @@
+{
+  "generatedAt": "2026-05-24T20:28:49.473881+00:00",
+  "status": "PASS",
+  "rulesLoaded": 8,
+  "eventsLoaded": 4,
+  "results": [
+    {
+      "ruleId": "GOZAR-BACKEND-001",
+      "title": "Backend Admin Token Failure",
+      "severity": "medium",
+      "matched": true,
+      "expected_sample_exists": false,
+      "matchingEvents": []
+    },
+    {
+      "ruleId": "GOZAR-CI-001",
+      "title": "Emulator Smoke Failure",
+      "severity": "low",
+      "matched": true,
+      "expected_sample_exists": false,
+      "matchingEvents": []
+    },
+    {
+      "ruleId": "GOZAR-EVIDENCE-001",
+      "title": "Evidence Redaction Failure",
+      "severity": "critical",
+      "matched": true,
+      "expected_sample_exists": false,
+      "matchingEvents": []
+    },
+    {
+      "ruleId": "GOZAR-PROFILE-001",
+      "title": "Profile Validation Failure",
+      "severity": "medium",
+      "matched": true,
+      "expected_sample_exists": true,
+      "matchingEvents": [
+        "profile_validation_failure"
+      ]
+    },
+    {
+      "ruleId": "GOZAR-ROUTE-001",
+      "title": "Route Policy Violation",
+      "severity": "high",
+      "matched": true,
+      "expected_sample_exists": true,
+      "matchingEvents": [
+        "route_policy_violation"
+      ]
+    },
+    {
+      "ruleId": "GOZAR-SAFETY-001",
+      "title": "Safety Pause Enabled",
+      "severity": "medium",
+      "matched": true,
+      "expected_sample_exists": true,
+      "matchingEvents": [
+        "safety_pause_enabled"
+      ]
+    },
+    {
+      "ruleId": "GOZAR-DEMO-001",
+      "title": "Suspicious Demo State Change",
+      "severity": "medium",
+      "matched": true,
+      "expected_sample_exists": false,
+      "matchingEvents": []
+    },
+    {
+      "ruleId": "GOZAR-ANDROID-001",
+      "title": "Unsafe Android Permission Detected",
+      "severity": "high",
+      "matched": true,
+      "expected_sample_exists": false,
+      "matchingEvents": []
+    }
+  ]
+}

@@ -1,213 +1,143 @@
 # Phase 4 Final Validation Report
 
-## 1. Executive Summary
+## Executive Summary
 
-Phase 4 closes the four-phase roadmap as a controlled release readiness milestone.
+Phase 4 closes the four-phase roadmap as a controlled prototype release candidate. The repo now contains Android UX, local profile lifecycle, evidence export, diagnostics, Terraform, Kubernetes, Prometheus/Grafana assets, SIEM-style detection, deterministic incident summaries, CI/CD, screenshots or labelled placeholders, demo-video planning, reviewer walkthrough, and readiness reporting.
 
-## 2. Four-Phase Roadmap Closure
+This report is evidence for review, not a production security claim.
 
-See `docs/product/four-phase-roadmap.md`. There is no Phase 5 in this roadmap.
+## Safety Boundary
 
-## 3. Scope
+Gozar/Gorz is for authorized local demo, research, review, and stakeholder evaluation only. It is not a production VPN, not a public routing product, and not suitable for sensitive communication.
 
-Controlled prototype release candidate for demo, research, security review, company evaluation, academic review, and stakeholder presentation.
+## Four-Phase Roadmap
 
-## 4. Non-Goals
+Roadmap: [docs/product/four-phase-roadmap.md](../product/four-phase-roadmap.md)
 
-No public traffic forwarding, no production security claim, no public routing product, and no circumvention tool claim.
+There is no Phase 5 in this roadmap.
 
-## 5. Environment
-
-Local repository, Android Studio or Gradle/Android SDK when available, optional Pixel 2 API 30 emulator.
-
-## 6. App Version
-
-`0.4.0-rc1`
-
-## 7. Commit SHA Placeholder
-
-Filled by release candidate manifest when generated.
-
-## 8. Android Studio Version Placeholder
-
-Record manually during final reviewer run.
-
-## 9. Emulator Model
-
-Pixel 2 managed device.
-
-## 10. API Level
-
-API 30.
-
-## 11. Backend Mode Tested
-
-Local Profile API at `http://10.0.2.2:8095` when available.
-
-## 12. Offline Mode Tested
-
-Offline demo mode is supported and does not require backend availability.
-
-## 13. Commands Run
-
-Expected commands:
+## Commands
 
 ```bash
 make phase4-check
-make phase4-screenshot-report
-make android-emulator-smoke-report
+make phase4-10of10-check
+make production-readiness-check
 make release-candidate-manifest
+make phase4-example-reports
 ```
 
-## 14. Unit Test Results
+## Example Reports
 
-Android unit tests require Gradle and Android SDK. If unavailable, report SKIPPED.
+Report directory: [docs/reports/examples/](../reports/examples/)
 
-## 15. Emulator Smoke Results
+| Evidence | Link |
+| --- | --- |
+| Production readiness report | [production-readiness-report.md](../reports/examples/production-readiness-report.md) |
+| Android emulator smoke report | [android-emulator-smoke-report.md](../reports/examples/android-emulator-smoke-report.md) |
+| Screenshot capture report | [screenshot-capture-report.md](../reports/examples/screenshot-capture-report.md) |
+| Platform screenshot report | [platform-screenshot-report.md](../reports/examples/platform-screenshot-report.md) |
+| Terraform report | [terraform-check-report.md](../reports/examples/terraform-check-report.md) |
+| Kubernetes report | [kubernetes-check-report.md](../reports/examples/kubernetes-check-report.md) |
+| Observability report | [observability-check-report.md](../reports/examples/observability-check-report.md) |
+| SIEM detection report | [siem-detection-report.md](../reports/examples/siem-detection-report.md) |
+| Deterministic incident summary | [incident-summary.md](../reports/examples/incident-summary.md) |
+| Release candidate manifest | [gorz-android-rc-manifest.md](../reports/examples/gorz-android-rc-manifest.md) |
+| Phase 4 check summary | [phase4-check-summary.md](../reports/examples/phase4-check-summary.md) |
+| Phase 4 10/10 check | [phase4-10of10-check.md](../reports/examples/phase4-10of10-check.md) |
 
-See `runtime/reports/android-emulator-smoke-report.md`.
+## Screenshot Status
 
-## 16. Screenshot Capture Results
+Status README: [docs/vpn-product/images/phase4/README.md](images/phase4/README.md)
 
-See `runtime/reports/screenshots/phase4/screenshot-capture-report.md`.
+| Screenshot | Current status |
+| --- | --- |
+| `phase4-home.png` | REAL or PLACEHOLDER per screenshot status README |
+| `phase4-connect-flow.png` | REAL or PLACEHOLDER per screenshot status README |
+| `phase4-session.png` | REAL or PLACEHOLDER per screenshot status README |
+| `phase4-confidence.png` | REAL or PLACEHOLDER per screenshot status README |
+| `phase4-route-policy.png` | REAL or PLACEHOLDER per screenshot status README |
+| `phase4-diagnostics.png` | REAL or PLACEHOLDER per screenshot status README |
+| `phase4-evidence.png` | REAL or PLACEHOLDER per screenshot status README |
+| `phase4-safety-pause.png` | REAL or PLACEHOLDER per screenshot status README |
+| `phase4-audit.png` | REAL or PLACEHOLDER per screenshot status README |
+| `phase4-settings.png` | REAL or PLACEHOLDER per screenshot status README |
+| `phase4-storage-mode.png` | REAL or PLACEHOLDER per screenshot status README |
+| `phase4-emulator-smoke-result.png` | REAL or PLACEHOLDER per screenshot status README |
+| `phase4-github-actions.png` | REAL or PLACEHOLDER per screenshot status README |
+| `phase4-terraform-validate.png` | REAL or PLACEHOLDER per screenshot status README |
+| `phase4-kubernetes-manifests.png` | REAL or PLACEHOLDER per screenshot status README |
+| `phase4-prometheus-alerts.png` | REAL or PLACEHOLDER per screenshot status README |
+| `phase4-grafana-dashboard.png` | REAL or PLACEHOLDER per screenshot status README |
+| `phase4-siem-detection-report.png` | REAL or PLACEHOLDER per screenshot status README |
+| `phase4-incident-summary.png` | REAL or PLACEHOLDER per screenshot status README |
+| `phase4-production-readiness-report.png` | REAL or PLACEHOLDER per screenshot status README |
 
-## 17. Android Manifest Review
+Placeholders are visibly labelled `PLACEHOLDER - screenshot capture pending` and are not product proof.
 
-Manifest permission checks are covered by `scripts/check_android_manifest_permissions.py`.
+## Demo Video Status
 
-## 18. Route Policy Evidence
+Demo video link: [docs/demo/demo-video-link.md](../demo/demo-video-link.md)
 
-Route guard blocks `0.0.0.0/0`, `::/0`, public IP endpoints, public hostnames, wildcard routes, and unsafe labels.
+Status: `PARTIAL` until `docs/demo/gozar-gorz-phase4-demo.mp4` exists. The script, shot list, checklist, recording commands, subtitles, and placeholder are complete.
 
-## 19. Confidence Engine Evidence
+## CI Workflow Status
 
-Confidence engine is deterministic, explainable, and blocks unsafe states.
+CI documentation: [docs/ci/README.md](../ci/README.md)
 
-## 20. Evidence Package V2 Sample
+Manual workflow status: [docs/ci/workflow-status.md](../ci/workflow-status.md)
 
-Generate from the Android Evidence screen or unit tests. The JSON includes checksum, redaction summary, confidence, diagnostics, route policy, safety pause, storage mode, and screenshot references.
+No live CI passing status is claimed in this report unless the manual status table is updated from a verified run.
 
-## 21. Safety Pause Evidence
+## Reviewer Walkthrough
 
-Safety pause blocks connect, records pause/resume events, and appears in diagnostics and evidence.
+15-minute reviewer path: [docs/demo/reviewer-walkthrough.md](../demo/reviewer-walkthrough.md)
 
-## 22. Diagnostics Evidence
+## Release Candidate Manifest
 
-Diagnostics return `localOnly: true` and block non-local Profile API endpoints.
+Runtime manifest: `runtime/reports/gorz-android-rc-manifest.md`
 
-## 23. Secure Storage Status
+Example manifest: [docs/release/gorz-android-rc-manifest-example.md](../release/gorz-android-rc-manifest-example.md)
 
-Demo storage is default. Android Keystore storage exists as an experimental path and requires more validation before real sensitive usage.
+Report copy: [docs/reports/examples/gorz-android-rc-manifest.md](../reports/examples/gorz-android-rc-manifest.md)
 
-## 24. Backend Contract Validation
+## Evidence Checklist
 
-See `docs/backend/android-phase-4-backend-contract.md`.
+| Area | Evidence |
+| --- | --- |
+| Android controlled release readiness | Android app docs, tests, emulator report, screenshots/status README |
+| Route safety | Route guard code, tests, screenshot/status README |
+| Confidence engine | Android model and tests |
+| Evidence Package V2 | Android evidence model, redaction tests, screenshot/status README |
+| Safety pause | Android state model, tests, screenshot/status README |
+| Secure storage abstraction | Android secure storage interface and implementations |
+| Terraform | Terraform docs and generated report |
+| Kubernetes | Manifests, overlays, NetworkPolicy, generated report |
+| Observability | Prometheus rules, Grafana dashboards, generated report |
+| SIEM-style detection | Detection rules, redacted sample events, generated report |
+| Incident summaries | Deterministic summary script and generated summary |
+| GitHub Actions | Workflow files and CI docs |
+| Demo video | Pending link plus complete recording package |
+| Reviewer experience | README, walkthrough, reports, final validation report |
 
-## 25. Privacy Review Result
-
-See `docs/privacy/android-phase-4-privacy-review.md`.
-
-## 26. Threat Model Result
-
-See `docs/security/android-phase-4-threat-model.md`.
-
-## 27. Release Artifact Manifest
-
-See `runtime/reports/gorz-android-rc-manifest.md` after generation.
-
-## 28. Release Blocker Status
-
-See `docs/product/release-blocker-checklist.md`.
-
-## 29. Known Issues
-
-Android Gradle/SDK may be unavailable in some local shells. Emulator and screenshots may be SKIPPED with reason. Release signing is not configured.
-
-## 30. Production Gaps
-
-Production readiness remains NOT_READY. See `docs/product/production-gap-analysis.md`.
-
-## 31. Final Go/No-Go Decision
+## Final Decision
 
 - Four-phase roadmap complete: YES
-- Demo-ready: YES
-- Controlled release candidate: PARTIAL until Android toolchain evidence is generated
+- Controlled release candidate structure: YES
+- Controlled release evidence: PARTIAL
+- Demo-ready: PARTIAL
 - Production-ready: NO
 - Public routing product: NO
 - Circumvention tool: NO
 
-## 32. Terraform Validation
+## What remains before real production
 
-See `runtime/reports/terraform-check-report.md`. Terraform validates when installed; otherwise the report is SKIPPED.
-
-## 33. Kubernetes Validation
-
-See `runtime/reports/kubernetes-check-report.md`. Manifests include ClusterIP services, probes, resource requests and limits, and NetworkPolicy.
-
-## 34. Observability Validation
-
-See `runtime/reports/observability-check-report.md`. Prometheus and Grafana assets are present under `observability/`.
-
-## 35. Prometheus Alerts
-
-Alerts include safety pause, route policy violation, profile validation failures, evidence redaction failure, backend unavailable, emulator smoke failed, and production readiness failed.
-
-## 36. Grafana Dashboard
-
-Dashboards include Controlled Release Overview and Security Operations View.
-
-## 37. SIEM Detection Logic
-
-See `runtime/reports/siem-detection-report.md` and `docs/security/siem-detection-logic.md`.
-
-## 38. LLM Incident Summary
-
-The incident summary demo uses deterministic offline mode by default. See `runtime/reports/incident-summary.md`.
-
-## 39. GitHub Actions
-
-Workflows cover CI, Android, emulator smoke, production readiness, Terraform, Kubernetes, detection/AI, and release-candidate artifacts.
-
-## 40. Platform Screenshots
-
-See `runtime/reports/screenshots/phase4/platform-screenshot-report.md`. Missing desktop captures are SKIPPED honestly.
-
-## 41. Demo Video
-
-Demo video is pending unless `docs/demo/gozar-gorz-phase4-demo.mp4` exists. The script, shot list, checklist, and placeholder are under `docs/demo/`.
-
-## 42. README Review
-
-README has been rewritten for controlled release candidate review and references platform engineering, security operations, screenshots, demo video, and readiness commands.
-
-## Phase 4 Acceptance Criteria Addendum
-
-61. Terraform layer exists and validates or reports SKIPPED.
-62. Kubernetes layer exists and validates or reports SKIPPED.
-63. Prometheus or Grafana assets exist.
-64. SIEM-style detection logic exists.
-65. LLM-generated incident summary demo exists.
-66. GitHub Actions workflows cover the main project areas.
-67. README is clean, complete, and demo-ready.
-68. Screenshots are captured or honestly reported as SKIPPED.
-69. Demo video script and placeholder exist.
-70. Demo video file exists or is clearly marked as pending.
-71. Final validation report includes platform engineering and security operations layers.
-72. Controlled release readiness includes Android, backend, infrastructure, observability, detection, incident summary, CI, docs, screenshots, and demo video.
-
-## Screenshot References
-
-- Home: `docs/vpn-product/images/phase4/phase4-home.png`
-- Connect flow: `docs/vpn-product/images/phase4/phase4-connect-flow.png`
-- Session: `docs/vpn-product/images/phase4/phase4-session.png`
-- Confidence: `docs/vpn-product/images/phase4/phase4-confidence.png`
-- Route Policy: `docs/vpn-product/images/phase4/phase4-route-policy.png`
-- Diagnostics: `docs/vpn-product/images/phase4/phase4-diagnostics.png`
-- Evidence: `docs/vpn-product/images/phase4/phase4-evidence.png`
-- Safety Pause: `docs/vpn-product/images/phase4/phase4-safety-pause.png`
-- Audit: `docs/vpn-product/images/phase4/phase4-audit.png`
-- Settings: `docs/vpn-product/images/phase4/phase4-settings.png`
-- Storage mode: `docs/vpn-product/images/phase4/phase4-storage-mode.png`
-- Emulator smoke result: `docs/vpn-product/images/phase4/phase4-emulator-smoke-result.png`
-
-If screenshots are skipped, reference `runtime/reports/screenshots/phase4/screenshot-capture-report.md` and follow the manual capture instructions in `docs/vpn-product/phase-4-screenshot-guide.md`.
+- Real production crypto review
+- Android Keystore full validation
+- Release signing and key custody
+- Tenant-aware backend auth
+- Legal review
+- Privacy policy review
+- Independent security review
+- Operational monitoring
+- Retention policy
+- Abuse-prevention governance

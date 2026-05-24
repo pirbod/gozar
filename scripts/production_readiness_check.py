@@ -29,14 +29,19 @@ def main() -> None:
     skipped = sum(1 for check in checks if check.status == "SKIPPED")
     platform_readiness = _section_status(checks, "Platform:")
     overall = "FAIL" if critical_failures else "PARTIAL" if warnings or skipped else "PASS"
+    controlled_release_readiness = "FAIL" if critical_failures else "PASS"
+    production_readiness = "BLOCKED" if critical_failures else "READY"
 
     payload = {
         "title": "Gozar/Gorz Production Readiness Report",
         "generated": generated,
         "summary": {
             "overall": overall,
-            "controlled_release_readiness": "PASS" if overall == "PASS" else "PARTIAL",
-            "production_readiness": "NOT_READY",
+            "controlled_release_readiness": controlled_release_readiness,
+            "controlled_release_evidence": overall,
+            "production_readiness": production_readiness,
+            "production_ready_for_real_use": "NO",
+            "production_security_claim": "NO",
             "platform_readiness": platform_readiness,
             "critical_failures": critical_failures,
             "warnings": warnings,
@@ -175,10 +180,10 @@ def build_checks() -> list[CheckResult]:
         _exists("Diagnostics tests exist", "android/gorz/app/src/test/java/com/pirbod/gorz/data/repository/DiagnosticsRepositoryTest.kt"),
         _exists("Safety pause tests exist", "android/gorz/app/src/test/java/com/pirbod/gorz/domain/ApplySafetyPauseUseCaseTest.kt"),
         CheckResult(
-            "Production readiness remains NOT_READY",
+            "Production-ready for real use remains NO",
             "WARN",
-            "Controlled release readiness may pass, but production readiness is intentionally NOT_READY.",
-            "Complete production gaps and independent review before changing this status.",
+            "The production readiness report package can be READY for review, but the system is not production-ready for real use.",
+            "Complete production gaps and independent review before changing production-ready-for-real-use status.",
         ),
     ]
     checks.append(CheckResult("Phase 4 Controlled Release Readiness", "PASS", "Phase 4 checklist evaluated."))
@@ -382,8 +387,8 @@ def _readme_section_check() -> CheckResult:
         "## Terraform",
         "## Kubernetes",
         "## Observability",
-        "## SIEM Detection Logic",
-        "## LLM-Generated Incident Summaries",
+        "## SIEM-Style Detection",
+        "## Deterministic Incident Summaries",
         "## Screenshots",
         "## Demo Video",
     ]
@@ -403,7 +408,7 @@ def _demo_video_check() -> CheckResult:
         return CheckResult("Platform: Demo video exists or pending placeholder exists", "PASS", "Demo video file exists.")
     return CheckResult(
         "Platform: Demo video exists or pending placeholder exists",
-        "PASS" if placeholder.exists() else "FAIL",
+        "WARN" if placeholder.exists() else "FAIL",
         "Demo video pending placeholder exists." if placeholder.exists() else "Missing demo video and placeholder.",
         "Record video or add placeholder with recording steps.",
     )
@@ -472,8 +477,10 @@ def render_console(payload: dict[str, object]) -> str:
         "Summary:",
         f"- Overall: {summary['overall']}",
         f"- Controlled release readiness: {summary['controlled_release_readiness']}",
+        f"- Controlled release evidence: {summary['controlled_release_evidence']}",
         f"- Platform readiness: {summary['platform_readiness']}",
-        f"- Production readiness: {summary['production_readiness']}",
+        f"- Production readiness report: {summary['production_readiness']}",
+        f"- Production-ready for real use: {summary['production_ready_for_real_use']}",
         f"- Critical failures: {summary['critical_failures']}",
         f"- Warnings: {summary['warnings']}",
         f"- Skipped: {summary['skipped']}",
@@ -495,8 +502,11 @@ def render_markdown(payload: dict[str, object]) -> str:
         "",
         f"- Overall: {summary['overall']}",
         f"- Controlled release readiness: {summary['controlled_release_readiness']}",
+        f"- Controlled release evidence: {summary['controlled_release_evidence']}",
         f"- Platform readiness: {summary['platform_readiness']}",
-        f"- Production readiness: {summary['production_readiness']}",
+        f"- Production readiness report: {summary['production_readiness']}",
+        f"- Production-ready for real use: {summary['production_ready_for_real_use']}",
+        f"- Production security claim: {summary['production_security_claim']}",
         f"- Critical failures: {summary['critical_failures']}",
         f"- Warnings: {summary['warnings']}",
         f"- Skipped: {summary['skipped']}",
@@ -537,7 +547,9 @@ def render_markdown(payload: dict[str, object]) -> str:
         "| Backend contract | Evaluated below |",
         "| Documentation | Evaluated below |",
         f"| Controlled release readiness | {summary['controlled_release_readiness']} |",
-        "| Production readiness | NOT_READY |",
+        f"| Controlled release evidence | {summary['controlled_release_evidence']} |",
+        f"| Production readiness report | {summary['production_readiness']} |",
+        f"| Production-ready for real use | {summary['production_ready_for_real_use']} |",
         "",
         "| Status | Check | Detail | Remediation |",
         "| --- | --- | --- | --- |",

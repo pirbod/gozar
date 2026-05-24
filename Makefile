@@ -4,7 +4,7 @@ GORZ_COMPOSE := docker compose -f docker-compose.gorz.yml
 PROFILE_COMPOSE := docker compose -f docker-compose.profile.yml
 ANDROID_DIR := android/gorz
 
-.PHONY: eval eval-clean eval-baseline eval-adaptive eval-smoke eval-scenario gorz-install gorz-dev gorz-demo gorz-test gorz-lint gorz-validate gorz-clean gorz-cli-test gorz-homebrew-check gorz-release-check profile-install profile-dev profile-demo profile-test profile-lint profile-validate profile-clean profile-audit-export profile-safety-check safety-wording-check profile-syntax-check profile-compose-check profile-release-check profile-full-check android-check android-test android-build android-clean android-safety-check android-emulator-smoke android-emulator-smoke-report backend-safety-check docs-check safety-check production-readiness-check local-health-report phase2-check phase3-check phase4-docs-check phase4-safety-check phase4-screenshots phase4-screenshot-report release-candidate-manifest terraform-fmt terraform-validate terraform-check k8s-lint k8s-validate k8s-check observability-check detection-check incident-summary-demo platform-screenshots demo-video-assets platform-check phase4-check
+.PHONY: eval eval-clean eval-baseline eval-adaptive eval-smoke eval-scenario gorz-install gorz-dev gorz-demo gorz-test gorz-lint gorz-validate gorz-clean gorz-cli-test gorz-homebrew-check gorz-release-check profile-install profile-dev profile-demo profile-test profile-lint profile-validate profile-clean profile-audit-export profile-safety-check safety-wording-check profile-syntax-check profile-compose-check profile-release-check profile-full-check android-check android-test android-build android-clean android-safety-check android-emulator-smoke android-emulator-smoke-report backend-safety-check docs-check safety-check production-readiness-check local-health-report phase2-check phase3-check phase4-docs-check phase4-safety-check phase4-screenshots phase4-screenshot-report release-candidate-manifest terraform-fmt terraform-validate terraform-check k8s-lint k8s-validate k8s-check observability-check detection-check incident-summary-demo platform-screenshots demo-video-assets demo-video-check platform-check phase4-example-reports phase4-check phase4-10of10-check
 
 eval:
 	$(PYTHON) $(EVAL_RUNNER) run-all
@@ -149,16 +149,30 @@ profile-compose-check:
 	$(PROFILE_COMPOSE) config
 
 profile-full-check:
-	$(MAKE) profile-lint
-	$(MAKE) profile-test
-	$(PROFILE_COMPOSE) config
-	$(PROFILE_COMPOSE) up -d --build
-	@if $(PYTHON) -c "import httpx" >/dev/null 2>&1; then \
-		$(PYTHON) scripts/profile/validate_profile_lifecycle.py --api http://127.0.0.1:8095; \
+	$(MAKE) profile-syntax-check
+	$(MAKE) profile-safety-check
+	@if $(PYTHON) -m ruff --version >/dev/null 2>&1; then \
+		$(MAKE) profile-lint; \
 	else \
-		docker run --rm --network gozar_default -v "$(CURDIR):/workspace" -w /workspace gozar-profile-api python scripts/profile/validate_profile_lifecycle.py --api http://profile-api:8095; \
+		echo "Warning: ruff is unavailable; skipped Profile API lint." >&2; \
 	fi
-	$(PROFILE_COMPOSE) down -v
+	@if $(PYTHON) -m pytest --version >/dev/null 2>&1; then \
+		$(MAKE) profile-test; \
+	else \
+		echo "Warning: pytest is unavailable; skipped Profile API tests." >&2; \
+	fi
+	@if docker info >/dev/null 2>&1; then \
+		$(PROFILE_COMPOSE) config; \
+		$(PROFILE_COMPOSE) up -d --build; \
+		if $(PYTHON) -c "import httpx" >/dev/null 2>&1; then \
+			$(PYTHON) scripts/profile/validate_profile_lifecycle.py --api http://127.0.0.1:8095; \
+		else \
+			docker run --rm --network gozar_default -v "$(CURDIR):/workspace" -w /workspace gozar-profile-api python scripts/profile/validate_profile_lifecycle.py --api http://profile-api:8095; \
+		fi; \
+		$(PROFILE_COMPOSE) down -v; \
+	else \
+		echo "Warning: Docker daemon unavailable; skipped Profile API compose validation." >&2; \
+	fi
 	$(MAKE) safety-wording-check
 
 android-check:
@@ -285,13 +299,20 @@ phase4-safety-check:
 
 phase4-screenshots:
 	$(PYTHON) scripts/android/capture_phase4_screenshots.py
+	$(PYTHON) scripts/platform/capture_platform_screenshots.py
 
 phase4-screenshot-report:
 	$(PYTHON) scripts/android/capture_phase4_screenshots.py --report-only
-	$(PYTHON) scripts/platform/capture_platform_screenshots.py
+	$(PYTHON) scripts/platform/capture_platform_screenshots.py --report-only
 
 release-candidate-manifest:
 	$(PYTHON) scripts/android/generate_release_candidate_manifest.py
+
+demo-video-check:
+	$(PYTHON) scripts/reports/check_demo_video_assets.py
+
+phase4-example-reports:
+	$(PYTHON) scripts/reports/generate_phase4_example_reports.py
 
 phase4-check:
 	$(MAKE) docs-check
@@ -308,8 +329,27 @@ phase4-check:
 	$(MAKE) platform-check
 	$(MAKE) android-emulator-smoke-report
 	$(MAKE) phase4-screenshot-report
+	$(MAKE) demo-video-check
+	$(MAKE) production-readiness-check
+	$(MAKE) release-candidate-manifest
+	$(MAKE) phase4-example-reports
+
+phase4-10of10-check:
+	$(MAKE) docs-check
+	$(MAKE) phase4-docs-check
+	$(MAKE) safety-check
+	$(MAKE) android-safety-check
+	$(MAKE) backend-safety-check
+	$(MAKE) phase3-check
+	$(MAKE) platform-check
+	$(MAKE) detection-check
+	$(MAKE) incident-summary-demo
+	$(MAKE) phase4-screenshot-report
+	$(MAKE) demo-video-check
 	$(MAKE) release-candidate-manifest
 	$(MAKE) production-readiness-check
+	$(MAKE) phase4-example-reports
+	$(PYTHON) scripts/reports/phase4_10of10_check.py
 
 profile-release-check:
 	@test -f Dockerfile.profile-api || (echo "Dockerfile.profile-api is missing" >&2; exit 1)

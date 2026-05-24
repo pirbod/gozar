@@ -24,8 +24,14 @@ jobs:
         run: ./gradlew assembleDebug
       - name: Screenshot report
         run: make phase4-screenshot-report
+      - name: Demo video package check
+        run: make demo-video-check
+      - name: Production readiness report
+        run: make production-readiness-check
       - name: Release candidate manifest
         run: make release-candidate-manifest
+      - name: Example reports
+        run: make phase4-example-reports
       - name: Upload reports and APK
         if: always()
         uses: actions/upload-artifact@v4
