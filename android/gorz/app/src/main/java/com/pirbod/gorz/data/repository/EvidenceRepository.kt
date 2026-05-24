@@ -36,10 +36,11 @@ class EvidenceRepository(
         operatorNote: String = "",
         screenshotReferences: List<String> = emptyList(),
     ): EvidencePackage {
-        val routePolicy = validation?.routePolicyResult ?: profile?.let { RoutePolicyGuard.evaluate(it) }
+        val routePolicy = validation?.routePolicyResult ?: profile?.let { RoutePolicyGuard.evaluate(it, clock) }
             ?: RoutePolicyGuard.evaluate(
                 requestedRoute = RoutePolicyGuard.AppliedSafeRoute,
                 endpoint = RoutePolicyGuard.ControlledLabEndpoint,
+                clock = clock,
             )
         val unsigned = EvidencePackageV2(
             schemaVersion = "2",

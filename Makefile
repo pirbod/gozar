@@ -306,10 +306,10 @@ phase4-check:
 		echo "Warning: Gradle or Android SDK not available; skipped Android unit tests and build." >&2; \
 	fi
 	$(MAKE) platform-check
-	$(MAKE) production-readiness-check
 	$(MAKE) android-emulator-smoke-report
 	$(MAKE) phase4-screenshot-report
 	$(MAKE) release-candidate-manifest
+	$(MAKE) production-readiness-check
 
 profile-release-check:
 	@test -f Dockerfile.profile-api || (echo "Dockerfile.profile-api is missing" >&2; exit 1)
