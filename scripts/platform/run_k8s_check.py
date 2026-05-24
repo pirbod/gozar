@@ -20,14 +20,20 @@ def main() -> int:
         print("Kubernetes check: SKIPPED")
         return 0
     rendered_path = REPORT_DIR / "gozar-k8s-rendered.yaml"
-    lint = subprocess.run([kubectl, "kustomize", "deploy/kubernetes/overlays/local"], cwd=ROOT, text=True, capture_output=True, check=False)
+    kustomize_command = [
+        kubectl,
+        "kustomize",
+        "--load-restrictor=LoadRestrictionsNone",
+        "deploy/kubernetes/overlays/local",
+    ]
+    lint = subprocess.run(kustomize_command, cwd=ROOT, text=True, capture_output=True, check=False)
     if lint.stdout:
         rendered_path.write_text(lint.stdout, encoding="utf-8")
-    results = [{"command": "kubectl kustomize deploy/kubernetes/overlays/local", "exitCode": lint.returncode, "output": tail(lint.stdout + lint.stderr)}]
+    results = [{"command": "kubectl kustomize --load-restrictor=LoadRestrictionsNone deploy/kubernetes/overlays/local", "exitCode": lint.returncode, "output": tail(lint.stdout + lint.stderr)}]
     status = "PASS" if lint.returncode == 0 else "FAIL"
     if status == "PASS":
-        dry = subprocess.run([kubectl, "apply", "--dry-run=client", "--validate=false", "-k", "deploy/kubernetes/overlays/local"], cwd=ROOT, text=True, capture_output=True, check=False)
-        results.append({"command": "kubectl apply --dry-run=client --validate=false -k deploy/kubernetes/overlays/local", "exitCode": dry.returncode, "output": tail(dry.stdout + dry.stderr)})
+        dry = subprocess.run([kubectl, "apply", "--dry-run=client", "--validate=false", "-f", str(rendered_path)], cwd=ROOT, text=True, capture_output=True, check=False)
+        results.append({"command": f"kubectl apply --dry-run=client --validate=false -f {rendered_path.relative_to(ROOT)}", "exitCode": dry.returncode, "output": tail(dry.stdout + dry.stderr)})
         status = "PASS" if dry.returncode == 0 else "FAIL"
     payload = payload_for(status, "Kubernetes manifests rendered and dry-run validated." if status == "PASS" else "Kubernetes check failed.", str(rendered_path), results)
     write_reports(payload)
