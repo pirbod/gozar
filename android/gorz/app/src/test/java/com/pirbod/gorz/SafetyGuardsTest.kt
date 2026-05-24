@@ -31,6 +31,28 @@ class SafetyGuardsTest {
     }
 
     @Test
+    fun rejectsIpv6DefaultRoute() {
+        val payload = samplePayload(
+            config = JsonObject(
+                mapOf(
+                    "kind" to JsonPrimitive("wireguard_like_demo"),
+                    "routing" to JsonObject(mapOf("routes" to JsonArray(listOf(JsonPrimitive("::/0"))))),
+                ),
+            ),
+        )
+
+        assertThrows(IllegalArgumentException::class.java) {
+            SafetyGuards.validateEnvelope(
+                sampleEnvelope(),
+                payload,
+                sampleValidation(),
+                "pkh_android",
+                requestedMode = "demo_full_tunnel",
+            )
+        }
+    }
+
+    @Test
     fun rejectsMissingLocalDemoOnlyNote() {
         val payload = samplePayload(safetyNotes = listOf("no_public_gateway"))
 

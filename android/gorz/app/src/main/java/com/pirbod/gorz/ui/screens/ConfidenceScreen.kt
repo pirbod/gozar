@@ -10,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.pirbod.gorz.state.GorzAppState
 import com.pirbod.gorz.ui.components.ConfidenceCard
@@ -18,7 +19,9 @@ import com.pirbod.gorz.ui.components.SignalCard
 @Composable
 fun ConfidenceScreen(state: GorzAppState) {
     LazyColumn(
-        modifier = Modifier.padding(16.dp),
+        modifier = Modifier
+            .padding(16.dp)
+            .testTag("screen_confidence"),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
@@ -26,6 +29,7 @@ fun ConfidenceScreen(state: GorzAppState) {
                 ConfidenceCard(state.confidenceScore, label = "Overall")
                 Column {
                     Text("Confidence", style = MaterialTheme.typography.headlineMedium)
+                    Text("Controlled prototype confidence model.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
                         "The confidence score explains whether the current demo session is safe to start in the controlled prototype.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,

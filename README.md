@@ -287,6 +287,35 @@ Prototype screenshots:
 - [Connect flow](docs/vpn-product/images/android-phase3-connect-flow.svg)
 - [Evidence and safety pause](docs/vpn-product/images/android-phase3-evidence-safety.svg)
 
+Android emulator smoke test:
+
+```bash
+make android-emulator-smoke
+```
+
+For manual validation, see [docs/vpn-product/android-studio-emulator-smoke-test.md](docs/vpn-product/android-studio-emulator-smoke-test.md). The smoke test validates app launch, key screens, offline demo navigation, route policy visibility, and evidence redaction. It does not validate public routing or production VPN behavior.
+
+## Production Readiness
+
+Gozar/Gorz includes production-readiness guardrails for controlled prototype evaluation:
+
+- repository-level readiness report
+- Android permission and route safety checks
+- backend safety scanner
+- privacy and security documentation
+- release blocker checklist
+- risk register
+- operational runbooks
+- CI safety gates
+
+Run:
+
+```bash
+make production-readiness-check
+```
+
+The project remains a controlled research prototype. These checks improve engineering maturity, but they do not make the system a production VPN, public routing product, real secure messenger, or circumvention tool.
+
 ## Install Gorz with Homebrew
 
 ```bash

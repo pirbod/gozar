@@ -9,6 +9,7 @@ class RoutePolicyGuardTest {
     fun allowsOnlyLocalDemoRoute() {
         assertTrue(RoutePolicyGuard.isAppliedRouteSafe("10.77.0.0/24"))
         assertFalse(RoutePolicyGuard.isAppliedRouteSafe("0.0.0.0/0"))
+        assertFalse(RoutePolicyGuard.isAppliedRouteSafe("::/0"))
     }
 
     @Test

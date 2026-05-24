@@ -1,3 +1,5 @@
+import com.android.build.api.dsl.ManagedVirtualDevice
+
 plugins {
     id("com.android.application")
     kotlin("android")
@@ -26,6 +28,15 @@ android {
 
     testOptions {
         unitTests.isReturnDefaultValues = true
+        managedDevices {
+            devices {
+                create<ManagedVirtualDevice>("pixel2api30") {
+                    device = "Pixel 2"
+                    apiLevel = 30
+                    systemImageSource = "aosp"
+                }
+            }
+        }
     }
 
     compileOptions {

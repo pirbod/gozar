@@ -1,0 +1,35 @@
+name: android
+
+on:
+  pull_request:
+  push:
+    branches: [main, "codex/**", "ci-node24-actions"]
+  workflow_dispatch:
+
+jobs:
+  android-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Prepare Gradle shim
+        run: chmod +x android/gorz/gradlew
+
+      - name: Android unit tests
+        working-directory: android/gorz
+        run: ./gradlew testDebugUnitTest
+
+      - name: Android debug build
+        working-directory: android/gorz
+        run: ./gradlew assembleDebug
+
+      - name: Android safety checks
+        run: |
+          python scripts/check_android_manifest_permissions.py
+          python scripts/check_android_route_safety.py

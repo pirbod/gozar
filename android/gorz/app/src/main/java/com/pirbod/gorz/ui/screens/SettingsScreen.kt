@@ -19,6 +19,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.pirbod.gorz.data.model.DemoMode
 import com.pirbod.gorz.state.GorzAppState
@@ -38,11 +39,14 @@ fun SettingsScreen(
     var adminToken by remember(state.settings.adminToken) { mutableStateOf(state.settings.adminToken) }
 
     LazyColumn(
-        modifier = Modifier.padding(16.dp),
+        modifier = Modifier
+            .padding(16.dp)
+            .testTag("screen_settings"),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         item {
             Text("Settings", style = MaterialTheme.typography.headlineMedium)
+            Text("Controlled prototype · Local lifecycle only · No public traffic forwarding · No full-device route", color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text("Demo configuration is stored locally for the prototype.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         item {
@@ -83,7 +87,11 @@ fun SettingsScreen(
         }
         item {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Switch(checked = state.settings.offlineDemoMode, onCheckedChange = onOfflineModeChange)
+                Switch(
+                    checked = state.settings.offlineDemoMode,
+                    onCheckedChange = onOfflineModeChange,
+                    modifier = Modifier.testTag("switch_offline_demo"),
+                )
                 Text("Offline demo mode")
             }
         }
