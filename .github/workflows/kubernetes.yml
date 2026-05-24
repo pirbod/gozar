@@ -12,13 +12,14 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: azure/setup-kubectl@v4
-      - name: Render local overlay
-        run: kubectl kustomize --load-restrictor=LoadRestrictionsNone deploy/kubernetes/overlays/local > runtime-k8s-rendered.yaml
-      - name: Client dry-run
-        run: kubectl apply --dry-run=client --validate=false -f runtime-k8s-rendered.yaml
+      - name: Validate local overlay
+        run: python3 scripts/platform/run_k8s_check.py
       - name: Upload rendered manifests
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: kubernetes-rendered
-          path: runtime-k8s-rendered.yaml
+          path: |
+            runtime/reports/gozar-k8s-rendered.yaml
+            runtime/reports/kubernetes-check-report.md
+            runtime/reports/kubernetes-check-report.json

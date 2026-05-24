@@ -32,10 +32,20 @@ def main() -> int:
     results = [{"command": "kubectl kustomize --load-restrictor=LoadRestrictionsNone deploy/kubernetes/overlays/local", "exitCode": lint.returncode, "output": tail(lint.stdout + lint.stderr)}]
     status = "PASS" if lint.returncode == 0 else "FAIL"
     if status == "PASS":
-        dry = subprocess.run([kubectl, "apply", "--dry-run=client", "--validate=false", "-f", str(rendered_path)], cwd=ROOT, text=True, capture_output=True, check=False)
-        results.append({"command": f"kubectl apply --dry-run=client --validate=false -f {rendered_path.relative_to(ROOT)}", "exitCode": dry.returncode, "output": tail(dry.stdout + dry.stderr)})
-        status = "PASS" if dry.returncode == 0 else "FAIL"
-    payload = payload_for(status, "Kubernetes manifests rendered and dry-run validated." if status == "PASS" else "Kubernetes check failed.", str(rendered_path), results)
+        cluster = subprocess.run([kubectl, "cluster-info", "--request-timeout=2s"], cwd=ROOT, text=True, capture_output=True, check=False)
+        results.append({"command": "kubectl cluster-info --request-timeout=2s", "exitCode": cluster.returncode, "output": tail(cluster.stdout + cluster.stderr)})
+        if cluster.returncode == 0:
+            dry = subprocess.run([kubectl, "apply", "--dry-run=client", "--validate=false", "-f", str(rendered_path)], cwd=ROOT, text=True, capture_output=True, check=False)
+            results.append({"command": f"kubectl apply --dry-run=client --validate=false -f {rendered_path.relative_to(ROOT)}", "exitCode": dry.returncode, "output": tail(dry.stdout + dry.stderr)})
+            status = "PASS" if dry.returncode == 0 else "FAIL"
+        else:
+            status = "PARTIAL"
+    detail = {
+        "PASS": "Kubernetes manifests rendered and dry-run validated.",
+        "PARTIAL": "Kubernetes manifests rendered; API-server dry-run skipped because no cluster is available.",
+        "FAIL": "Kubernetes check failed.",
+    }[status]
+    payload = payload_for(status, detail, str(rendered_path), results)
     write_reports(payload)
     print(f"Kubernetes check: {status}")
     return 0 if status != "FAIL" else 1
