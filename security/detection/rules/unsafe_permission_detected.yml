@@ -1,0 +1,17 @@
+id: GOZAR-ANDROID-001
+title: Unsafe Android Permission Detected
+severity: high
+description: Detects sensitive Android permissions in manifest review events.
+event_source: ci.android_manifest
+condition:
+  field: event_type
+  equals: unsafe_permission_detected
+fields:
+  - event_type
+  - permission
+  - workflow
+false_positives:
+  - Generated report from a test fixture.
+response_action: Block release candidate and remove the permission.
+mitre_mapping: []
+safety_note: Local repository detection only.

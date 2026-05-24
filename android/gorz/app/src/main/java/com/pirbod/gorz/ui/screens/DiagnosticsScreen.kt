@@ -25,6 +25,7 @@ fun DiagnosticsScreen(
     state: GorzAppState,
     onRunDiagnostics: () -> Unit,
     onResetDiagnostics: () -> Unit,
+    onGenerateEvidence: () -> Unit,
 ) {
     val diagnostics = state.diagnostics
     val clipboard = LocalClipboardManager.current
@@ -37,7 +38,7 @@ fun DiagnosticsScreen(
         item {
             Text("Diagnostics", style = MaterialTheme.typography.headlineMedium)
             Text("Controlled prototype · Local lifecycle only · No public traffic forwarding", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("Local-only diagnostic simulation.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Local-only diagnostic simulation · No public probing", modifier = Modifier.testTag("text_no_public_probing"), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         item { PrimaryActionButton("Run local diagnostics", onClick = onRunDiagnostics) }
         item {
@@ -46,6 +47,7 @@ fun DiagnosticsScreen(
                     clipboard.setText(AnnotatedString(diagnostics?.summary ?: "No diagnostics run."))
                 }) { Text("Copy diagnostic summary") }
                 Button(onClick = onResetDiagnostics) { Text("Reset diagnostics") }
+                Button(onClick = onGenerateEvidence) { Text("Generate evidence") }
             }
         }
         item {
@@ -58,7 +60,14 @@ fun DiagnosticsScreen(
                     DiagnosticRow("Safety boundary status", diagnostics?.safetyBoundaryStatus ?: "local_only_enforced")
                     DiagnosticRow("Demo API latency", "${diagnostics?.apiLatencyMs ?: 0} ms")
                     DiagnosticRow("Mock path quality", diagnostics?.pathQuality ?: "direct_ok")
+                    DiagnosticRow("Local-only", (diagnostics?.localOnly ?: true).toString())
+                    DiagnosticRow("Overall status", diagnostics?.status ?: "not_run")
                 }
+            }
+        }
+        diagnostics?.checks.orEmpty().forEach { check ->
+            item {
+                DiagnosticRow(check.name, "${check.status}: ${check.detail}")
             }
         }
     }

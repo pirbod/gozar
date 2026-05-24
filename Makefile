@@ -4,7 +4,7 @@ GORZ_COMPOSE := docker compose -f docker-compose.gorz.yml
 PROFILE_COMPOSE := docker compose -f docker-compose.profile.yml
 ANDROID_DIR := android/gorz
 
-.PHONY: eval eval-clean eval-baseline eval-adaptive eval-smoke eval-scenario gorz-install gorz-dev gorz-demo gorz-test gorz-lint gorz-validate gorz-clean gorz-cli-test gorz-homebrew-check gorz-release-check profile-install profile-dev profile-demo profile-test profile-lint profile-validate profile-clean profile-audit-export profile-safety-check safety-wording-check profile-syntax-check profile-compose-check profile-release-check profile-full-check android-check android-test android-build android-clean android-safety-check android-emulator-smoke backend-safety-check docs-check safety-check production-readiness-check local-health-report phase2-check phase3-check
+.PHONY: eval eval-clean eval-baseline eval-adaptive eval-smoke eval-scenario gorz-install gorz-dev gorz-demo gorz-test gorz-lint gorz-validate gorz-clean gorz-cli-test gorz-homebrew-check gorz-release-check profile-install profile-dev profile-demo profile-test profile-lint profile-validate profile-clean profile-audit-export profile-safety-check safety-wording-check profile-syntax-check profile-compose-check profile-release-check profile-full-check android-check android-test android-build android-clean android-safety-check android-emulator-smoke android-emulator-smoke-report backend-safety-check docs-check safety-check production-readiness-check local-health-report phase2-check phase3-check phase4-docs-check phase4-safety-check phase4-screenshots phase4-screenshot-report release-candidate-manifest terraform-fmt terraform-validate terraform-check k8s-lint k8s-validate k8s-check observability-check detection-check incident-summary-demo platform-screenshots demo-video-assets platform-check phase4-check
 
 eval:
 	$(PYTHON) $(EVAL_RUNNER) run-all
@@ -181,6 +181,51 @@ android-safety-check:
 android-emulator-smoke:
 	cd $(ANDROID_DIR) && ./gradlew pixel2api30DebugAndroidTest
 
+android-emulator-smoke-report:
+	GORZ_EMULATOR_REPORT_ONLY=1 $(PYTHON) scripts/android/run_emulator_smoke_report.py
+
+terraform-fmt:
+	@if command -v terraform >/dev/null 2>&1; then cd infra/terraform && terraform fmt -recursive; else $(PYTHON) scripts/platform/run_terraform_check.py; fi
+
+terraform-validate:
+	$(PYTHON) scripts/platform/run_terraform_check.py
+
+terraform-check:
+	$(MAKE) terraform-fmt
+	$(MAKE) terraform-validate
+
+k8s-lint:
+	$(PYTHON) scripts/platform/run_k8s_check.py
+
+k8s-validate:
+	$(PYTHON) scripts/platform/run_k8s_check.py
+
+k8s-check:
+	$(PYTHON) scripts/platform/run_k8s_check.py
+
+observability-check:
+	$(PYTHON) scripts/platform/check_observability_assets.py
+
+detection-check:
+	$(PYTHON) scripts/security/run_detection_tests.py
+
+incident-summary-demo:
+	$(PYTHON) ai/incident-summary/incident_summary.py --input security/detection/sample-events/route_policy_violation.json --output runtime/reports/incident-summary.md --mode deterministic
+
+platform-screenshots:
+	$(PYTHON) scripts/platform/capture_platform_screenshots.py
+
+demo-video-assets:
+	@echo "See docs/demo/demo-video-script.md and docs/demo/demo-video-shot-list.md"
+
+platform-check:
+	$(MAKE) terraform-check
+	$(MAKE) k8s-check
+	$(MAKE) observability-check
+	$(MAKE) detection-check
+	$(MAKE) incident-summary-demo
+	$(MAKE) platform-screenshots
+
 backend-safety-check:
 	$(PYTHON) scripts/check_backend_safety.py
 
@@ -219,6 +264,52 @@ phase3-check:
 	$(MAKE) android-check
 	$(MAKE) phase2-check
 	$(PYTHON) scripts/check_phase3_safety.py
+
+phase4-docs-check:
+	@test -f docs/product/four-phase-roadmap.md || (echo "docs/product/four-phase-roadmap.md is missing" >&2; exit 1)
+	@test -f docs/vpn-product/confidence-model.md || (echo "docs/vpn-product/confidence-model.md is missing" >&2; exit 1)
+	@test -f docs/vpn-product/evidence-package-v2.md || (echo "docs/vpn-product/evidence-package-v2.md is missing" >&2; exit 1)
+	@test -f docs/vpn-product/local-diagnostics.md || (echo "docs/vpn-product/local-diagnostics.md is missing" >&2; exit 1)
+	@test -f docs/vpn-product/phase-4-screenshot-guide.md || (echo "docs/vpn-product/phase-4-screenshot-guide.md is missing" >&2; exit 1)
+	@test -f docs/security/android-phase-4-threat-model.md || (echo "docs/security/android-phase-4-threat-model.md is missing" >&2; exit 1)
+	@test -f docs/privacy/android-phase-4-privacy-review.md || (echo "docs/privacy/android-phase-4-privacy-review.md is missing" >&2; exit 1)
+	@test -f docs/backend/android-phase-4-backend-contract.md || (echo "docs/backend/android-phase-4-backend-contract.md is missing" >&2; exit 1)
+	@test -f docs/release/phase-4-controlled-release-process.md || (echo "docs/release/phase-4-controlled-release-process.md is missing" >&2; exit 1)
+	@test -f docs/release/phase-4-release-notes.md || (echo "docs/release/phase-4-release-notes.md is missing" >&2; exit 1)
+	@test -f docs/vpn-product/phase-4-final-validation-report.md || (echo "docs/vpn-product/phase-4-final-validation-report.md is missing" >&2; exit 1)
+
+phase4-safety-check:
+	$(MAKE) safety-check
+	$(PYTHON) scripts/check_android_manifest_permissions.py
+	$(PYTHON) scripts/check_android_route_safety.py
+
+phase4-screenshots:
+	$(PYTHON) scripts/android/capture_phase4_screenshots.py
+
+phase4-screenshot-report:
+	$(PYTHON) scripts/android/capture_phase4_screenshots.py --report-only
+	$(PYTHON) scripts/platform/capture_platform_screenshots.py
+
+release-candidate-manifest:
+	$(PYTHON) scripts/android/generate_release_candidate_manifest.py
+
+phase4-check:
+	$(MAKE) docs-check
+	$(MAKE) phase4-docs-check
+	$(MAKE) android-safety-check
+	$(MAKE) backend-safety-check
+	$(MAKE) phase3-check
+	@if command -v gradle >/dev/null 2>&1 && (cd $(ANDROID_DIR) && ./gradlew -v >/dev/null 2>&1); then \
+		$(MAKE) android-test; \
+		$(MAKE) android-build; \
+	else \
+		echo "Warning: Gradle or Android SDK not available; skipped Android unit tests and build." >&2; \
+	fi
+	$(MAKE) platform-check
+	$(MAKE) android-emulator-smoke-report
+	$(MAKE) phase4-screenshot-report
+	$(MAKE) release-candidate-manifest
+	$(MAKE) production-readiness-check
 
 profile-release-check:
 	@test -f Dockerfile.profile-api || (echo "Dockerfile.profile-api is missing" >&2; exit 1)

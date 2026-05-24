@@ -17,3 +17,10 @@ This repository has alpha-readiness guardrails, but it is not production secure 
 | Legal review gap | Repo is positioned for lawful controlled evaluation. | Complete jurisdiction-specific legal review and pilot agreements. |
 | Abuse-prevention gap | Safety language and scanners reduce misuse risk. | Add abuse monitoring, reporting, eligibility, rate limits, and enforcement process. |
 | Data retention policy gap | Local runtime data can be cleared manually. | Define retention schedules, deletion workflows, and audit retention requirements. |
+| Evidence export misuse gap | Evidence export is redacted and user initiated, but sharing is operator controlled. | Add reviewer policy, approval workflow, and retention controls. |
+| Screenshot leakage gap | Screenshots are manual or emulator artifacts and may show local state. | Add screenshot review, storage policy, and sharing approval. |
+| Release artifact misuse gap | Debug artifacts can be generated for controlled review. | Add signing, artifact custody, provenance, and distribution controls. |
+| Route guard regression gap | Phase 4 tests and scanners check known unsafe route scopes. | Add broader property tests and independent route review. |
+| Platform operations gap | Terraform and Kubernetes are controlled demo assets. | Add cloud-specific architecture, secret management, policy-as-code, admission control, and reviewed runbooks. |
+| Observability operations gap | Metrics, alerts, and dashboards are modeled assets. | Add real scrape endpoints, alert routing, retention, access control, and SLO ownership. |
+| Detection operations gap | Local SIEM-style rules and deterministic summaries exist. | Integrate with reviewed SOC workflow and external SIEM only after privacy and security approval. |

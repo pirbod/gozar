@@ -38,3 +38,6 @@ Android release signing and Play distribution are not configured. This remains a
 ## Rollback Plan
 
 Keep prior release tag, revert the release commit if needed, disable demo services, and publish corrected release notes.
+# Phase 4 Controlled Release Candidate Addendum
+
+For `0.4.0-rc1`, use `docs/release/phase-4-controlled-release-process.md`. Required artifacts are the final validation report, production readiness report, screenshot report, emulator smoke report, release candidate manifest, privacy review, threat model, backend contract, release notes, and updated blocker checklist.

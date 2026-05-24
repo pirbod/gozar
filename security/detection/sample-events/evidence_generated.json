@@ -1,0 +1,7 @@
+{
+  "event_type": "evidence_generated",
+  "component": "android-evidence",
+  "redaction_status": "pass",
+  "evidence_ref": "evidence_2026_05_24_redacted",
+  "safety_boundary": "controlled_demo"
+}

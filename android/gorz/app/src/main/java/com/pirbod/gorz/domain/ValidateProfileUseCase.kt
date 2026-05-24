@@ -14,7 +14,8 @@ class ValidateProfileUseCase(
         val fresh = runCatching { Instant.parse(profile.expiresAt).isAfter(now) }.getOrDefault(false)
         val signatureValid = profile.signatureStatus in setOf("verified", "demo_verified")
         val revoked = profile.revocationStatus == "revoked"
-        val routeScopeValid = RoutePolicyGuard.validate(profile)
+        val routePolicyResult = RoutePolicyGuard.evaluate(profile, clock)
+        val routeScopeValid = routePolicyResult.allowed
         val endpointScopeValid = profile.safetyNotes.any { it in endpointSafetyNotes }
         val selectedModeValid = profile.selectedMode in DemoMode.entries
         val safetyNotesValid = profile.safetyNotes.any { it in localNotes } &&
@@ -25,7 +26,7 @@ class ValidateProfileUseCase(
             if (!fresh) add("Profile expired")
             if (!signatureValid) add("Issuer signature invalid")
             if (revoked) add("Profile revoked")
-            if (!routeScopeValid) add("Route scope outside demo boundary")
+            if (!routeScopeValid) addAll(routePolicyResult.blockingReasons.ifEmpty { listOf("Route scope outside demo boundary") })
             if (!endpointScopeValid) add("Endpoint scope missing local-only note")
             if (!safetyNotesValid) add("Safety notes incomplete")
             if (!apiAvailable) add("Offline demo repository in use")
@@ -42,6 +43,7 @@ class ValidateProfileUseCase(
             safetyNotesValid = safetyNotesValid,
             apiAvailable = apiAvailable,
             messages = messages,
+            routePolicyResult = routePolicyResult,
         )
     }
 

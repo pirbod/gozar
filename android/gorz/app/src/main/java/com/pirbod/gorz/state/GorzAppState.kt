@@ -8,6 +8,7 @@ import com.pirbod.gorz.data.model.SafetyState
 import com.pirbod.gorz.data.model.SessionProfile
 import com.pirbod.gorz.data.model.ValidationResult
 import com.pirbod.gorz.data.repository.AppSettings
+import com.pirbod.gorz.security.SecureStorageHealth
 
 enum class SessionStatus(val label: String) {
     Disconnected("Disconnected"),
@@ -38,12 +39,20 @@ data class GorzAppState(
     val profile: SessionProfile? = null,
     val validation: ValidationResult? = null,
     val confidenceScore: Int = 0,
+    val confidenceStatus: String = "BLOCKED",
+    val confidenceExplanation: String = "No validated profile is available.",
+    val confidenceRecommendedAction: String = "Request or generate a controlled prototype profile before connecting.",
+    val confidenceBlockingReasons: List<String> = emptyList(),
     val confidenceSignals: List<ConfidenceSignal> = emptyList(),
     val diagnostics: DiagnosticResult? = null,
     val evidencePackage: EvidencePackage? = null,
     val evidenceJson: String = "",
     val auditEvents: List<AuditEvent> = emptyList(),
     val safetyState: SafetyState = SafetyState(),
+    val storageLabel: String = "Demo",
+    val storageHealth: SecureStorageHealth = SecureStorageHealth.demo(),
+    val localReadinessSummary: String = "",
+    val lastEvidenceLocalPath: String = "",
     val connectStages: List<ConnectStageState> = defaultConnectStages(),
     val offlineDemoActive: Boolean = false,
     val offlineReason: String = "",

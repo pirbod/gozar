@@ -1,0 +1,17 @@
+id: GOZAR-DEMO-001
+title: Suspicious Demo State Change
+severity: medium
+description: Detects unexpected local demo state transitions.
+event_source: android.audit
+condition:
+  field: event_type
+  equals: suspicious_demo_state_change
+fields:
+  - event_type
+  - state
+  - component
+false_positives:
+  - Manual reset during demo preparation.
+response_action: Review audit timeline and reset local state if needed.
+mitre_mapping: []
+safety_note: Local state only; no automatic upload.

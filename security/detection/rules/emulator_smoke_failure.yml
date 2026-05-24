@@ -1,0 +1,17 @@
+id: GOZAR-CI-001
+title: Emulator Smoke Failure
+severity: low
+description: Detects failed or skipped emulator smoke status.
+event_source: ci.android_emulator
+condition:
+  field: event_type
+  equals: emulator_smoke_failure
+fields:
+  - event_type
+  - status
+  - workflow
+false_positives:
+  - Missing Android SDK on local developer machine.
+response_action: Review runtime report and rerun with emulator tooling.
+mitre_mapping: []
+safety_note: Tooling unavailability must be reported honestly.

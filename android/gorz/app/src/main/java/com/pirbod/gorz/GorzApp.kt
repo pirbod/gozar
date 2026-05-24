@@ -129,7 +129,7 @@ fun GorzApp(
                     }
                     composable("session") { SessionDashboardScreen(state) }
                     composable("confidence") { ConfidenceScreen(state) }
-                    composable("evidence") { EvidenceScreen(state, viewModel::generateEvidence) }
+                    composable("evidence") { EvidenceScreen(state, viewModel::generateEvidence, viewModel::clearEvidence) }
                     composable("settings") {
                         SettingsScreen(
                             state = state,
@@ -137,9 +137,12 @@ fun GorzApp(
                             onAdminTokenChange = viewModel::updateAdminToken,
                             onModeChange = viewModel::updateMode,
                             onOfflineModeChange = viewModel::updateOfflineDemoMode,
+                            onExperimentalKeystoreChange = viewModel::updateExperimentalKeystoreStorage,
                             onResetLocalIdentity = viewModel::resetLocalIdentity,
                             onClearAudit = viewModel::clearAuditHistory,
                             onClearDiagnostics = viewModel::clearDiagnostics,
+                            onClearSecureStorage = viewModel::clearSecureStorage,
+                            onExportLocalReadinessSummary = viewModel::exportLocalReadinessSummary,
                         )
                     }
                     composable("connect") { ConnectFlowScreen(state) }
@@ -149,6 +152,7 @@ fun GorzApp(
                             state = state,
                             onRunDiagnostics = viewModel::runDiagnostics,
                             onResetDiagnostics = viewModel::clearDiagnostics,
+                            onGenerateEvidence = viewModel::generateEvidence,
                         )
                     }
                     composable("audit") { AuditTimelineScreen(state) }
@@ -157,6 +161,7 @@ fun GorzApp(
                             state = state,
                             onApplyPause = viewModel::applySafetyPause,
                             onResume = viewModel::resumeFromSafetyPause,
+                            onGenerateEvidence = viewModel::generateEvidence,
                         )
                     }
                 }

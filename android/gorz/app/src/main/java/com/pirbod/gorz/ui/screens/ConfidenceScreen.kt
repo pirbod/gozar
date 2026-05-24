@@ -29,12 +29,18 @@ fun ConfidenceScreen(state: GorzAppState) {
                 ConfidenceCard(state.confidenceScore, label = "Overall")
                 Column {
                     Text("Confidence", style = MaterialTheme.typography.headlineMedium)
-                    Text("Controlled prototype confidence model.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("Controlled prototype confidence model · ${state.confidenceStatus}", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(
-                        "The confidence score explains whether the current demo session is safe to start in the controlled prototype.",
+                        state.confidenceExplanation,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    Text(state.confidenceRecommendedAction, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+            }
+        }
+        if (state.confidenceBlockingReasons.isNotEmpty()) {
+            item {
+                Text("Blocking reasons: ${state.confidenceBlockingReasons.joinToString("; ")}", color = MaterialTheme.colorScheme.error)
             }
         }
         items(state.confidenceSignals.size) { index ->

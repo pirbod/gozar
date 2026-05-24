@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gozar-observability-config
+  namespace: gozar-controlled-demo
+data:
+  metrics.md: |
+    Modeled metrics: profile_issuance_total, profile_validation_failure_total,
+    revoked_profile_total, expired_profile_total, safety_pause_active,
+    evidence_package_generated_total, diagnostics_run_total,
+    route_policy_blocked_total, backend_health, api_latency_ms,
+    audit_event_total, emulator_smoke_status, readiness_check_status.
