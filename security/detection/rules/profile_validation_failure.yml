@@ -1,0 +1,17 @@
+id: GOZAR-PROFILE-001
+title: Profile Validation Failure
+severity: medium
+description: Detects failed local profile validation events.
+event_source: profile_api.validation
+condition:
+  field: event_type
+  equals: profile_validation_failure
+fields:
+  - event_type
+  - validation_status
+  - component
+false_positives:
+  - Expected revoked or expired profile test.
+response_action: Review validation reason and evidence package.
+mitre_mapping: []
+safety_note: Uses redacted profile references only.

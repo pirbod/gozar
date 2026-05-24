@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gozar-grafana-dashboards
+  namespace: gozar-controlled-demo
+data:
+  dashboards.md: |
+    Dashboard JSON is stored under observability/grafana/dashboards/.

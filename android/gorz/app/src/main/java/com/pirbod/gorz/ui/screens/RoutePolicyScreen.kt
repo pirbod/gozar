@@ -12,11 +12,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import com.pirbod.gorz.domain.RoutePolicyGuard
 import com.pirbod.gorz.state.GorzAppState
 
 @Composable
 fun RoutePolicyScreen(state: GorzAppState) {
     val profile = state.profile
+    val result = profile?.let { RoutePolicyGuard.evaluate(it) }
+        ?: RoutePolicyGuard.evaluate(RoutePolicyGuard.AppliedSafeRoute, RoutePolicyGuard.ControlledLabEndpoint)
     LazyColumn(
         modifier = Modifier
             .padding(16.dp)
@@ -27,7 +30,7 @@ fun RoutePolicyScreen(state: GorzAppState) {
             Text("Route policy", style = MaterialTheme.typography.headlineMedium)
             Text("Controlled prototype · No full-device route · No public traffic forwarding", color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
-                "Phase 3 keeps device-wide routing disabled. The Android service only validates local lifecycle and route policy behavior.",
+                "Phase 4 validates route policy behavior. It does not enable device-wide routing or public traffic forwarding.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -38,7 +41,13 @@ fun RoutePolicyScreen(state: GorzAppState) {
             PolicyCard("Applied safe policy", profile?.allowedRouteScope ?: "10.77.0.0/24", "Only the controlled local demo route is applied.", "text_applied_route")
         }
         item {
-            PolicyCard("Blocked unsafe policy", profile?.blockedRouteScope ?: "0.0.0.0/0", "Device-wide routing remains blocked.", "text_blocked_route")
+            PolicyCard("Blocked IPv4 full-device route", "0.0.0.0/0", "Device-wide IPv4 routing remains blocked.", "text_blocked_route")
+        }
+        item {
+            PolicyCard("Blocked IPv6 full-device route", "::/0", "Device-wide IPv6 routing remains blocked.", "text_blocked_ipv6_route")
+        }
+        item {
+            PolicyCard("Validation result", if (result.allowed) "PASS" else "BLOCKED", result.blockingReasons.ifEmpty { listOf(result.reason) }.joinToString("; "))
         }
     }
 }

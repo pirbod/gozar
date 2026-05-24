@@ -1,0 +1,7 @@
+{
+  "event_type": "safety_pause_enabled",
+  "component": "android-safety-pause",
+  "reason": "manual_review",
+  "operator_note": "redacted",
+  "safety_boundary": "controlled_demo"
+}

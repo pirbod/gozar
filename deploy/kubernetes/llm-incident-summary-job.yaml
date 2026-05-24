@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gozar-incident-summary-demo
+  namespace: gozar-controlled-demo
+spec:
+  template:
+    metadata:
+      labels:
+        app: gozar-incident-summary-demo
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: incident-summary
+          image: python:3.12-slim
+          imagePullPolicy: IfNotPresent
+          command: ["python", "-c"]
+          args:
+            - "print('Deterministic incident summary demo placeholder; run repository script locally for report generation.')"
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000

@@ -1,0 +1,24 @@
+groups:
+  - name: gozar-profile-api
+    rules:
+      - alert: ProfileValidationFailuresHigh
+        expr: increase(profile_validation_failure_total[15m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Profile validation failures increased.
+      - alert: BackendUnavailable
+        expr: backend_health == 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: Local backend health check is unavailable.
+      - alert: ProductionReadinessFailed
+        expr: readiness_check_status == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Production readiness remains not ready.

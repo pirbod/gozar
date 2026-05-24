@@ -88,3 +88,19 @@ http://10.0.2.2:8095
 | Profile API unavailable | Use offline demo mode. |
 | VPN permission dialog blocks automation | Use manual VPN path and CI smoke without VPN permission. |
 | Managed device unavailable in CI | Run `workflow_dispatch` or Android Studio manual smoke. |
+## Phase 4 Addendum
+
+Use a Pixel 2 API 30 emulator. The managed device name is `pixel2api30`.
+
+Run:
+
+```bash
+cd android/gorz
+./gradlew test
+./gradlew assembleDebug
+./gradlew pixel2api30DebugAndroidTest
+```
+
+Expected screens: onboarding, home, connect flow, session, confidence, route policy, diagnostics, evidence, safety pause, audit, settings, and storage mode. Manual VPN permission validation may remain manual if emulator permission automation is unstable.
+
+Capture screenshots with `docs/vpn-product/phase-4-screenshot-guide.md`. Known CI limitations: hosted emulator startup can be slow, hardware acceleration may vary, and unavailable tooling must be reported as SKIPPED rather than PASS.

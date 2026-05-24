@@ -31,3 +31,23 @@ jobs:
       - name: Managed-device smoke test
         working-directory: android/gorz
         run: ./gradlew pixel2api30DebugAndroidTest
+
+      - name: Generate emulator smoke report
+        if: always()
+        run: python scripts/android/run_emulator_smoke_report.py
+
+      - name: Generate screenshot report
+        if: always()
+        run: python scripts/android/capture_phase4_screenshots.py --report-only
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-emulator-smoke-artifacts
+          path: |
+            android/gorz/app/build/reports
+            android/gorz/app/build/outputs/apk/debug
+            runtime/reports/android-emulator-smoke-report.md
+            runtime/reports/android-emulator-smoke-report.json
+            runtime/reports/screenshots/phase4

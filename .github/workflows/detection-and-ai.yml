@@ -1,0 +1,29 @@
+name: detection-and-ai
+
+on:
+  pull_request:
+  push:
+    branches: [main, "codex/**"]
+  workflow_dispatch:
+
+jobs:
+  detection-and-ai:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Detection tests
+        run: make detection-check
+      - name: Incident summary demo
+        run: make incident-summary-demo
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: detection-and-ai-reports
+          path: |
+            runtime/reports/siem-detection-report.md
+            runtime/reports/siem-detection-report.json
+            runtime/reports/incident-summary.md

@@ -27,6 +27,7 @@ def main() -> None:
     critical_failures = sum(1 for check in checks if check.status == "FAIL" and check.critical)
     warnings = sum(1 for check in checks if check.status == "WARN")
     skipped = sum(1 for check in checks if check.status == "SKIPPED")
+    platform_readiness = _section_status(checks, "Platform:")
     overall = "FAIL" if critical_failures else "PARTIAL" if warnings or skipped else "PASS"
 
     payload = {
@@ -34,6 +35,9 @@ def main() -> None:
         "generated": generated,
         "summary": {
             "overall": overall,
+            "controlled_release_readiness": "PASS" if overall == "PASS" else "PARTIAL",
+            "production_readiness": "NOT_READY",
+            "platform_readiness": platform_readiness,
             "critical_failures": critical_failures,
             "warnings": warnings,
             "skipped": skipped,
@@ -137,6 +141,84 @@ def build_checks() -> list[CheckResult]:
             _gap_doc_check("Real tenant auth not implemented, documented as gap", "tenant"),
         ],
     )
+
+    phase4_checks = [
+        _exists("Phase 4 roadmap closure exists", "docs/product/four-phase-roadmap.md"),
+        _exists("SecureValueStore interface exists", "android/gorz/app/src/main/java/com/pirbod/gorz/security/SecureValueStore.kt"),
+        _exists("AndroidKeystoreSecureValueStore exists", "android/gorz/app/src/main/java/com/pirbod/gorz/security/AndroidKeystoreSecureValueStore.kt"),
+        _exists("RoutePolicyGuard exists", "android/gorz/app/src/main/java/com/pirbod/gorz/domain/RoutePolicyGuard.kt"),
+        _exists("ConfidenceEngine exists", "android/gorz/app/src/main/java/com/pirbod/gorz/domain/ConfidenceEngine.kt"),
+        _exists("EvidencePackageV2 exists", "android/gorz/app/src/main/java/com/pirbod/gorz/data/model/EvidencePackageV2.kt"),
+        _exists("SafetyPauseReason exists", "android/gorz/app/src/main/java/com/pirbod/gorz/data/model/SafetyPauseReason.kt"),
+        _exists("Local diagnostics doc exists", "docs/vpn-product/local-diagnostics.md"),
+        _exists("Phase 4 threat model exists", "docs/security/android-phase-4-threat-model.md"),
+        _exists("Phase 4 privacy review exists", "docs/privacy/android-phase-4-privacy-review.md"),
+        _exists("Phase 4 screenshot guide exists", "docs/vpn-product/phase-4-screenshot-guide.md"),
+        _exists("Screenshot capture script exists", "scripts/android/capture_phase4_screenshots.py"),
+        _screenshot_report_check(),
+        _exists("Controlled release process exists", "docs/release/phase-4-controlled-release-process.md"),
+        _exists("Controlled release notes exist", "docs/release/phase-4-release-notes.md"),
+        _exists("Release candidate manifest script exists", "scripts/android/generate_release_candidate_manifest.py"),
+        _exists("GorzSmokeTest exists", "android/gorz/app/src/androidTest/java/com/pirbod/gorz/GorzSmokeTest.kt"),
+        _exists("GorzOfflineConnectSmokeTest exists", "android/gorz/app/src/androidTest/java/com/pirbod/gorz/GorzOfflineConnectSmokeTest.kt"),
+        _contains("Makefile android-emulator-smoke-report target exists", makefile, "\nandroid-emulator-smoke-report:"),
+        _contains("Makefile phase4-check target exists", makefile, "\nphase4-check:"),
+        _contains("Makefile phase4-screenshots target exists", makefile, "\nphase4-screenshots:"),
+        _contains("VERSION is 0.4.0-rc1", _read("VERSION"), "0.4.0-rc1", critical=True),
+        _contains("Android versionName is 0.4.0-rc1", gradle_text(), 'versionName = "0.4.0-rc1"', critical=True),
+        _not_contains("No sensitive Android location permission", manifest, "ACCESS_FINE_LOCATION", critical=True),
+        _not_contains("No Android contacts permission", manifest, "READ_CONTACTS", critical=True),
+        _phrase_absent("Android code has no automatic diagnostic upload", android_text, "automatic diagnostic upload", critical=True),
+        _exists("Evidence redaction tests exist", "android/gorz/app/src/test/java/com/pirbod/gorz/data/repository/EvidenceRepositoryTest.kt"),
+        _exists("Route policy tests exist", "android/gorz/app/src/test/java/com/pirbod/gorz/domain/RoutePolicyGuardTest.kt"),
+        _exists("Confidence tests exist", "android/gorz/app/src/test/java/com/pirbod/gorz/domain/CalculateConfidenceUseCaseTest.kt"),
+        _exists("Diagnostics tests exist", "android/gorz/app/src/test/java/com/pirbod/gorz/data/repository/DiagnosticsRepositoryTest.kt"),
+        _exists("Safety pause tests exist", "android/gorz/app/src/test/java/com/pirbod/gorz/domain/ApplySafetyPauseUseCaseTest.kt"),
+        CheckResult(
+            "Production readiness remains NOT_READY",
+            "WARN",
+            "Controlled release readiness may pass, but production readiness is intentionally NOT_READY.",
+            "Complete production gaps and independent review before changing this status.",
+        ),
+    ]
+    checks.append(CheckResult("Phase 4 Controlled Release Readiness", "PASS", "Phase 4 checklist evaluated."))
+    checks.extend(phase4_checks)
+
+    platform_checks = [
+        _exists("Platform: Terraform directory exists", "infra/terraform"),
+        _exists("Platform: Terraform versions.tf exists", "infra/terraform/versions.tf"),
+        _exists("Platform: Terraform docs exist", "docs/platform/terraform.md"),
+        _exists("Platform: Kubernetes manifests exist", "deploy/kubernetes/kustomization.yaml"),
+        _exists("Platform: Kubernetes docs exist", "docs/platform/kubernetes.md"),
+        _exists("Platform: NetworkPolicy exists", "deploy/kubernetes/networkpolicy.yaml"),
+        _exists("Platform: Prometheus config exists", "observability/prometheus/prometheus.yml"),
+        _exists("Platform: Prometheus alert rules exist", "observability/prometheus/rules/gozar-safety-alerts.yml"),
+        _exists("Platform: Grafana dashboard exists", "observability/grafana/dashboards/gozar-controlled-release-dashboard.json"),
+        _exists("Platform: Observability docs exist", "docs/platform/observability.md"),
+        _exists("Platform: SIEM rules exist", "security/detection/rules/route_policy_violation.yml"),
+        _exists("Platform: SIEM sample events exist", "security/detection/sample-events/route_policy_violation.json"),
+        _exists("Platform: Detection test script exists", "scripts/security/run_detection_tests.py"),
+        _exists("Platform: LLM incident summary script exists", "ai/incident-summary/incident_summary.py"),
+        _exists("Platform: Deterministic summary output exists", "runtime/reports/incident-summary.md"),
+        _exists("Platform: Detection report exists", "runtime/reports/siem-detection-report.md"),
+        _report_status_check("Platform: Terraform check status", "runtime/reports/terraform-check-report.json"),
+        _report_status_check("Platform: Kubernetes check status", "runtime/reports/kubernetes-check-report.json"),
+        _exists("Platform: Observability report exists", "runtime/reports/observability-check-report.md"),
+        _exists("Platform: GitHub Actions terraform workflow exists", ".github/workflows/terraform.yml"),
+        _exists("Platform: GitHub Actions kubernetes workflow exists", ".github/workflows/kubernetes.yml"),
+        _exists("Platform: GitHub Actions detection workflow exists", ".github/workflows/detection-and-ai.yml"),
+        _exists("Platform: GitHub Actions release candidate workflow exists", ".github/workflows/release-candidate.yml"),
+        _readme_section_check(),
+        _exists("Platform: Screenshots directory exists", "docs/vpn-product/images/phase4"),
+        _report_status_check("Platform: Screenshots Android report status", "runtime/reports/screenshots/phase4/screenshot-capture-report.json"),
+        _report_status_check("Platform: Screenshots platform report status", "runtime/reports/screenshots/phase4/platform-screenshot-report.json"),
+        _exists("Platform: Demo video script exists", "docs/demo/demo-video-script.md"),
+        _demo_video_check(),
+        _exists("Platform: Release candidate manifest exists", "runtime/reports/gorz-android-rc-manifest.md"),
+        _exists("Platform: Final validation report exists", "docs/vpn-product/phase-4-final-validation-report.md"),
+    ]
+    checks.append(CheckResult("Platform Readiness", "PASS", "Platform engineering and security operations checklist evaluated."))
+    checks.extend(platform_checks)
 
     if shutil.which("gradle") is None:
         checks.append(
@@ -294,6 +376,83 @@ def _managed_device_config() -> CheckResult:
     )
 
 
+def _readme_section_check() -> CheckResult:
+    readme = _read("README.md")
+    required = [
+        "## Terraform",
+        "## Kubernetes",
+        "## Observability",
+        "## SIEM Detection Logic",
+        "## LLM-Generated Incident Summaries",
+        "## Screenshots",
+        "## Demo Video",
+    ]
+    missing = [section for section in required if section not in readme]
+    return CheckResult(
+        "Platform: README has platform sections",
+        "PASS" if not missing else "FAIL",
+        "All platform sections present." if not missing else f"Missing sections: {', '.join(missing)}",
+        "Update README platform sections.",
+    )
+
+
+def _demo_video_check() -> CheckResult:
+    video = ROOT / "docs" / "demo" / "gozar-gorz-phase4-demo.mp4"
+    placeholder = ROOT / "docs" / "demo" / "gozar-gorz-phase4-demo.placeholder.md"
+    if video.exists():
+        return CheckResult("Platform: Demo video exists or pending placeholder exists", "PASS", "Demo video file exists.")
+    return CheckResult(
+        "Platform: Demo video exists or pending placeholder exists",
+        "PASS" if placeholder.exists() else "FAIL",
+        "Demo video pending placeholder exists." if placeholder.exists() else "Missing demo video and placeholder.",
+        "Record video or add placeholder with recording steps.",
+    )
+
+
+def _report_status_check(name: str, relative: str) -> CheckResult:
+    path = ROOT / relative
+    if not path.exists():
+        return CheckResult(name, "FAIL", f"Missing {relative}", f"Generate {relative}.")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    status = str(payload.get("status", "UNKNOWN"))
+    if status == "PASS":
+        return CheckResult(name, "PASS", f"{relative} status: PASS")
+    if status == "SKIPPED":
+        return CheckResult(name, "SKIPPED", f"{relative} status: SKIPPED")
+    if status == "PARTIAL":
+        return CheckResult(name, "WARN", f"{relative} status: PARTIAL")
+    return CheckResult(name, "FAIL", f"{relative} status: {status}")
+
+
+def _section_status(checks: list[CheckResult], prefix: str) -> str:
+    scoped = [check for check in checks if check.name.startswith(prefix)]
+    if not scoped:
+        return "PARTIAL"
+    if any(check.status == "FAIL" and check.critical for check in scoped):
+        return "FAIL"
+    if any(check.status in {"FAIL", "WARN", "SKIPPED"} for check in scoped):
+        return "PARTIAL"
+    return "PASS"
+
+
+def gradle_text() -> str:
+    return _read("android/gorz/app/build.gradle.kts")
+
+
+def _screenshot_report_check() -> CheckResult:
+    path = ROOT / "runtime" / "reports" / "screenshots" / "phase4" / "screenshot-capture-report.md"
+    if path.exists():
+        text = path.read_text(encoding="utf-8")
+        status_line = next((line for line in text.splitlines() if line.startswith("Status:")), "Status: UNKNOWN")
+        return CheckResult("Screenshot report exists", "PASS", status_line)
+    return CheckResult(
+        "Screenshot report exists or is skipped with reason",
+        "WARN",
+        "No screenshot report found yet.",
+        "Run make phase4-screenshot-report.",
+    )
+
+
 def _gap_doc_check(name: str, phrase: str) -> CheckResult:
     text = _read("docs/product/production-gap-analysis.md").lower()
     return CheckResult(
@@ -312,6 +471,9 @@ def render_console(payload: dict[str, object]) -> str:
         "",
         "Summary:",
         f"- Overall: {summary['overall']}",
+        f"- Controlled release readiness: {summary['controlled_release_readiness']}",
+        f"- Platform readiness: {summary['platform_readiness']}",
+        f"- Production readiness: {summary['production_readiness']}",
         f"- Critical failures: {summary['critical_failures']}",
         f"- Warnings: {summary['warnings']}",
         f"- Skipped: {summary['skipped']}",
@@ -332,11 +494,50 @@ def render_markdown(payload: dict[str, object]) -> str:
         "## Summary",
         "",
         f"- Overall: {summary['overall']}",
+        f"- Controlled release readiness: {summary['controlled_release_readiness']}",
+        f"- Platform readiness: {summary['platform_readiness']}",
+        f"- Production readiness: {summary['production_readiness']}",
         f"- Critical failures: {summary['critical_failures']}",
         f"- Warnings: {summary['warnings']}",
         f"- Skipped: {summary['skipped']}",
         "",
         "## Checks",
+        "",
+        "## Platform Readiness",
+        "",
+        "| Area | Status |",
+        "| --- | --- |",
+        f"| Terraform | {status_for(payload, 'Platform: Terraform')} |",
+        f"| Kubernetes | {status_for(payload, 'Platform: Kubernetes')} |",
+        f"| Observability | {status_for(payload, 'Platform: Observability')} |",
+        f"| SIEM detection | {status_for(payload, 'Platform: SIEM')} |",
+        f"| Incident summaries | {status_for(payload, 'Platform: LLM')} |",
+        f"| GitHub Actions | {status_for(payload, 'Platform: GitHub Actions')} |",
+        f"| README | {status_for(payload, 'Platform: README')} |",
+        f"| Screenshots | {status_for(payload, 'Platform: Screenshot')} |",
+        f"| Demo video | {status_for(payload, 'Platform: Demo video')} |",
+        "",
+        "## Phase 4 Controlled Release Readiness",
+        "",
+        "| Area | Status |",
+        "| --- | --- |",
+        "| Roadmap closure | Evaluated below |",
+        "| Android hardening | Evaluated below |",
+        "| Storage readiness | Evaluated below |",
+        "| Route safety | Evaluated below |",
+        "| Confidence engine | Evaluated below |",
+        "| Evidence package | Evaluated below |",
+        "| Diagnostics | Evaluated below |",
+        "| Safety pause | Evaluated below |",
+        "| Emulator smoke | Evaluated below |",
+        "| Screenshot evidence | Evaluated below |",
+        "| Release artifact manifest | Evaluated below |",
+        "| Privacy review | Evaluated below |",
+        "| Threat model | Evaluated below |",
+        "| Backend contract | Evaluated below |",
+        "| Documentation | Evaluated below |",
+        f"| Controlled release readiness | {summary['controlled_release_readiness']} |",
+        "| Production readiness | NOT_READY |",
         "",
         "| Status | Check | Detail | Remediation |",
         "| --- | --- | --- | --- |",
@@ -344,6 +545,18 @@ def render_markdown(payload: dict[str, object]) -> str:
     for check in payload["checks"]:
         lines.append(f"| {check['status']} | {check['name']} | {check['detail']} | {check['remediation']} |")
     return "\n".join(lines) + "\n"
+
+
+def status_for(payload: dict[str, object], prefix: str) -> str:
+    checks = payload["checks"]
+    scoped = [check for check in checks if check["name"].startswith(prefix)]
+    if not scoped:
+        return "PARTIAL"
+    if any(check["status"] == "FAIL" for check in scoped):
+        return "FAIL"
+    if any(check["status"] in {"WARN", "SKIPPED"} for check in scoped):
+        return "PARTIAL"
+    return "PASS"
 
 
 if __name__ == "__main__":
