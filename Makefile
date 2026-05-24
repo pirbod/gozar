@@ -182,7 +182,7 @@ android-emulator-smoke:
 	cd $(ANDROID_DIR) && ./gradlew pixel2api30DebugAndroidTest
 
 android-emulator-smoke-report:
-	$(PYTHON) scripts/android/run_emulator_smoke_report.py
+	GORZ_EMULATOR_REPORT_ONLY=1 $(PYTHON) scripts/android/run_emulator_smoke_report.py
 
 terraform-fmt:
 	@if command -v terraform >/dev/null 2>&1; then cd infra/terraform && terraform fmt -recursive; else $(PYTHON) scripts/platform/run_terraform_check.py; fi
