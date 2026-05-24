@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 from datetime import UTC, datetime
@@ -14,6 +15,12 @@ REPORT_DIR = ROOT / "runtime" / "reports"
 
 def main() -> int:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    if os.environ.get("GORZ_EMULATOR_REPORT_ONLY") == "1":
+        payload = payload_for("SKIPPED", "Report-only mode did not attempt emulator execution.", "", 0)
+        write_reports(payload)
+        print("Android emulator smoke status: SKIPPED")
+        return 0
+
     gradle = shutil.which("gradle")
     if not gradle:
         payload = payload_for("SKIPPED", "Gradle is not installed in this shell.", "", 127)
