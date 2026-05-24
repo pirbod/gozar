@@ -1,6 +1,6 @@
 # Release Blocker Checklist
 
-Statuses use `PASS`, `FAIL`, `PARTIAL`, or `NOT_STARTED`.
+Statuses use `PASS`, `PARTIAL`, `SKIPPED`, `FAIL`, or `NOT_STARTED`.
 
 ## Safety
 
@@ -102,3 +102,38 @@ Statuses use `PASS`, `FAIL`, `PARTIAL`, or `NOT_STARTED`.
 | REL-001 | Version is set. | PARTIAL | `VERSION`. | TBD | Align release tags and changelog. |
 | REL-002 | Changelog exists. | PASS | `CHANGELOG.md`. | TBD | Update for every release. |
 | REL-003 | All blockers closed. | NOT_STARTED | This checklist. | TBD | Close every FAIL/PARTIAL/NOT_STARTED item before production release. |
+
+## Phase 4 Controlled Release Readiness
+
+| ID | Requirement | Status | Evidence | Owner | Remediation |
+| --- | --- | --- | --- | --- | --- |
+| PHASE4-ROADMAP-001 | Four-phase roadmap documented. | PASS | `docs/product/four-phase-roadmap.md`. | TBD | Keep closure statement current. |
+| PHASE4-ANDROID-001 | App builds. | SKIPPED | Requires local Gradle/Android SDK in this shell. | TBD | Run Android Studio or CI build. |
+| PHASE4-ANDROID-002 | Manifest has no sensitive permissions. | PASS | Manifest checker. | TBD | Remove blocked permissions. |
+| PHASE4-ROUTE-001 | No full-device IPv4 route. | PASS | Route checker and route guard tests. | TBD | Block release on regression. |
+| PHASE4-ROUTE-002 | No full-device IPv6 route. | PASS | Route guard tests. | TBD | Block release on regression. |
+| PHASE4-ROUTE-003 | Route guard tests pass. | SKIPPED | Gradle unavailable locally. | TBD | Run Android tests in Android Studio or CI. |
+| PHASE4-CONFIDENCE-001 | Confidence engine tests pass. | SKIPPED | Gradle unavailable locally. | TBD | Run Android tests in Android Studio or CI. |
+| PHASE4-EVIDENCE-001 | Evidence Package V2 generated. | PARTIAL | Code and tests added. | TBD | Verify on emulator. |
+| PHASE4-EVIDENCE-002 | Evidence redaction tests pass. | SKIPPED | Gradle unavailable locally. | TBD | Run Android tests in Android Studio or CI. |
+| PHASE4-EVIDENCE-003 | Integrity checksum present. | PASS | Evidence repository code and UI label. | TBD | Verify generated JSON. |
+| PHASE4-DIAG-001 | Diagnostics local-only. | PASS | Diagnostics use case blocks non-local endpoints. | TBD | Keep scanner coverage. |
+| PHASE4-PAUSE-001 | Safety pause blocks connect. | PARTIAL | Use case and UI wired. | TBD | Verify on emulator. |
+| PHASE4-STORAGE-001 | Storage mode visible. | PASS | Settings screen. | TBD | Keep visible in screenshots. |
+| PHASE4-STORAGE-002 | Keystore gap documented. | PASS | Settings UI and gap docs. | TBD | Complete hardening before pilot. |
+| PHASE4-EMULATOR-001 | Emulator smoke passes or skipped with reason. | PARTIAL | Report script added. | TBD | Run with emulator. |
+| PHASE4-SCREENSHOT-001 | Screenshots captured or skipped with reason. | PARTIAL | Screenshot script added. | TBD | Capture final screenshots. |
+| PHASE4-DOCS-001 | Threat model exists. | PASS | `docs/security/android-phase-4-threat-model.md`. | TBD | Review findings. |
+| PHASE4-DOCS-002 | Privacy review exists. | PASS | `docs/privacy/android-phase-4-privacy-review.md`. | TBD | Review findings. |
+| PHASE4-DOCS-003 | Final validation report exists. | PASS | `docs/vpn-product/phase-4-final-validation-report.md`. | TBD | Fill environment placeholders. |
+| PHASE4-RELEASE-001 | Release candidate manifest exists. | PARTIAL | Generator added. | TBD | Generate runtime report. |
+| PHASE4-README-001 | README updated. | PASS | README Phase 4 section. | TBD | Keep commands current. |
+| PHASE4-FINAL-001 | Controlled release candidate decision documented. | PASS | Final validation report. | TBD | Update after final checks. |
+| PHASE4-PLATFORM-001 | Terraform layer exists and reports validation status. | PARTIAL | `infra/terraform/` and runtime report. | TBD | Run with Terraform installed. |
+| PHASE4-PLATFORM-002 | Kubernetes manifests exist and report validation status. | PARTIAL | `deploy/kubernetes/` and runtime report. | TBD | Run with kubectl installed. |
+| PHASE4-OBS-001 | Prometheus and Grafana assets exist. | PASS | `observability/`. | TBD | Run local dashboard capture. |
+| PHASE4-DETECT-001 | SIEM-style detection report generated. | PASS | `runtime/reports/siem-detection-report.md`. | TBD | Keep sample events updated. |
+| PHASE4-AI-001 | Deterministic incident summary demo generated. | PASS | `runtime/reports/incident-summary.md`. | TBD | Review summary wording. |
+| PHASE4-VIDEO-001 | Demo video script and placeholder exist. | PASS | `docs/demo/`. | TBD | Record final video when emulator and desktop capture are available. |
+
+Production readiness must not be marked PASS for Phase 4.

@@ -1,0 +1,17 @@
+id: GOZAR-SAFETY-001
+title: Safety Pause Enabled
+severity: medium
+description: Detects activation of operator safety pause.
+event_source: android.safety_pause
+condition:
+  field: event_type
+  equals: safety_pause_enabled
+fields:
+  - event_type
+  - reason
+  - component
+false_positives:
+  - Planned demo validation.
+response_action: Confirm sessions are blocked and generate evidence.
+mitre_mapping: []
+safety_note: Safety pause is a controlled demo operator action.

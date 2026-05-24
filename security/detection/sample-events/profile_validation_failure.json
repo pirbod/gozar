@@ -1,0 +1,7 @@
+{
+  "event_type": "profile_validation_failure",
+  "component": "profile-api",
+  "validation_status": "expired",
+  "redacted_profile_ref": "prof_2026_05_24_redacted",
+  "safety_boundary": "controlled_demo"
+}

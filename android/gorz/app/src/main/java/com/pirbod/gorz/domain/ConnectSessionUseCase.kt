@@ -27,6 +27,14 @@ class ConnectSessionUseCase(
         val fetch = profileRepository.fetchProfile(settings, onStage)
         val validation = validateProfileUseCase.validate(fetch.profile, apiAvailable = fetch.profile.backendConnected)
         val confidence = calculateConfidenceUseCase.calculate(validation)
+        if (confidence.status == "BLOCKED") {
+            auditRepository.record(
+                "connect_blocked_by_confidence",
+                status = "failed",
+                metadata = mapOf("reasons" to confidence.blockingReasons.joinToString("; ")),
+            )
+            throw IllegalStateException(confidence.explanation)
+        }
         if (!validation.valid) {
             throw IllegalStateException(validation.messages.joinToString("; "))
         }

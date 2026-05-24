@@ -1,5 +1,7 @@
 package com.pirbod.gorz.data.model
 
+import com.pirbod.gorz.domain.RoutePolicyResult
+
 data class ValidationResult(
     val profileFresh: Boolean,
     val signatureValid: Boolean,
@@ -10,6 +12,7 @@ data class ValidationResult(
     val safetyNotesValid: Boolean,
     val apiAvailable: Boolean,
     val messages: List<String>,
+    val routePolicyResult: RoutePolicyResult? = null,
 ) {
     val valid: Boolean
         get() = profileFresh &&

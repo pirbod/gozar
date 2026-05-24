@@ -1,0 +1,19 @@
+{
+  "uid": "gozar-controlled-release",
+  "title": "Gozar Controlled Release Overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "tags": ["gozar", "controlled-release"],
+  "panels": [
+    {"id": 1, "type": "stat", "title": "System Health", "targets": [{"expr": "backend_health"}]},
+    {"id": 2, "type": "stat", "title": "Safety Pause State", "targets": [{"expr": "safety_pause_active"}]},
+    {"id": 3, "type": "timeseries", "title": "Profile Lifecycle", "targets": [{"expr": "profile_issuance_total"}]},
+    {"id": 4, "type": "timeseries", "title": "Validation Failures", "targets": [{"expr": "profile_validation_failure_total"}]},
+    {"id": 5, "type": "timeseries", "title": "Evidence Exports", "targets": [{"expr": "evidence_package_generated_total"}]},
+    {"id": 6, "type": "timeseries", "title": "Diagnostics Runs", "targets": [{"expr": "diagnostics_run_total"}]},
+    {"id": 7, "type": "timeseries", "title": "Route Policy Blocks", "targets": [{"expr": "route_policy_blocked_total"}]},
+    {"id": 8, "type": "stat", "title": "Readiness Status", "targets": [{"expr": "readiness_check_status"}]}
+  ],
+  "time": {"from": "now-6h", "to": "now"},
+  "refresh": "30s"
+}

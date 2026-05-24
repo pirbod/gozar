@@ -1,0 +1,17 @@
+groups:
+  - name: gozar-safety
+    rules:
+      - alert: SafetyPauseActive
+        expr: safety_pause_active == 1
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Safety pause is active.
+      - alert: RevokedProfileUsageAttempt
+        expr: increase(revoked_profile_total[10m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: Revoked profile activity was observed.

@@ -1,0 +1,7 @@
+{
+  "event_type": "route_policy_violation",
+  "component": "android-route-guard",
+  "route_scope": "blocked_full_device_route",
+  "redacted_session_ref": "sess_2026_05_24_redacted",
+  "safety_boundary": "controlled_demo"
+}

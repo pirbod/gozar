@@ -1,0 +1,17 @@
+{
+  "uid": "gozar-security-ops",
+  "title": "Gozar Security Operations View",
+  "schemaVersion": 39,
+  "version": 1,
+  "tags": ["gozar", "security-ops"],
+  "panels": [
+    {"id": 1, "type": "timeseries", "title": "Detection Events", "targets": [{"expr": "siem_detection_event_total"}]},
+    {"id": 2, "type": "timeseries", "title": "SIEM Rule Hits", "targets": [{"expr": "siem_rule_hit_total"}]},
+    {"id": 3, "type": "stat", "title": "Incident Summary Queue", "targets": [{"expr": "incident_summary_queue_depth"}]},
+    {"id": 4, "type": "timeseries", "title": "High Severity Findings", "targets": [{"expr": "high_severity_finding_total"}]},
+    {"id": 5, "type": "timeseries", "title": "Audit Timeline Count", "targets": [{"expr": "audit_event_total"}]},
+    {"id": 6, "type": "timeseries", "title": "Safety Events", "targets": [{"expr": "safety_event_total"}]}
+  ],
+  "time": {"from": "now-6h", "to": "now"},
+  "refresh": "30s"
+}

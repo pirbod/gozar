@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gozar-controlled-demo
+  labels:
+    app.kubernetes.io/part-of: gozar-gorz
+    gozar.pirbod.com/scope: controlled-demo

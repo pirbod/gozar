@@ -120,6 +120,10 @@ class ProfileStateStore(private val store: KeyValueStore) {
         get() = store.getString(KEY_LOCAL_SAFETY_PAUSE_REASON) ?: ""
         set(value) = store.putString(KEY_LOCAL_SAFETY_PAUSE_REASON, value)
 
+    var experimentalKeystoreStorage: Boolean
+        get() = store.getString(KEY_EXPERIMENTAL_KEYSTORE_STORAGE)?.toBooleanStrictOrNull() ?: false
+        set(value) = store.putString(KEY_EXPERIMENTAL_KEYSTORE_STORAGE, value.toString())
+
     fun ensureDemoDeviceKeyMaterial(): String {
         demoDeviceKeyMaterial?.let { return it }
         val raw = ByteArray(32)
@@ -179,5 +183,6 @@ class ProfileStateStore(private val store: KeyValueStore) {
         private const val KEY_ONBOARDING_COMPLETE = "onboarding_complete"
         private const val KEY_LOCAL_SAFETY_PAUSE_ENABLED = "local_safety_pause_enabled"
         private const val KEY_LOCAL_SAFETY_PAUSE_REASON = "local_safety_pause_reason"
+        private const val KEY_EXPERIMENTAL_KEYSTORE_STORAGE = "experimental_keystore_storage"
     }
 }

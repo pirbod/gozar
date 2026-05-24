@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gorz-api
+  namespace: gozar-controlled-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gorz-api
+  template:
+    metadata:
+      labels:
+        app: gorz-api
+    spec:
+      containers:
+        - name: gorz-api
+          image: gozar-gorz-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8090
+              name: http
+          env:
+            - name: GORZ_SAFETY_MODE
+              value: local_only
+          readinessProbe:
+            httpGet:
+              path: /api/gorz/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/gorz/health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            runAsNonRoot: true
+            runAsUser: 1000

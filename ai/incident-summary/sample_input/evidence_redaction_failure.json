@@ -1,0 +1,6 @@
+{
+  "event_type": "evidence_redaction_failure",
+  "component": "android-evidence",
+  "redaction_status": "failed_test_fixture",
+  "safety_boundary": "controlled_demo"
+}

@@ -10,6 +10,7 @@ data class AppSettings(
     val selectedMode: DemoMode,
     val offlineDemoMode: Boolean,
     val onboardingComplete: Boolean,
+    val experimentalKeystoreStorage: Boolean = false,
 )
 
 class SettingsRepository(private val store: ProfileStateStore) {
@@ -22,6 +23,7 @@ class SettingsRepository(private val store: ProfileStateStore) {
             selectedMode = DemoMode.fromApiValue(store.selectedDemoMode),
             offlineDemoMode = store.offlineDemoMode,
             onboardingComplete = store.onboardingComplete,
+            experimentalKeystoreStorage = store.experimentalKeystoreStorage,
         )
     }
 
@@ -39,6 +41,10 @@ class SettingsRepository(private val store: ProfileStateStore) {
 
     fun updateOfflineDemoMode(enabled: Boolean) {
         store.offlineDemoMode = enabled
+    }
+
+    fun updateExperimentalKeystoreStorage(enabled: Boolean) {
+        store.experimentalKeystoreStorage = enabled
     }
 
     fun setOnboardingComplete(complete: Boolean) {

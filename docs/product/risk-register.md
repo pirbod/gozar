@@ -12,3 +12,13 @@
 | RISK-008 | CI does not cover Android emulator. | Medium | Medium | Managed-device config, smoke docs, manual/nightly workflow. | Medium | TBD | Every milestone |
 | RISK-009 | Overclaiming research results. | High | Medium | Demo positioning and docs review. | Medium | TBD | Every release |
 | RISK-010 | Supply-chain dependency risk. | High | Medium | Dependency audit workflow and release checklist. | Medium | TBD | Every release |
+| RISK-011 | Android storage downgrade risk. | High | Medium | Demo warning, storage mode UI, Keystore gap documentation. | Medium | TBD | Every release |
+| RISK-012 | Evidence export misuse risk. | Medium | Medium | User-initiated export, redaction tests, evidence docs. | Medium | TBD | Every release |
+| RISK-013 | Screenshot leakage risk. | Medium | Medium | Screenshot guide and validation report warnings. | Medium | TBD | Every release |
+| RISK-014 | Emulator-only validation risk. | Medium | Medium | Manual checklist, skipped reports, CI artifacts. | Medium | TBD | Every milestone |
+| RISK-015 | Demo interpreted as production risk. | High | Medium | README, UI labels, release notes, final validation report. | Medium | TBD | Every release |
+| RISK-016 | Route guard regression risk. | High | Low | RoutePolicyGuard tests and Android route checker. | Low | TBD | Every PR |
+| RISK-017 | Admin token leakage risk. | High | Medium | Redaction tests and admin token hardening gap. | Medium | TBD | Every release |
+| RISK-018 | Release artifact misuse risk. | Medium | Medium | RC manifest, release notes, no signing unless configured. | Medium | TBD | Every release |
+| RISK-019 | Platform manifests interpreted as production deployment. | High | Medium | README, platform docs, ClusterIP defaults, Terraform local defaults. | Medium | TBD | Every release |
+| RISK-020 | Detection summaries treated as completed security review. | Medium | Medium | Docs state summaries are reviewer aids only. | Medium | TBD | Every release |

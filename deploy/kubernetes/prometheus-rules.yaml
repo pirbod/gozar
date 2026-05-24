@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gozar-prometheus-rules
+  namespace: gozar-controlled-demo
+data:
+  gozar-alerts.yml: |
+    groups:
+      - name: gozar-controlled-release
+        rules:
+          - alert: SafetyPauseActive
+            expr: safety_pause_active == 1
+            for: 1m
+            labels:
+              severity: warning
+            annotations:
+              summary: Safety pause is active.
+          - alert: RoutePolicyViolationDetected
+            expr: increase(route_policy_blocked_total[5m]) > 0
+            labels:
+              severity: critical
+            annotations:
+              summary: Route policy blocked an unsafe scope.
+          - alert: ProfileValidationFailuresHigh
+            expr: increase(profile_validation_failure_total[15m]) > 5
+            labels:
+              severity: warning
+            annotations:
+              summary: Profile validation failures increased.
+          - alert: EvidenceRedactionFailure
+            expr: evidence_redaction_failure_total > 0
+            labels:
+              severity: critical
+            annotations:
+              summary: Evidence redaction failure detected.
+          - alert: BackendUnavailable
+            expr: backend_health == 0
+            labels:
+              severity: warning
+            annotations:
+              summary: Backend health check is unavailable.
+          - alert: EmulatorSmokeFailed
+            expr: emulator_smoke_status == 0
+            labels:
+              severity: warning
+            annotations:
+              summary: Emulator smoke failed or was not completed.
+          - alert: ProductionReadinessFailed
+            expr: readiness_check_status == 0
+            labels:
+              severity: warning
+            annotations:
+              summary: Production readiness is not ready.

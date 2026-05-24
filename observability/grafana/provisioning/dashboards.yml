@@ -1,0 +1,10 @@
+apiVersion: 1
+providers:
+  - name: gozar
+    orgId: 1
+    folder: Gozar Controlled Release
+    type: file
+    disableDeletion: true
+    editable: false
+    options:
+      path: /var/lib/grafana/dashboards

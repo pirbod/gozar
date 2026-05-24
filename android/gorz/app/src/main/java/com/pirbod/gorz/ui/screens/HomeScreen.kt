@@ -87,6 +87,8 @@ fun HomeScreen(
                     )
                     Text("Profile expiry: ${state.profile?.ttlLabel() ?: "none"}")
                     Text("Last validation: ${state.validation?.messages?.firstOrNull() ?: "not run"}")
+                    Text("Confidence status: ${state.confidenceStatus}")
+                    Text("Safety pause: ${if (state.safetyState.active) "active" else "inactive"}")
                 }
             }
         }
