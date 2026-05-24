@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.pirbod.gorz.ui.components.PrimaryActionButton
 
@@ -21,7 +22,8 @@ fun OnboardingScreen(onStartDemo: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp),
+            .padding(24.dp)
+            .testTag("screen_onboarding"),
         verticalArrangement = Arrangement.Center,
     ) {
         Text("Gorz", style = MaterialTheme.typography.displaySmall)
@@ -47,7 +49,7 @@ fun OnboardingScreen(onStartDemo: () -> Unit) {
             }
         }
         Spacer(Modifier.height(28.dp))
-        PrimaryActionButton("Start demo", onClick = onStartDemo)
+        PrimaryActionButton("Start demo", onClick = onStartDemo, modifier = Modifier.testTag("button_start_demo"))
         Spacer(Modifier.height(18.dp))
         Text(
             "Prototype mode. No public gateway, no public probing, no internet traffic forwarding.",

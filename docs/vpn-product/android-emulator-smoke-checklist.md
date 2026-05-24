@@ -1,0 +1,21 @@
+# Android Emulator Smoke Checklist
+
+- [ ] App builds.
+- [ ] App installs.
+- [ ] App launches.
+- [ ] Onboarding visible.
+- [ ] Home visible.
+- [ ] Controlled prototype label visible.
+- [ ] Offline mode works.
+- [ ] Connect flow visible.
+- [ ] Confidence screen visible.
+- [ ] Route policy visible.
+- [ ] `10.77.0.0/24` shown as applied.
+- [ ] `0.0.0.0/0` shown as blocked.
+- [ ] Diagnostics visible.
+- [ ] Evidence generation visible.
+- [ ] Redaction wording visible.
+- [ ] Settings visible.
+- [ ] Disconnect works.
+- [ ] No public forwarding claim.
+- [ ] No production secure claim.

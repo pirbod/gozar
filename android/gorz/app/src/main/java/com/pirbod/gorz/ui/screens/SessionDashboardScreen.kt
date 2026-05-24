@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.pirbod.gorz.state.GorzAppState
 
@@ -19,11 +20,14 @@ import com.pirbod.gorz.state.GorzAppState
 fun SessionDashboardScreen(state: GorzAppState) {
     val profile = state.profile
     LazyColumn(
-        modifier = Modifier.padding(16.dp),
+        modifier = Modifier
+            .padding(16.dp)
+            .testTag("screen_session"),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         item {
             Text("Session", style = MaterialTheme.typography.headlineMedium)
+            Text("Controlled prototype · Local lifecycle only · No public traffic forwarding", color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text("Packets are observed for local diagnostics only and are not forwarded.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         item {

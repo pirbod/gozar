@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.pirbod.gorz.state.GorzAppState
 import com.pirbod.gorz.ui.components.JsonPreview
@@ -26,17 +27,25 @@ fun EvidenceScreen(
 ) {
     val context = LocalContext.current
     LazyColumn(
-        modifier = Modifier.padding(16.dp),
+        modifier = Modifier
+            .padding(16.dp)
+            .testTag("screen_evidence"),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
             Text("Evidence", style = MaterialTheme.typography.headlineMedium)
+            Text("Controlled prototype · Redacted export · No public traffic forwarding", color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text("Redacted incident evidence package.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        item { PrimaryActionButton("Generate evidence package", onClick = onGenerateEvidence) }
+        item { PrimaryActionButton("Generate evidence package", onClick = onGenerateEvidence, modifier = Modifier.testTag("button_generate_evidence")) }
         item {
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant), shape = MaterialTheme.shapes.small) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Column(
+                    Modifier
+                        .padding(16.dp)
+                        .testTag("text_redacted_evidence"),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
                     listOf(
                         "Device ID redacted",
                         "Session ID redacted",

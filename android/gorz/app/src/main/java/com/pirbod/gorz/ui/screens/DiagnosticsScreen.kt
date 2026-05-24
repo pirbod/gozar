@@ -14,6 +14,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.pirbod.gorz.state.GorzAppState
@@ -28,11 +29,14 @@ fun DiagnosticsScreen(
     val diagnostics = state.diagnostics
     val clipboard = LocalClipboardManager.current
     LazyColumn(
-        modifier = Modifier.padding(16.dp),
+        modifier = Modifier
+            .padding(16.dp)
+            .testTag("screen_diagnostics"),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item {
             Text("Diagnostics", style = MaterialTheme.typography.headlineMedium)
+            Text("Controlled prototype · Local lifecycle only · No public traffic forwarding", color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text("Local-only diagnostic simulation.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         item { PrimaryActionButton("Run local diagnostics", onClick = onRunDiagnostics) }
