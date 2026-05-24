@@ -8,19 +8,28 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.util.concurrent.TimeUnit
 
 class ProfileApiClient(
     private val apiUrl: String,
     private val adminToken: String,
-    private val http: OkHttpClient = OkHttpClient(),
+    private val http: OkHttpClient = OkHttpClient.Builder()
+        .connectTimeout(1200, TimeUnit.MILLISECONDS)
+        .readTimeout(1800, TimeUnit.MILLISECONDS)
+        .writeTimeout(1200, TimeUnit.MILLISECONDS)
+        .build(),
     private val json: Json = Json { ignoreUnknownKeys = true },
 ) {
     fun health(): HealthResponse = get("/api/profile/health", HealthResponse.serializer())
+
+    fun healthCheck(): HealthResponse = health()
 
     fun bootstrap(): MobileBootstrapResponse =
         get("/api/profile/mobile/bootstrap", MobileBootstrapResponse.serializer())
 
     fun safety(): SafetyResponse = get("/api/profile/safety", SafetyResponse.serializer())
+
+    fun getSafetyState(): SafetyResponse = safety()
 
     fun registerDevice(devicePublicKey: String): RegisterDeviceResponse {
         val request = RegisterDeviceRequest(
@@ -39,6 +48,9 @@ class ProfileApiClient(
             SessionProfileResponse.serializer(),
         )
     }
+
+    fun requestProfile(deviceId: String, requestedMode: String): SessionProfileResponse =
+        requestSessionProfile(deviceId, requestedMode)
 
     fun validateProfile(profileId: String): ProfileValidationResponse {
         return post(
@@ -63,6 +75,11 @@ class ProfileApiClient(
             DiagnosticsRequest(scenario),
             DiagnosticsResponse.serializer(),
         )
+    }
+
+    fun setSafetyPause(paused: Boolean): SafetyResponse {
+        val path = if (paused) "/api/profile/safety/pause" else "/api/profile/safety/resume"
+        return post(path, emptyMap<String, String>(), SafetyResponse.serializer(), admin = true)
     }
 
     private fun <T> get(path: String, serializer: KSerializer<T>): T {
