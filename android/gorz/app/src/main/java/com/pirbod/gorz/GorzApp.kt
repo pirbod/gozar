@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -78,6 +79,7 @@ fun GorzApp(
                     NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
                         bottomItems.forEach { item ->
                             NavigationBarItem(
+                                modifier = Modifier.testTag("nav_${item.route}"),
                                 selected = currentDestination?.hierarchy?.any { it.route == item.route } == true,
                                 onClick = {
                                     navController.navigate(item.route) {

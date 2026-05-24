@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.pirbod.gorz.state.GorzAppState
 import com.pirbod.gorz.state.SessionStatus
@@ -29,9 +30,25 @@ fun HomeScreen(
     onNavigate: (String) -> Unit,
 ) {
     LazyColumn(
-        modifier = Modifier.padding(16.dp),
+        modifier = Modifier
+            .padding(16.dp)
+            .testTag("screen_home"),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
+        item {
+            Text(
+                "Controlled prototype · Local lifecycle only · No public traffic forwarding · No full-device route",
+                modifier = Modifier.testTag("text_controlled_prototype"),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                "No public traffic forwarding",
+                modifier = Modifier.testTag("text_no_public_forwarding"),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         item {
             StatusCard(
                 status = state.sessionStatus,
@@ -54,6 +71,7 @@ fun HomeScreen(
                         else -> onConnect()
                     }
                 },
+                modifier = Modifier.testTag(if (active) "button_disconnect" else "button_connect"),
             )
         }
         item {
@@ -80,6 +98,7 @@ fun HomeScreen(
                     "Diagnostics" to "diagnostics",
                     "Evidence" to "evidence",
                     "Audit" to "audit",
+                    "Connect flow" to "connect",
                     "Route policy" to "route",
                     "Safety pause" to "safety",
                     "Settings" to "settings",

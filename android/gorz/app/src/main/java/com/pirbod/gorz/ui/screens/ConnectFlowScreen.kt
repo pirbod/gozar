@@ -17,13 +17,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.pirbod.gorz.state.GorzAppState
 
 @Composable
 fun ConnectFlowScreen(state: GorzAppState) {
     LazyColumn(
-        modifier = Modifier.padding(16.dp),
+        modifier = Modifier
+            .padding(16.dp)
+            .testTag("screen_connect_flow"),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         item {

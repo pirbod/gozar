@@ -38,4 +38,17 @@ class ValidateProfileUseCaseTest {
         assertFalse(result.valid)
         assertFalse(result.profileFresh)
     }
+
+    @Test
+    fun revokedProfileBlocksConnect() {
+        val profile = LocalDemoProfileRepository(clock).requestProfile(
+            DemoMode.SplitTunnel,
+            DemoDeviceRegistration("demo-device-test", "demo-pkh-test"),
+        ).copy(revocationStatus = "revoked")
+
+        val result = ValidateProfileUseCase(clock).validate(profile)
+
+        assertFalse(result.valid)
+        assertTrue(result.revoked)
+    }
 }
