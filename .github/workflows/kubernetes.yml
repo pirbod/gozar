@@ -13,9 +13,9 @@ jobs:
       - uses: actions/checkout@v6
       - uses: azure/setup-kubectl@v4
       - name: Render local overlay
-        run: kubectl kustomize deploy/kubernetes/overlays/local > runtime-k8s-rendered.yaml
+        run: kubectl kustomize --load-restrictor=LoadRestrictionsNone deploy/kubernetes/overlays/local > runtime-k8s-rendered.yaml
       - name: Client dry-run
-        run: kubectl apply --dry-run=client --validate=false -k deploy/kubernetes/overlays/local
+        run: kubectl apply --dry-run=client --validate=false -f runtime-k8s-rendered.yaml
       - name: Upload rendered manifests
         if: always()
         uses: actions/upload-artifact@v4
