@@ -1,0 +1,63 @@
+1
+00:00:00,000 --> 00:00:18,000
+Gozar/Gorz is a controlled local-first prototype release candidate for Android UX, local profile lifecycle, platform automation, evidence, and review.
+
+2
+00:00:18,000 --> 00:00:36,000
+The safety boundary is explicit: this is not a production VPN, not a public routing product, and not suitable for sensitive communication.
+
+3
+00:00:36,000 --> 00:00:58,000
+The four-phase roadmap closes with Phase 4: controlled release readiness across Android, platform assets, detection, reporting, and reviewer evidence.
+
+4
+00:00:58,000 --> 00:01:22,000
+The Android Home screen introduces the controlled demo state, offline mode, route safety, evidence, diagnostics, and safety pause.
+
+5
+00:01:22,000 --> 00:01:45,000
+The offline connect flow demonstrates local session lifecycle behavior without relying on public infrastructure.
+
+6
+00:01:45,000 --> 00:02:06,000
+The confidence screen shows deterministic scoring and explainable local signals.
+
+7
+00:02:06,000 --> 00:02:28,000
+The route policy screen shows the applied local route, 10.77.0.0/24, and blocked unsafe routes.
+
+8
+00:02:28,000 --> 00:02:52,000
+Evidence Package V2 includes redaction summary, checksum, diagnostics, route policy, and safety status.
+
+9
+00:02:52,000 --> 00:03:15,000
+Safety Pause blocks new sessions, records audit events, and appears in diagnostics and evidence.
+
+10
+00:03:15,000 --> 00:03:45,000
+Terraform and Kubernetes assets describe local lab infrastructure, ClusterIP services, overlays, and NetworkPolicy.
+
+11
+00:03:45,000 --> 00:04:12,000
+Prometheus and Grafana assets provide controlled release observability views and alerts.
+
+12
+00:04:12,000 --> 00:04:38,000
+SIEM-style detection rules evaluate redacted sample events and generate a local detection report.
+
+13
+00:04:38,000 --> 00:05:02,000
+The incident summary uses deterministic offline logic and does not call an external model by default.
+
+14
+00:05:02,000 --> 00:05:28,000
+GitHub Actions document CI, Android, emulator smoke, readiness, Terraform, Kubernetes, detection, and release candidate workflows.
+
+15
+00:05:28,000 --> 00:05:55,000
+The production readiness report marks the review package ready while production-ready for real use remains NO.
+
+16
+00:05:55,000 --> 00:06:18,000
+The final position is a controlled prototype release candidate for demo, portfolio, research, and platform-security review.

@@ -1,0 +1,14 @@
+{
+  "generatedAt": "2026-05-24T20:21:00.859483+00:00",
+  "status": "SKIPPED",
+  "detail": "Report-only mode did not attempt emulator execution.",
+  "command": "cd android/gorz && ./gradlew pixel2api30DebugAndroidTest",
+  "exitCode": 0,
+  "outputTail": "",
+  "artifacts": [
+    "android/gorz/app/build/reports/androidTests/managedDevice",
+    "android/gorz/app/build/outputs/apk/debug",
+    "runtime/reports/android-emulator-smoke-report.md",
+    "runtime/reports/android-emulator-smoke-report.json"
+  ]
+}

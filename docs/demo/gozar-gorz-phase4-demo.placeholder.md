@@ -1,8 +1,15 @@
 # Phase 4 Demo Video Placeholder
 
-Video not recorded yet.
+Demo video pending. Recording plan is complete.
 
-The recording script exists at `docs/demo/demo-video-script.md`.
+Required recording assets exist in this directory:
+
+- `docs/demo/demo-video-script.md`
+- `docs/demo/demo-video-shot-list.md`
+- `docs/demo/demo-video-checklist.md`
+- `docs/demo/demo-video-recording-commands.md`
+- `docs/demo/demo-video-subtitles.srt`
+- `docs/demo/demo-video-link.md`
 
 Expected output path:
 
@@ -14,4 +21,4 @@ Recording steps:
 2. Run screen recorder.
 3. Capture browser or terminal for CI, reports, and dashboards.
 4. Save final video to `docs/demo/gozar-gorz-phase4-demo.mp4`.
-5. Update README link after recording.
+5. Update `docs/demo/demo-video-link.md` after recording.

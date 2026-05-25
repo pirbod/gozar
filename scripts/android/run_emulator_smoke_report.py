@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
 import subprocess
 from datetime import UTC, datetime
 from pathlib import Path
@@ -21,9 +20,15 @@ def main() -> int:
         print("Android emulator smoke status: SKIPPED")
         return 0
 
-    gradle = shutil.which("gradle")
-    if not gradle:
-        payload = payload_for("SKIPPED", "Gradle is not installed in this shell.", "", 127)
+    gradlew = ANDROID_DIR / "gradlew"
+    if not gradlew.exists():
+        payload = payload_for("SKIPPED", "Gradle wrapper is missing.", "", 127)
+        write_reports(payload)
+        print("Android emulator smoke status: SKIPPED")
+        return 0
+
+    if not android_sdk_available():
+        payload = payload_for("SKIPPED", "Android SDK is not available in this shell.", "", 127)
         write_reports(payload)
         print("Android emulator smoke status: SKIPPED")
         return 0
@@ -53,6 +58,15 @@ def payload_for(status: str, detail: str, output: str, exit_code: int) -> dict[s
             "runtime/reports/android-emulator-smoke-report.json",
         ],
     }
+
+
+def android_sdk_available() -> bool:
+    candidates = [
+        os.environ.get("ANDROID_HOME", ""),
+        os.environ.get("ANDROID_SDK_ROOT", ""),
+        str(Path.home() / "Android" / "Sdk"),
+    ]
+    return any(candidate and Path(candidate).exists() for candidate in candidates)
 
 
 def write_reports(payload: dict[str, object]) -> None:

@@ -1,0 +1,341 @@
+{
+  "generatedAt": "2026-05-24T20:30:51.891140+00:00",
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "README completeness",
+      "status": "PASS",
+      "detail": "All required README sections and labels are present."
+    },
+    {
+      "name": "Required file exists: docs/demo/reviewer-walkthrough.md",
+      "status": "PASS",
+      "detail": "docs/demo/reviewer-walkthrough.md"
+    },
+    {
+      "name": "Required file exists: docs/demo/demo-video-script.md",
+      "status": "PASS",
+      "detail": "docs/demo/demo-video-script.md"
+    },
+    {
+      "name": "Required file exists: docs/demo/demo-video-shot-list.md",
+      "status": "PASS",
+      "detail": "docs/demo/demo-video-shot-list.md"
+    },
+    {
+      "name": "Required file exists: docs/demo/demo-video-checklist.md",
+      "status": "PASS",
+      "detail": "docs/demo/demo-video-checklist.md"
+    },
+    {
+      "name": "Required file exists: docs/demo/demo-video-recording-commands.md",
+      "status": "PASS",
+      "detail": "docs/demo/demo-video-recording-commands.md"
+    },
+    {
+      "name": "Required file exists: docs/demo/demo-video-subtitles.srt",
+      "status": "PASS",
+      "detail": "docs/demo/demo-video-subtitles.srt"
+    },
+    {
+      "name": "Required file exists: docs/demo/demo-video-link.md",
+      "status": "PASS",
+      "detail": "docs/demo/demo-video-link.md"
+    },
+    {
+      "name": "Required file exists: docs/demo/gozar-gorz-phase4-demo.placeholder.md",
+      "status": "PASS",
+      "detail": "docs/demo/gozar-gorz-phase4-demo.placeholder.md"
+    },
+    {
+      "name": "Required file exists: docs/vpn-product/phase-4-final-validation-report.md",
+      "status": "PASS",
+      "detail": "docs/vpn-product/phase-4-final-validation-report.md"
+    },
+    {
+      "name": "Required file exists: docs/vpn-product/images/phase4/README.md",
+      "status": "PASS",
+      "detail": "docs/vpn-product/images/phase4/README.md"
+    },
+    {
+      "name": "Required file exists: docs/ci/README.md",
+      "status": "PASS",
+      "detail": "docs/ci/README.md"
+    },
+    {
+      "name": "Required file exists: docs/ci/workflow-status.md",
+      "status": "PASS",
+      "detail": "docs/ci/workflow-status.md"
+    },
+    {
+      "name": "Required file exists: runtime/reports/gorz-android-rc-manifest.md",
+      "status": "PASS",
+      "detail": "runtime/reports/gorz-android-rc-manifest.md"
+    },
+    {
+      "name": "Required file exists: runtime/reports/gorz-android-rc-manifest.json",
+      "status": "PASS",
+      "detail": "runtime/reports/gorz-android-rc-manifest.json"
+    },
+    {
+      "name": "Required file exists: docs/release/gorz-android-rc-manifest-example.md",
+      "status": "PASS",
+      "detail": "docs/release/gorz-android-rc-manifest-example.md"
+    },
+    {
+      "name": "Demo video file or explicit placeholder",
+      "status": "PASS",
+      "detail": "Demo video pending placeholder exists."
+    },
+    {
+      "name": "Final validation states production-ready NO",
+      "status": "PASS",
+      "detail": "Final report explicitly says Production-ready: NO."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-home.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-connect-flow.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-session.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-confidence.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-route-policy.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-diagnostics.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-evidence.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-safety-pause.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-audit.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-settings.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-storage-mode.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-emulator-smoke-result.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-github-actions.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-terraform-validate.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-kubernetes-manifests.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-prometheus-alerts.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-grafana-dashboard.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-siem-detection-report.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-incident-summary.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Screenshot artifact exists: phase4-production-readiness-report.png",
+      "status": "PASS",
+      "detail": "Screenshot file exists and status README includes statuses."
+    },
+    {
+      "name": "Placeholder screenshots are explicit",
+      "status": "PASS",
+      "detail": "Screenshot README distinguishes placeholders from proof."
+    },
+    {
+      "name": "Example report exists: production-readiness-report.md",
+      "status": "PASS",
+      "detail": "production-readiness-report.md"
+    },
+    {
+      "name": "Example report exists: production-readiness-report.json",
+      "status": "PASS",
+      "detail": "production-readiness-report.json"
+    },
+    {
+      "name": "Example report exists: android-emulator-smoke-report.md",
+      "status": "PASS",
+      "detail": "android-emulator-smoke-report.md"
+    },
+    {
+      "name": "Example report exists: android-emulator-smoke-report.json",
+      "status": "PASS",
+      "detail": "android-emulator-smoke-report.json"
+    },
+    {
+      "name": "Example report exists: screenshot-capture-report.md",
+      "status": "PASS",
+      "detail": "screenshot-capture-report.md"
+    },
+    {
+      "name": "Example report exists: platform-screenshot-report.md",
+      "status": "PASS",
+      "detail": "platform-screenshot-report.md"
+    },
+    {
+      "name": "Example report exists: terraform-check-report.md",
+      "status": "PASS",
+      "detail": "terraform-check-report.md"
+    },
+    {
+      "name": "Example report exists: terraform-check-report.json",
+      "status": "PASS",
+      "detail": "terraform-check-report.json"
+    },
+    {
+      "name": "Example report exists: kubernetes-check-report.md",
+      "status": "PASS",
+      "detail": "kubernetes-check-report.md"
+    },
+    {
+      "name": "Example report exists: kubernetes-check-report.json",
+      "status": "PASS",
+      "detail": "kubernetes-check-report.json"
+    },
+    {
+      "name": "Example report exists: observability-check-report.md",
+      "status": "PASS",
+      "detail": "observability-check-report.md"
+    },
+    {
+      "name": "Example report exists: observability-check-report.json",
+      "status": "PASS",
+      "detail": "observability-check-report.json"
+    },
+    {
+      "name": "Example report exists: siem-detection-report.md",
+      "status": "PASS",
+      "detail": "siem-detection-report.md"
+    },
+    {
+      "name": "Example report exists: siem-detection-report.json",
+      "status": "PASS",
+      "detail": "siem-detection-report.json"
+    },
+    {
+      "name": "Example report exists: incident-summary.md",
+      "status": "PASS",
+      "detail": "incident-summary.md"
+    },
+    {
+      "name": "Example report exists: gorz-android-rc-manifest.md",
+      "status": "PASS",
+      "detail": "gorz-android-rc-manifest.md"
+    },
+    {
+      "name": "Example report exists: gorz-android-rc-manifest.json",
+      "status": "PASS",
+      "detail": "gorz-android-rc-manifest.json"
+    },
+    {
+      "name": "Example report exists: phase4-check-summary.md",
+      "status": "PASS",
+      "detail": "phase4-check-summary.md"
+    },
+    {
+      "name": "Production readiness report status",
+      "status": "PASS",
+      "detail": "production_readiness=READY"
+    },
+    {
+      "name": "Production-ready for real use remains NO",
+      "status": "PASS",
+      "detail": "production_ready_for_real_use=NO"
+    },
+    {
+      "name": "Controlled release readiness status",
+      "status": "PASS",
+      "detail": "controlled_release_readiness=PASS"
+    },
+    {
+      "name": "Terraform report status",
+      "status": "PASS",
+      "detail": "SKIPPED"
+    },
+    {
+      "name": "Kubernetes report status",
+      "status": "PASS",
+      "detail": "SKIPPED"
+    },
+    {
+      "name": "Observability report status",
+      "status": "PASS",
+      "detail": "PASS"
+    },
+    {
+      "name": "Detection report status",
+      "status": "PASS",
+      "detail": "PASS"
+    },
+    {
+      "name": "Release manifest decision exists",
+      "status": "PASS",
+      "detail": "Controlled release candidate: PARTIAL"
+    },
+    {
+      "name": "Safety wording avoids unsupported claims",
+      "status": "PASS",
+      "detail": "No unsupported forbidden wording found."
+    }
+  ],
+  "summary": {
+    "demoVideoStatus": "PARTIAL",
+    "androidScreenshotStatus": "PARTIAL",
+    "platformScreenshotStatus": "PARTIAL"
+  }
+}
