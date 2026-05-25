@@ -1,0 +1,15 @@
+{
+  "generatedAt": "2026-05-24T20:28:48.665477+00:00",
+  "status": "PASS",
+  "required": [
+    "observability/prometheus/prometheus.yml",
+    "observability/prometheus/rules/gozar-profile-api-alerts.yml",
+    "observability/prometheus/rules/gozar-android-demo-alerts.yml",
+    "observability/prometheus/rules/gozar-safety-alerts.yml",
+    "observability/grafana/dashboards/gozar-controlled-release-dashboard.json",
+    "observability/grafana/dashboards/gozar-security-ops-dashboard.json",
+    "observability/grafana/provisioning/datasources.yml",
+    "observability/grafana/provisioning/dashboards.yml"
+  ],
+  "missing": []
+}

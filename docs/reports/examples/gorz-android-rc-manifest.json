@@ -1,0 +1,33 @@
+{
+  "generatedAt": "2026-05-24T20:30:51.947546+00:00",
+  "repository": "git@github.com:pirbod/gozar.git",
+  "phase": "Phase 4 Controlled Prototype Release Candidate",
+  "version": "0.4.0-rc1",
+  "commitSha": "1ae19cf635c9a68a17927910a86292c58ada258b",
+  "androidVersionName": "0.4.0-rc1",
+  "buildType": "debug_or_local",
+  "apkPath": "missing",
+  "apkSha256": "missing",
+  "screenshotStatus": "PARTIAL",
+  "demoVideoStatus": "PARTIAL",
+  "terraformStatus": "SKIPPED",
+  "kubernetesStatus": "SKIPPED",
+  "observabilityStatus": "PASS",
+  "detectionStatus": "PASS",
+  "incidentSummaryStatus": "PASS",
+  "emulatorSmokeStatus": "SKIPPED",
+  "safetyStatus": "PASS",
+  "productionReadinessStatus": "READY",
+  "productionReadyForRealUse": "NO",
+  "controlledReleaseReadinessStatus": "PASS",
+  "knownGaps": [
+    "Release signing and key custody are not configured.",
+    "Independent production crypto review is not complete.",
+    "Tenant-aware backend auth is not implemented for production use.",
+    "Production-ready-for-real-use status remains NO.",
+    "Local APK artifact was not present when this manifest was generated.",
+    "Demo video recording is pending; complete recording package is present.",
+    "Some screenshot files are placeholders or require real capture."
+  ],
+  "releaseDecision": "Controlled release candidate: PARTIAL"
+}

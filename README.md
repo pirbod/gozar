@@ -1,6 +1,12 @@
 # Gozar/Gorz
 
-Controlled local-first prototype release candidate for Android session lifecycle, local profile issuance, evidence export, diagnostics, platform automation, observability, detection logic, and deterministic incident summaries.
+Controlled local-first prototype release candidate for Android session lifecycle, local profile issuance, evidence export, diagnostics, platform automation, observability, SIEM-style detection, and deterministic incident summaries.
+
+Static review labels, not live CI badges:
+
+- Controlled Release Candidate
+- Production: READY
+- Production-ready for real use: NO
 
 ## Safety Disclaimer
 
@@ -12,24 +18,9 @@ Safety boundaries:
 - No full-device Android route.
 - No public gateway discovery.
 - No public relay discovery.
-- No public probing.
+- No public network probing.
 - No automatic diagnostic upload.
 - No contacts, phone number, location, or public IP history collection.
-
-## What This Project Is
-
-- A four-phase controlled prototype roadmap.
-- A local Profile API that issues short-lived demo profiles.
-- An Android Compose app with local VPN lifecycle validation, route safety, confidence scoring, diagnostics, evidence export, and safety pause.
-- A platform engineering demo with Terraform, Kubernetes manifests, Prometheus/Grafana assets, SIEM-style local detection, deterministic incident summaries, and CI workflows.
-
-## What This Project Is Not
-
-- Not public production infrastructure.
-- Not a production VPN.
-- Not a public routing product.
-- Not a security guarantee.
-- Not suitable for sensitive communication.
 
 ## Four-Phase Roadmap
 
@@ -38,15 +29,16 @@ Safety boundaries:
 3. Phase 3: Clickable Android Product Experience
 4. Phase 4: Controlled Release Readiness
 
-See [docs/product/four-phase-roadmap.md](docs/product/four-phase-roadmap.md). There is no Phase 5 in this roadmap.
+Roadmap: [docs/product/four-phase-roadmap.md](docs/product/four-phase-roadmap.md)
 
 ## Architecture
 
 ```mermaid
 flowchart LR
   Android["Android controlled demo app"] --> Profile["Local Profile API"]
-  Android --> Evidence["Redacted evidence package"]
+  Android --> Evidence["Redacted Evidence Package V2"]
   Android --> Diagnostics["Local diagnostics"]
+  Android --> Safety["Route guard and safety pause"]
   Profile --> Audit["Redacted audit export"]
   Platform["Terraform and Kubernetes assets"] --> Observability["Prometheus and Grafana"]
   Platform --> Detection["Local detection rules"]
@@ -63,45 +55,68 @@ python/gorz_api/              local Gorz API prototype
 infra/terraform/              Terraform local lab shape
 deploy/kubernetes/            Kubernetes manifests and overlays
 observability/                Prometheus and Grafana assets
-security/detection/           local SIEM-style rules and sample events
+security/detection/           local rules and redacted sample events
 ai/incident-summary/          deterministic incident summary demo
 docs/                         product, platform, security, privacy, release docs
-scripts/                      readiness, safety, screenshot, detection scripts
+scripts/                      readiness, safety, screenshot, report scripts
 runtime/reports/              generated local reports
 ```
 
 ## Quick Start
 
 ```bash
-make profile-demo
 make phase4-check
+make phase4-10of10-check
 make production-readiness-check
 ```
 
-`phase4-check` runs safety checks, docs checks, backend validation, platform checks, report generation, and release manifest generation. Optional Android, emulator, Terraform, Kubernetes, and screenshot tooling reports SKIPPED when unavailable.
+Optional Android, emulator, Terraform, Kubernetes, and screenshot tooling reports `SKIPPED` or `PARTIAL` when unavailable. Reports are generated under `runtime/reports/` and safe examples are copied to [docs/reports/examples/](docs/reports/examples/).
 
 ## Android Demo
 
 Open `android/gorz` in Android Studio and run on a Pixel 2 API 30 emulator. Offline demo mode works without the local Profile API.
 
+```bash
+make android-emulator-smoke-report
+make phase4-screenshot-report
+```
+
+The Android app includes Home, offline connect flow, session dashboard, deterministic confidence, route policy, local diagnostics, Evidence Package V2, safety pause, audit, settings, and storage mode views.
+
 ### Android Phase 2 Prototype
 
-Phase 2 introduced the Android VpnService local lifecycle prototype with Profile API integration, signature verification, profile decryption, route validation, local TUN lifecycle, packet counting and dropping, and no public forwarding.
+Phase 2 introduced the local Android VpnService lifecycle prototype, Profile API integration, profile validation, route safety, local TUN lifecycle, packet counting, packet dropping, and no public forwarding.
 
 ### Android Phase 3 Clickable Prototype
 
-Phase 3 introduced the clickable Android product experience with onboarding, home, connect flow, session dashboard, confidence, route policy, diagnostics, evidence, safety pause, audit, settings, offline demo mode, and emulator smoke coverage.
+Phase 3 introduced the clickable Android product experience: onboarding, home, connect flow, session dashboard, confidence, route policy, diagnostics, evidence, safety pause, audit, settings, offline demo mode, and emulator smoke coverage.
 
-### Phase 4 Controlled Release Readiness
+## Screenshots
 
-Phase 4 adds storage hardening, route guard finalization, deterministic confidence, Evidence Package V2, local diagnostics hardening, safety pause hardening, screenshots, release reports, platform engineering assets, observability, detection rules, incident summaries, and final documentation.
+Screenshot status: [docs/vpn-product/images/phase4/README.md](docs/vpn-product/images/phase4/README.md)
 
-```bash
-make android-emulator-smoke
-make android-emulator-smoke-report
-make phase4-screenshots
-make phase4-screenshot-report
-```
+Placeholders are visibly labelled and do not imply real product capture.
+
+![Home](docs/vpn-product/images/phase4/phase4-home.png)
+
+![Route Policy](docs/vpn-product/images/phase4/phase4-route-policy.png)
+
+![Evidence](docs/vpn-product/images/phase4/phase4-evidence.png)
+
+![Grafana Dashboard](docs/vpn-product/images/phase4/phase4-grafana-dashboard.png)
+
+![SIEM Detection Report](docs/vpn-product/images/phase4/phase4-siem-detection-report.png)
+
+![Incident Summary](docs/vpn-product/images/phase4/phase4-incident-summary.png)
+
+## Demo Video
+
+Demo video status: `PARTIAL` until `docs/demo/gozar-gorz-phase4-demo.mp4` exists.
+
+- Link/status: [docs/demo/demo-video-link.md](docs/demo/demo-video-link.md)
+- Script: [docs/demo/demo-video-script.md](docs/demo/demo-video-script.md)
+- Shot list: [docs/demo/demo-video-shot-list.md](docs/demo/demo-video-shot-list.md)
+- Checklist: [docs/demo/demo-video-checklist.md](docs/demo/demo-video-checklist.md)
 
 ## Terraform
 
@@ -111,7 +126,7 @@ Terraform assets live in `infra/terraform/`.
 make terraform-check
 ```
 
-See [docs/platform/terraform.md](docs/platform/terraform.md).
+Docs: [docs/platform/terraform.md](docs/platform/terraform.md)
 
 ## Kubernetes
 
@@ -121,7 +136,7 @@ Kubernetes manifests live in `deploy/kubernetes/` with local and demo overlays. 
 make k8s-check
 ```
 
-See [docs/platform/kubernetes.md](docs/platform/kubernetes.md).
+Docs: [docs/platform/kubernetes.md](docs/platform/kubernetes.md)
 
 ## Observability
 
@@ -131,89 +146,48 @@ Prometheus and Grafana assets live in `observability/`.
 make observability-check
 ```
 
-See [docs/platform/observability.md](docs/platform/observability.md).
+Docs: [docs/platform/observability.md](docs/platform/observability.md)
 
-## SIEM Detection Logic
+## SIEM-Style Detection
 
-Local YAML detection rules and redacted sample events live in `security/detection/`.
+Local YAML rules and redacted sample events live in `security/detection/`.
 
 ```bash
 make detection-check
 ```
 
-Reports are written to `runtime/reports/siem-detection-report.md` and `.json`.
+Report: [docs/reports/examples/siem-detection-report.md](docs/reports/examples/siem-detection-report.md)
 
-## LLM-Generated Incident Summaries
+## Deterministic Incident Summaries
 
-The default mode is offline deterministic summarization. External LLM APIs are not enabled by default.
+The default incident summary mode is offline and deterministic. External model APIs are not enabled by default.
 
 ```bash
 make incident-summary-demo
 ```
 
-See [docs/ai/llm-incident-summaries.md](docs/ai/llm-incident-summaries.md).
+Report: [docs/reports/examples/incident-summary.md](docs/reports/examples/incident-summary.md)
 
-## Screenshots
+## GitHub Actions
 
-Expected screenshot paths:
+Workflows cover CI, Android, optional emulator smoke, production readiness reporting, Terraform, Kubernetes, detection/AI, and release-candidate artifacts.
 
-- [Home](docs/vpn-product/images/phase4/phase4-home.png)
-- [Connect flow](docs/vpn-product/images/phase4/phase4-connect-flow.png)
-- [Route policy](docs/vpn-product/images/phase4/phase4-route-policy.png)
-- [Evidence](docs/vpn-product/images/phase4/phase4-evidence.png)
-- [Grafana dashboard](docs/vpn-product/images/phase4/phase4-grafana-dashboard.png)
-- [Incident summary](docs/vpn-product/images/phase4/phase4-incident-summary.png)
+- CI docs: [docs/ci/README.md](docs/ci/README.md)
+- Manual workflow status: [docs/ci/workflow-status.md](docs/ci/workflow-status.md)
 
-If capture is unavailable, generated reports state SKIPPED with a reason. See [docs/vpn-product/phase-4-screenshot-guide.md](docs/vpn-product/phase-4-screenshot-guide.md).
+No fake CI passing status is claimed.
 
-## Demo Video
+## Reports And Evidence
 
-Demo video pending. See [docs/demo/demo-video-script.md](docs/demo/demo-video-script.md) for the recording plan.
+- Example reports: [docs/reports/examples/](docs/reports/examples/)
+- Production readiness: [docs/reports/examples/production-readiness-report.md](docs/reports/examples/production-readiness-report.md)
+- Release candidate manifest: [docs/release/gorz-android-rc-manifest-example.md](docs/release/gorz-android-rc-manifest-example.md)
+- Phase 4 10/10 check: [docs/reports/examples/phase4-10of10-check.md](docs/reports/examples/phase4-10of10-check.md)
+- Final validation: [docs/vpn-product/phase-4-final-validation-report.md](docs/vpn-product/phase-4-final-validation-report.md)
 
-Expected path:
+## Reviewer Walkthrough
 
-- `docs/demo/gozar-gorz-phase4-demo.mp4`
-
-Placeholder:
-
-- [docs/demo/gozar-gorz-phase4-demo.placeholder.md](docs/demo/gozar-gorz-phase4-demo.placeholder.md)
-
-## Testing And CI
-
-Primary commands:
-
-```bash
-make phase4-check
-make production-readiness-check
-make terraform-check
-make k8s-check
-make detection-check
-make incident-summary-demo
-make release-candidate-manifest
-```
-
-GitHub Actions cover CI, Android, emulator smoke, production readiness, Terraform, Kubernetes, detection/AI, and release-candidate artifacts.
-
-## Production Readiness
-
-```bash
-make production-readiness-check
-```
-
-Expected result for Phase 4:
-
-- Controlled release readiness: PASS or PARTIAL
-- Production readiness: NOT_READY
-
-Reports are written under `runtime/reports/`.
-
-## Known Limitations
-
-- Android Gradle/SDK and adb may be unavailable in local shells.
-- Emulator smoke and screenshots may be SKIPPED with reason.
-- Android Keystore path is experimental; demo storage remains default.
-- Release signing is not configured.
-- Tenant auth, independent review, formal retention policy, and production crypto review remain gaps.
+15-minute reviewer path: [docs/demo/reviewer-walkthrough.md](docs/demo/reviewer-walkthrough.md)
 
 ## Security And Privacy
 
@@ -221,6 +195,23 @@ Reports are written under `runtime/reports/`.
 - [PRIVACY.md](PRIVACY.md)
 - [docs/security/android-phase-4-threat-model.md](docs/security/android-phase-4-threat-model.md)
 - [docs/privacy/android-phase-4-privacy-review.md](docs/privacy/android-phase-4-privacy-review.md)
+
+## Known Limitations
+
+- Android Gradle/SDK and adb may be unavailable in local shells.
+- Emulator smoke and screenshots may be `SKIPPED` or `PARTIAL` with reasons.
+- Android Keystore path is experimental; demo storage remains default.
+- Release signing and key custody are not configured.
+- Tenant auth, independent review, formal retention policy, operational monitoring, and production crypto review remain gaps.
+
+## Final Readiness Status
+
+- Four-phase roadmap complete: YES
+- Controlled release candidate structure: YES
+- Controlled release evidence: PASS or PARTIAL depending on local evidence availability
+- Demo-ready: PARTIAL until a real demo video is recorded
+- Production readiness report: READY
+- Production-ready for real use: NO
 
 ## License
 
