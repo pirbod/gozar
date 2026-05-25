@@ -28,12 +28,7 @@ jobs:
         working-directory: android/gorz
         run: ./gradlew assembleDebug
 
-      - name: Managed-device smoke test
-        working-directory: android/gorz
-        run: ./gradlew pixel2api30DebugAndroidTest
-
-      - name: Generate emulator smoke report
-        if: always()
+      - name: Managed-device smoke test and report
         run: python scripts/android/run_emulator_smoke_report.py
 
       - name: Generate screenshot report
