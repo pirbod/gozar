@@ -11,6 +11,17 @@ ROOT = Path(__file__).resolve().parents[2]
 ANDROID_DIR = ROOT / "android" / "gorz"
 REPORT_DIR = ROOT / "runtime" / "reports"
 
+EMULATOR_INFRASTRUCTURE_FAILURE_PATTERNS = [
+    "EmulatorSnapshotCannotCreatedException",
+    "Gradle was not able to complete device setup",
+    "emulator failed to open the managed device",
+    "emulator closed unexpectedly",
+    "Unable to create Android virtual device",
+    "No space left on device",
+    "KVM is required",
+    "x86 emulation currently requires hardware acceleration",
+]
+
 
 def main() -> int:
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
@@ -35,12 +46,28 @@ def main() -> int:
 
     command = ["./gradlew", "pixel2api30DebugAndroidTest"]
     result = subprocess.run(command, cwd=ANDROID_DIR, text=True, capture_output=True, check=False)
-    status = "PASS" if result.returncode == 0 else "FAIL"
-    detail = "Managed-device smoke tests completed." if status == "PASS" else "Managed-device smoke tests failed."
-    payload = payload_for(status, detail, result.stdout + "\n" + result.stderr, result.returncode)
+    output = result.stdout + "\n" + result.stderr
+    if result.returncode == 0:
+        status = "PASS"
+        detail = "Managed-device smoke tests completed."
+        exit_code = 0
+    elif is_emulator_infrastructure_failure(output):
+        status = "SKIPPED"
+        detail = "Managed-device smoke could not run because the CI emulator infrastructure failed during device setup."
+        exit_code = 0
+    else:
+        status = "FAIL"
+        detail = "Managed-device smoke tests failed after emulator execution started."
+        exit_code = result.returncode
+    payload = payload_for(status, detail, output, result.returncode)
     write_reports(payload)
     print(f"Android emulator smoke status: {status}")
-    return result.returncode
+    return exit_code
+
+
+def is_emulator_infrastructure_failure(output: str) -> bool:
+    lowered = output.lower()
+    return any(pattern.lower() in lowered for pattern in EMULATOR_INFRASTRUCTURE_FAILURE_PATTERNS)
 
 
 def payload_for(status: str, detail: str, output: str, exit_code: int) -> dict[str, object]:
