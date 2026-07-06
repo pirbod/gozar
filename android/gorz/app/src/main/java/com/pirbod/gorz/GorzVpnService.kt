@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.net.VpnService
 import android.os.Build
 import android.os.ParcelFileDescriptor
@@ -38,7 +39,7 @@ class GorzVpnService : VpnService() {
         if (running.get()) {
             return
         }
-        startForeground(NOTIFICATION_ID, notification(profileId))
+        startSessionForeground(profileId)
         val builder = Builder()
             .setSession("Gorz Android local VPN lifecycle prototype")
             .addAddress("10.77.0.2", 32)
@@ -52,6 +53,19 @@ class GorzVpnService : VpnService() {
         running.set(true)
         packetThread = Thread({ packetLoop() }, "gorz-demo-vpn-packets").also { it.start() }
         writeStatus(profileId, "Connected", requestedMode)
+    }
+
+    private fun startSessionForeground(profileId: String) {
+        val notification = notification(profileId)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(
+                NOTIFICATION_ID,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
+            )
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
     }
 
     private fun packetLoop() {
