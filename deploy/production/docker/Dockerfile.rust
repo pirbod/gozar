@@ -1,0 +1,24 @@
+# syntax=docker/dockerfile:1.7
+
+ARG RUST_VERSION=1.88
+
+FROM rust:${RUST_VERSION}-bookworm AS builder
+WORKDIR /workspace
+
+ARG SERVICE
+
+COPY Cargo.toml Cargo.lock ./
+COPY rust ./rust
+
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/workspace/target \
+    cargo build --release --locked --bin "${SERVICE}" && \
+    cp "target/release/${SERVICE}" /tmp/gozar-service
+
+FROM gcr.io/distroless/cc-debian12:nonroot
+WORKDIR /
+
+COPY --from=builder /tmp/gozar-service /usr/local/bin/gozar-service
+
+USER nonroot:nonroot
+ENTRYPOINT ["/usr/local/bin/gozar-service"]
