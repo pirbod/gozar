@@ -45,6 +45,10 @@ jobs:
     needs:
       - rust
       - typescript
+    env:
+      GOZAR_ALLOW_INSECURE_DEV_DEFAULTS: "true"
+      GOZAR_CONTROL_SECRET: "gozar-local-shared-secret"
+      GOZAR_ADMIN_TOKEN: "gozar-admin-token"
     steps:
       - uses: actions/checkout@v6
       - name: End-to-end smoke test
@@ -78,7 +82,7 @@ jobs:
             local delay_seconds="$2"
             local state
             for _ in $(seq 1 "$attempts"); do
-              state="$(curl -fsS http://127.0.0.1:8080/api/v1/state -H 'x-gozar-admin-token: gozar-admin-token' || true)"
+              state="$(curl -fsS http://127.0.0.1:8080/api/v1/state -H "x-gozar-admin-token: ${GOZAR_ADMIN_TOKEN}" || true)"
               if [[ -n "$state" ]] && python3 -c 'import json, sys; data = json.loads(sys.stdin.read()); nodes = {node["node_id"] for node in data["nodes"]}; required = {"desktop-client-1", "relay-1", "gateway-1"}; sys.exit(0 if required.issubset(nodes) else 1)' <<<"$state"; then
                 return 0
               fi
@@ -134,7 +138,7 @@ jobs:
 
           curl -fsS -X POST http://127.0.0.1:8080/api/v1/admin/preferred-path \
             -H 'content-type: application/json' \
-            -H 'x-gozar-admin-token: gozar-admin-token' \
+            -H "x-gozar-admin-token: ${GOZAR_ADMIN_TOKEN}" \
             -d '{"preferred_path":"relay","switch_reason":"ci relay smoke test"}' >/dev/null
 
           relay_response=""
@@ -175,6 +179,10 @@ jobs:
     needs:
       - rust
       - typescript
+    env:
+      GOZAR_ALLOW_INSECURE_DEV_DEFAULTS: "true"
+      GOZAR_CONTROL_SECRET: "gozar-local-shared-secret"
+      GOZAR_ADMIN_TOKEN: "gozar-admin-token"
     steps:
       - uses: actions/checkout@v6
       - name: CI-safe evaluation smoke test

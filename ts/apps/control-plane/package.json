@@ -9,7 +9,7 @@
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "tsc -p tsconfig.json && node --test dist/state.test.js"
+    "test": "tsc -p tsconfig.json && node --test dist/state.test.js dist/config.test.js"
   },
   "dependencies": {
     "@gozar/shared": "0.1.0",

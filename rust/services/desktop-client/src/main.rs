@@ -12,6 +12,7 @@ use gozar_core::{
         TARGET_SERVICE_RESEARCH_HTTP,
     },
     quic::send_json_request,
+    runtime_config::control_secret_from_env,
     scoring::{choose_best_path, format_scores, score_paths, PathScoringContext},
     telemetry::init_telemetry,
 };
@@ -74,18 +75,18 @@ struct Config {
 }
 
 impl Config {
-    fn from_env() -> Self {
-        Self {
+    fn from_env() -> Result<Self> {
+        Ok(Self {
             node_id: env_var("GOZAR_NODE_ID", "desktop-client-1"),
             role: env_var("GOZAR_ROLE", "desktop-client"),
             control_plane_url: env_var("GOZAR_CONTROL_PLANE_URL", "http://127.0.0.1:8080"),
-            control_secret: env_var("GOZAR_CONTROL_SECRET", "gozar-local-shared-secret"),
+            control_secret: control_secret_from_env()?,
             local_listen_addr: env_var("GOZAR_LOCAL_LISTEN_ADDR", "127.0.0.1:7000"),
             poll_seconds: env_var("GOZAR_POLL_SECONDS", "5").parse().unwrap_or(5),
             queue_limit: env_var("GOZAR_QUEUE_LIMIT", "16").parse().unwrap_or(16),
             research_gateway_enabled: env_flag("GOZAR_ENABLE_RESEARCH_GATEWAY", false),
             research_listen_addr: env_var("GOZAR_RESEARCH_LISTEN_ADDR", "127.0.0.1:7100"),
-        }
+        })
     }
 
     fn features(&self) -> Vec<String> {
@@ -115,7 +116,7 @@ async fn main() -> Result<()> {
     let service_name = env_var("OTEL_SERVICE_NAME", "gozar-desktop-client");
     init_telemetry(&service_name)?;
 
-    let config = Config::from_env();
+    let config = Config::from_env()?;
     let shared = SharedClientState::new();
     let local_queue = InFlightQueue::new(config.node_id.clone(), config.queue_limit);
     let hook: Arc<dyn PathSwitchHook> = Arc::new(DefaultPathSwitchHook);
