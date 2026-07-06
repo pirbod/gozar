@@ -419,6 +419,7 @@ def apply_impairment(scenario: dict[str, Any], ci_safe: bool) -> None:
                 str(scenario.get("cycle_seconds", 3)),
             ],
             cwd=REPO_ROOT,
+            env=compose_environment(),
         )
     elif impairment == "none":
         return
@@ -437,7 +438,7 @@ def clear_impairments() -> None:
 def run_script(name: str, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
     script = REPO_ROOT / "eval" / "scripts" / name
     command = ["bash", str(script), *args]
-    return run(command, check=check)
+    return run(command, check=check, env=compose_environment())
 
 
 def set_preferred_path(path: str, reason: str) -> None:
@@ -488,10 +489,22 @@ def wait_for_nodes() -> None:
 
 
 def compose(args: list[str], check: bool = True) -> subprocess.CompletedProcess[str]:
-    return run(["docker", "compose", *args], check=check)
+    return run(["docker", "compose", *args], check=check, env=compose_environment())
 
 
-def run(command: list[str], check: bool = True) -> subprocess.CompletedProcess[str]:
+def compose_environment() -> dict[str, str]:
+    env = os.environ.copy()
+    env.setdefault("GOZAR_ALLOW_INSECURE_DEV_DEFAULTS", "true")
+    env.setdefault("GOZAR_CONTROL_SECRET", "gozar-local-shared-secret")
+    env.setdefault("GOZAR_ADMIN_TOKEN", ADMIN_TOKEN)
+    return env
+
+
+def run(
+    command: list[str],
+    check: bool = True,
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     log("$ " + " ".join(command))
     return subprocess.run(
         command,
@@ -500,6 +513,7 @@ def run(command: list[str], check: bool = True) -> subprocess.CompletedProcess[s
         stdout=sys.stdout,
         stderr=sys.stderr,
         check=check,
+        env=env,
     )
 
 

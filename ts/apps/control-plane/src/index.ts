@@ -18,6 +18,7 @@ import { BatchSpanProcessor, ConsoleSpanExporter } from "@opentelemetry/sdk-trac
 import { NodeTracerProvider } from "@opentelemetry/sdk-trace-node";
 import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
 
+import { loadControlPlaneConfig } from "./config";
 import {
   appendAuditLog,
   buildPaths,
@@ -43,14 +44,13 @@ class HttpError extends Error {
   }
 }
 
-const port = Number(process.env.PORT ?? "8080");
-const controlSecret = process.env.CONTROL_SECRET ?? "gozar-local-shared-secret";
-const adminToken = process.env.ADMIN_TOKEN ?? "gozar-admin-token";
-const serviceName = process.env.OTEL_SERVICE_NAME ?? "gozar-control-plane";
-const stateFile =
-  process.env.CONTROL_STATE_FILE ?? "./runtime/control-plane/control-plane-state.json";
-const auditLogFile =
-  process.env.AUDIT_LOG_FILE ?? "./runtime/control-plane/audit.log.ndjson";
+const runtimeConfig = loadControlPlaneConfig(process.env);
+const port = runtimeConfig.port;
+const controlSecret = runtimeConfig.controlSecret;
+const adminToken = runtimeConfig.adminToken;
+const serviceName = runtimeConfig.serviceName;
+const stateFile = runtimeConfig.stateFile;
+const auditLogFile = runtimeConfig.auditLogFile;
 
 const tracer = initTelemetry(serviceName);
 
@@ -104,6 +104,7 @@ async function start(): Promise<void> {
         port: address.port,
         preferred_path: state.preferred_path,
         research_gateway_allowed: state.research_gateway_allowed,
+        allow_insecure_dev_defaults: runtimeConfig.allowInsecureDevDefaults,
       }),
     );
   });

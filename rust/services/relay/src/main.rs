@@ -6,6 +6,7 @@ use gozar_core::{
     flow::{FlowControlledHop, InFlightQueue},
     overlay::{HopRecord, OverlayRequest, OverlayResponse},
     quic::{make_server_endpoint, read_json, send_json_request, write_json},
+    runtime_config::control_secret_from_env,
     telemetry::init_telemetry,
 };
 use tokio::{net::lookup_host, time::sleep};
@@ -24,17 +25,17 @@ struct Config {
 }
 
 impl Config {
-    fn from_env() -> Self {
-        Self {
+    fn from_env() -> Result<Self> {
+        Ok(Self {
             node_id: env_var("GOZAR_NODE_ID", "relay-1"),
             role: env_var("GOZAR_ROLE", "relay"),
             control_plane_url: env_var("GOZAR_CONTROL_PLANE_URL", "http://127.0.0.1:8080"),
-            control_secret: env_var("GOZAR_CONTROL_SECRET", "gozar-local-shared-secret"),
+            control_secret: control_secret_from_env()?,
             listen_addr: env_var("GOZAR_LISTEN_ADDR", "0.0.0.0:6100"),
             gateway_addr: env_var("GOZAR_GATEWAY_ADDR", "127.0.0.1:6200"),
             queue_limit: env_var("GOZAR_QUEUE_LIMIT", "32").parse().unwrap_or(32),
             heartbeat_seconds: env_var("GOZAR_HEARTBEAT_SECONDS", "5").parse().unwrap_or(5),
-        }
+        })
     }
 
     fn features(&self) -> Vec<String> {
@@ -51,7 +52,7 @@ async fn main() -> Result<()> {
     let service_name = env_var("OTEL_SERVICE_NAME", "gozar-relay");
     init_telemetry(&service_name)?;
 
-    let config = Config::from_env();
+    let config = Config::from_env()?;
     tokio::spawn(heartbeat_loop(config.clone()));
 
     let queue = InFlightQueue::new(config.node_id.clone(), config.queue_limit);
