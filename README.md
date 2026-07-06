@@ -1,6 +1,6 @@
 # Gozar/Gorz
 
-Controlled local-first prototype release candidate for Android session lifecycle, local profile issuance, evidence export, diagnostics, platform automation, observability, SIEM-style detection, and deterministic incident summaries.
+Controlled local-first prototype release candidate for Android session lifecycle, local profile issuance, Gozar Core service-to-service routing, evidence export, diagnostics, platform automation, observability, SIEM-style detection, deterministic incident summaries, and production-readiness hardening.
 
 Static review labels, not live CI badges:
 
@@ -21,6 +21,16 @@ Safety boundaries:
 - No public network probing.
 - No automatic diagnostic upload.
 - No contacts, phone number, location, or public IP history collection.
+- No production deployment claim from the provided production templates.
+
+## Current Scope
+
+The repository currently combines two controlled tracks:
+
+1. **Gorz Android controlled demo:** Android session lifecycle, local profile flow, offline demo mode, diagnostics, evidence export, safety pause, and reviewer-facing product screens.
+2. **Gozar Core routing lab:** Rust dataplane services, TypeScript control plane, Docker Compose lab, relay and gateway routing, signed local control messages, bounded queues, and production-readiness hardening artifacts.
+
+The latest production-hardening update keeps the local demo intact while making unsafe defaults explicit and adding production-oriented templates for future implementation.
 
 ## Four-Phase Roadmap
 
@@ -39,8 +49,16 @@ flowchart LR
   Android --> Evidence["Redacted Evidence Package V2"]
   Android --> Diagnostics["Local diagnostics"]
   Android --> Safety["Route guard and safety pause"]
+
+  Client["Desktop client local edge"] --> Control["TypeScript control plane"]
+  Client --> Relay["Rust relay"]
+  Client --> Gateway["Rust gateway"]
+  Relay --> Gateway
+  Gateway --> Echo["Echo service"]
+
   Profile --> Audit["Redacted audit export"]
-  Platform["Terraform and Kubernetes assets"] --> Observability["Prometheus and Grafana"]
+  Control --> CoreAudit["Control-plane audit log"]
+  Platform["Terraform, Kubernetes, and production templates"] --> Observability["Prometheus and Grafana"]
   Platform --> Detection["Local detection rules"]
   Detection --> Summary["Deterministic incident summary"]
   Observability --> Reports["Runtime readiness reports"]
@@ -52,17 +70,22 @@ flowchart LR
 android/gorz/                 Android app
 python/profile_api/           local Profile API
 python/gorz_api/              local Gorz API prototype
+rust/                         Gozar Core Rust libraries and services
+ts/                           TypeScript control plane and shared packages
 infra/terraform/              Terraform local lab shape
 deploy/kubernetes/            Kubernetes manifests and overlays
+deploy/production/            inert production-oriented Docker and Kubernetes templates
 observability/                Prometheus and Grafana assets
 security/detection/           local rules and redacted sample events
 ai/incident-summary/          deterministic incident summary demo
-docs/                         product, platform, security, privacy, release docs
+docs/                         product, platform, security, privacy, release, and production docs
 scripts/                      readiness, safety, screenshot, report scripts
 runtime/reports/              generated local reports
 ```
 
 ## Quick Start
+
+### Controlled Readiness Checks
 
 ```bash
 make phase4-check
@@ -71,6 +94,61 @@ make production-readiness-check
 ```
 
 Optional Android, emulator, Terraform, Kubernetes, and screenshot tooling reports `SKIPPED` or `PARTIAL` when unavailable. Reports are generated under `runtime/reports/` and safe examples are copied to [docs/reports/examples/](docs/reports/examples/).
+
+### Gozar Core Local Lab
+
+The local Docker Compose path now uses explicit demo secrets from `.env.example`. Known demo credentials are rejected unless local-dev mode is enabled.
+
+```bash
+cp .env.example .env
+docker compose up --build
+```
+
+Expected externally reachable local ports:
+
+- `7000`: desktop client local edge listener
+- `8080`: control plane
+
+Send a local test payload:
+
+```bash
+printf 'hello from direct path\n' | nc 127.0.0.1 7000
+```
+
+Force relay-path routing through the control plane:
+
+```bash
+curl -X POST http://127.0.0.1:8080/api/v1/admin/preferred-path \
+  -H 'content-type: application/json' \
+  -H "x-gozar-admin-token: ${GOZAR_ADMIN_TOKEN}" \
+  -d '{"preferred_path":"relay","switch_reason":"simulate direct path degradation"}'
+```
+
+Detailed local instructions: [docs/local-run.md](docs/local-run.md)
+
+## Production-Readiness Hardening
+
+The repository includes production-oriented artifacts, but these are templates and planning assets only. They do not make the system production-ready for real use.
+
+Added or hardened areas:
+
+- `.env.example` for explicit local demo defaults.
+- Docker Compose interpolation for control-plane and admin secrets.
+- Startup guardrails that reject known demo defaults unless `GOZAR_ALLOW_INSECURE_DEV_DEFAULTS=true`.
+- Signed local control messages, timestamp freshness, and process-local replay checks.
+- Bounded in-flight queues for client, relay, and gateway services.
+- Production Dockerfile templates for Rust services and the TypeScript control plane.
+- Kubernetes production base templates for control plane, relay, gateway, namespace, services, probes, resource limits, restricted pod security, and NetworkPolicy.
+- Production workflow example for future CI/CD release gates.
+- Gozar Core production plan and gap analysis.
+
+Key entry points:
+
+- Production plan: [docs/production/gozar-core-production-plan.md](docs/production/gozar-core-production-plan.md)
+- Production templates: [deploy/production/README.md](deploy/production/README.md)
+- Production workflow example: [docs/production/examples/github-actions-production.yml](docs/production/examples/github-actions-production.yml)
+
+Before real deployment, replace demo HMAC secrets, static admin tokens, process-local replay caches, local JSON state, self-signed QUIC trust, and template images with approved production identity, storage, certificate, signing, observability, and release controls.
 
 ## Android Demo
 
@@ -130,7 +208,7 @@ Docs: [docs/platform/terraform.md](docs/platform/terraform.md)
 
 ## Kubernetes
 
-Kubernetes manifests live in `deploy/kubernetes/` with local and demo overlays. Services default to `ClusterIP`, and NetworkPolicy is included.
+Kubernetes controlled-demo manifests live in `deploy/kubernetes/` with local and demo overlays. Production-oriented inert templates live in `deploy/production/kubernetes/base/` and require design completion before deployment.
 
 ```bash
 make k8s-check
@@ -170,10 +248,11 @@ Report: [docs/reports/examples/incident-summary.md](docs/reports/examples/incide
 
 ## GitHub Actions
 
-Workflows cover CI, Android, optional emulator smoke, production readiness reporting, Terraform, Kubernetes, detection/AI, and release-candidate artifacts.
+Workflows cover CI, Android, optional emulator smoke, production readiness reporting, Terraform, Kubernetes, detection/AI, release-candidate artifacts, Docker Compose smoke, evaluation smoke, dependency audit, and production workflow templates.
 
 - CI docs: [docs/ci/README.md](docs/ci/README.md)
 - Manual workflow status: [docs/ci/workflow-status.md](docs/ci/workflow-status.md)
+- Production workflow template: [docs/production/examples/github-actions-production.yml](docs/production/examples/github-actions-production.yml)
 
 No fake CI passing status is claimed.
 
@@ -195,6 +274,7 @@ No fake CI passing status is claimed.
 - [PRIVACY.md](PRIVACY.md)
 - [docs/security/android-phase-4-threat-model.md](docs/security/android-phase-4-threat-model.md)
 - [docs/privacy/android-phase-4-privacy-review.md](docs/privacy/android-phase-4-privacy-review.md)
+- [docs/production/gozar-core-production-plan.md](docs/production/gozar-core-production-plan.md)
 
 ## Known Limitations
 
@@ -202,7 +282,9 @@ No fake CI passing status is claimed.
 - Emulator smoke and screenshots may be `SKIPPED` or `PARTIAL` with reasons.
 - Android Keystore path is experimental; demo storage remains default.
 - Release signing and key custody are not configured.
+- Production deployment templates are inert examples, not deployable production approval.
 - Tenant auth, independent review, formal retention policy, operational monitoring, and production crypto review remain gaps.
+- Gozar Core still requires production identity, durable replay storage, production state storage, trusted QUIC certificates, real metrics endpoints, SLOs, image signing, SBOM publication, and admission policy before real use.
 
 ## Final Readiness Status
 
@@ -211,6 +293,7 @@ No fake CI passing status is claimed.
 - Controlled release evidence: PASS or PARTIAL depending on local evidence availability
 - Demo-ready: PARTIAL until a real demo video is recorded
 - Production readiness report: READY
+- Production hardening templates: ADDED
 - Production-ready for real use: NO
 
 ## License
