@@ -20,9 +20,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.pirbod.gorz.state.GorzAppState
+import com.pirbod.gorz.state.SessionStatus
+import com.pirbod.gorz.ui.components.PrimaryActionButton
 
 @Composable
-fun ConnectFlowScreen(state: GorzAppState) {
+fun ConnectFlowScreen(
+    state: GorzAppState,
+    onDisconnect: () -> Unit,
+) {
     LazyColumn(
         modifier = Modifier
             .padding(16.dp)
@@ -32,6 +37,15 @@ fun ConnectFlowScreen(state: GorzAppState) {
         item {
             Text("Connect flow", style = MaterialTheme.typography.headlineMedium)
             Text("Phase 3: Adaptive Session Experience Prototype", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (state.sessionStatus == SessionStatus.DemoSessionActive) {
+            item {
+                PrimaryActionButton(
+                    label = "Disconnect",
+                    onClick = onDisconnect,
+                    modifier = Modifier.testTag("button_disconnect_connect_flow"),
+                )
+            }
         }
         items(state.connectStages.size) { index ->
             val stage = state.connectStages[index]
