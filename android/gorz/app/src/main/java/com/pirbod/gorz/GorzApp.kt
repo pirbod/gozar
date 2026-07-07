@@ -127,7 +127,7 @@ fun GorzApp(
                             onNavigate = navController::navigate,
                         )
                     }
-                    composable("session") { SessionDashboardScreen(state) }
+                    composable("session") { SessionDashboardScreen(state, viewModel::disconnect) }
                     composable("confidence") { ConfidenceScreen(state) }
                     composable("evidence") { EvidenceScreen(state, viewModel::generateEvidence, viewModel::clearEvidence) }
                     composable("settings") {
@@ -145,7 +145,7 @@ fun GorzApp(
                             onExportLocalReadinessSummary = viewModel::exportLocalReadinessSummary,
                         )
                     }
-                    composable("connect") { ConnectFlowScreen(state) }
+                    composable("connect") { ConnectFlowScreen(state, viewModel::disconnect) }
                     composable("route") { RoutePolicyScreen(state) }
                     composable("diagnostics") {
                         DiagnosticsScreen(
