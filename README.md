@@ -173,19 +173,19 @@ Phase 3 introduced the clickable Android product experience: onboarding, home, c
 
 Screenshot status: [docs/vpn-product/images/phase4/README.md](docs/vpn-product/images/phase4/README.md)
 
-Placeholders are visibly labelled and do not imply real product capture.
+Current Android Phase 4 screenshots:
 
 ![Home](docs/vpn-product/images/phase4/phase4-home.png)
 
-![Route Policy](docs/vpn-product/images/phase4/phase4-route-policy.png)
+![Connect Flow](docs/vpn-product/images/phase4/phase4-connect-flow.png)
+
+![Session](docs/vpn-product/images/phase4/phase4-session.png)
+
+![Confidence](docs/vpn-product/images/phase4/phase4-confidence.png)
 
 ![Evidence](docs/vpn-product/images/phase4/phase4-evidence.png)
 
-![Grafana Dashboard](docs/vpn-product/images/phase4/phase4-grafana-dashboard.png)
-
-![SIEM Detection Report](docs/vpn-product/images/phase4/phase4-siem-detection-report.png)
-
-![Incident Summary](docs/vpn-product/images/phase4/phase4-incident-summary.png)
+![Settings](docs/vpn-product/images/phase4/phase4-settings.png)
 
 ## Demo Video
 
