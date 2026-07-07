@@ -12,6 +12,7 @@ ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
 ALLOWED_PERMISSIONS = {
     "android.permission.INTERNET",
     "android.permission.FOREGROUND_SERVICE",
+    "android.permission.FOREGROUND_SERVICE_SPECIAL_USE",
 }
 
 BLOCKED_PERMISSIONS = {
