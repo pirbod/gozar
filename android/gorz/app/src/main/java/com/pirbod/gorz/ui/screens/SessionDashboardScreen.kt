@@ -15,9 +15,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.pirbod.gorz.state.GorzAppState
+import com.pirbod.gorz.state.SessionStatus
+import com.pirbod.gorz.ui.components.PrimaryActionButton
 
 @Composable
-fun SessionDashboardScreen(state: GorzAppState) {
+fun SessionDashboardScreen(
+    state: GorzAppState,
+    onDisconnect: () -> Unit,
+) {
     val profile = state.profile
     LazyColumn(
         modifier = Modifier
@@ -29,6 +34,15 @@ fun SessionDashboardScreen(state: GorzAppState) {
             Text("Session", style = MaterialTheme.typography.headlineMedium)
             Text("Controlled prototype · Local lifecycle only · No public traffic forwarding", color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text("Packets are observed for local diagnostics only and are not forwarded.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (state.sessionStatus == SessionStatus.DemoSessionActive) {
+            item {
+                PrimaryActionButton(
+                    label = "Disconnect",
+                    onClick = onDisconnect,
+                    modifier = Modifier.testTag("button_disconnect_session"),
+                )
+            }
         }
         item {
             Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant), shape = MaterialTheme.shapes.small) {
