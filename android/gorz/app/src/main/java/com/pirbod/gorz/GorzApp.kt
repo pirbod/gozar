@@ -63,6 +63,13 @@ fun GorzApp(
     val currentDestination = backStackEntry?.destination
     val currentRoute = currentDestination?.route ?: startDestination
     val showBottomBar = currentRoute != "onboarding"
+    val disconnectAndReturnHome = {
+        viewModel.disconnect()
+        navController.navigate("home") {
+            popUpTo("home") { inclusive = false }
+            launchSingleTop = true
+        }
+    }
 
     MaterialTheme(
         colorScheme = GorzColorScheme,
@@ -123,11 +130,11 @@ fun GorzApp(
                                 navController.navigate("connect")
                                 onConnectRequested()
                             },
-                            onDisconnect = viewModel::disconnect,
+                            onDisconnect = disconnectAndReturnHome,
                             onNavigate = navController::navigate,
                         )
                     }
-                    composable("session") { SessionDashboardScreen(state, viewModel::disconnect) }
+                    composable("session") { SessionDashboardScreen(state, disconnectAndReturnHome) }
                     composable("confidence") { ConfidenceScreen(state) }
                     composable("evidence") { EvidenceScreen(state, viewModel::generateEvidence, viewModel::clearEvidence) }
                     composable("settings") {
@@ -145,7 +152,7 @@ fun GorzApp(
                             onExportLocalReadinessSummary = viewModel::exportLocalReadinessSummary,
                         )
                     }
-                    composable("connect") { ConnectFlowScreen(state, viewModel::disconnect) }
+                    composable("connect") { ConnectFlowScreen(state, disconnectAndReturnHome) }
                     composable("route") { RoutePolicyScreen(state) }
                     composable("diagnostics") {
                         DiagnosticsScreen(
