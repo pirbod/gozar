@@ -16,20 +16,30 @@ class ValidateProfileUseCase(
         val revoked = profile.revocationStatus == "revoked"
         val routePolicyResult = RoutePolicyGuard.evaluate(profile, clock)
         val routeScopeValid = routePolicyResult.allowed
-        val endpointScopeValid = profile.safetyNotes.any { it in endpointSafetyNotes }
+        val privateAccessProfile = profile.gatewayProfile == "wireguard_authenticated"
+        val endpointScopeValid = if (privateAccessProfile) {
+            profile.safetyNotes.contains("private_access_only")
+        } else {
+            profile.safetyNotes.any { it in endpointSafetyNotes }
+        }
         val selectedModeValid = profile.selectedMode in DemoMode.entries
-        val safetyNotesValid = profile.safetyNotes.any { it in localNotes } &&
-            profile.safetyNotes.contains("no_public_gateway") &&
-            profile.safetyNotes.any { it in probingNotes }
+        val safetyNotesValid = if (privateAccessProfile) {
+            profile.safetyNotes.contains("approved_routes_only") &&
+                profile.safetyNotes.contains("no_default_route")
+        } else {
+            profile.safetyNotes.any { it in localNotes } &&
+                profile.safetyNotes.contains("no_public_gateway") &&
+                profile.safetyNotes.any { it in probingNotes }
+        }
 
         val messages = buildList {
             if (!fresh) add("Profile expired")
             if (!signatureValid) add("Issuer signature invalid")
             if (revoked) add("Profile revoked")
-            if (!routeScopeValid) addAll(routePolicyResult.blockingReasons.ifEmpty { listOf("Route scope outside demo boundary") })
-            if (!endpointScopeValid) add("Endpoint scope missing local-only note")
+            if (!routeScopeValid) addAll(routePolicyResult.blockingReasons.ifEmpty { listOf("Route scope is outside the approved private boundary") })
+            if (!endpointScopeValid) add("Endpoint trust policy is incomplete")
             if (!safetyNotesValid) add("Safety notes incomplete")
-            if (!apiAvailable) add("Offline demo repository in use")
+            if (!apiAvailable) add("Profile service is unavailable")
             if (isEmpty()) add("Validation passed")
         }
 

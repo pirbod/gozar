@@ -8,6 +8,7 @@ import java.util.Base64
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import com.pirbod.gorz.privateaccess.AccessProfileResponse
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -24,6 +25,51 @@ class ProfileCrypto(
             verifier.initVerify(verifyKey)
             verifier.update(canonicalEnvelopeWithoutSignature(envelope).toByteArray(Charsets.UTF_8))
             verifier.verify(Base64.getDecoder().decode(envelope.signature))
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    fun verifyPrivateAccessSignature(
+        profile: AccessProfileResponse,
+        pinnedIssuerPublicKey: String,
+    ): Boolean {
+        return try {
+            val presented = Base64.getDecoder().decode(profile.issuerPublicKey)
+            val pinned = Base64.getDecoder().decode(pinnedIssuerPublicKey)
+            if (!MessageDigest.isEqual(presented, pinned)) {
+                return false
+            }
+            val values = mapOf(
+                "approved_routes" to profile.approvedRoutes,
+                "approved_services" to profile.approvedServices.map { service ->
+                    mapOf(
+                        "host" to service.host,
+                        "id" to service.id,
+                        "name" to service.name,
+                        "port" to service.port,
+                        "protocol" to service.protocol,
+                    )
+                },
+                "audience" to profile.audience,
+                "client_address" to profile.clientAddress,
+                "device_id" to profile.deviceId,
+                "dns_servers" to profile.dnsServers,
+                "expires_at" to profile.expiresAt,
+                "gateway_endpoint" to profile.gatewayEndpoint,
+                "gateway_public_key" to profile.gatewayPublicKey,
+                "issued_at" to profile.issuedAt,
+                "issuer_key_id" to profile.issuerKeyId,
+                "issuer_public_key" to profile.issuerPublicKey,
+                "persistent_keepalive_seconds" to profile.persistentKeepaliveSeconds,
+                "policy_version" to profile.policyVersion,
+                "profile_id" to profile.profileId,
+                "ttl_seconds" to profile.ttlSeconds,
+            )
+            val verifier = Signature.getInstance("Ed25519")
+            verifier.initVerify(ed25519VerifyKey(profile.issuerPublicKey))
+            verifier.update(canonicalAny(values).toByteArray(Charsets.UTF_8))
+            verifier.verify(Base64.getDecoder().decode(profile.signature))
         } catch (_: Exception) {
             false
         }

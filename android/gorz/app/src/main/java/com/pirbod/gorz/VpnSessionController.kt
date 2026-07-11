@@ -3,6 +3,8 @@ package com.pirbod.gorz
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import com.pirbod.gorz.data.model.SessionProfile
+import com.pirbod.gorz.privateaccess.PrivateTunnelRuntime
 
 class VpnSessionController(private val context: Context? = null) {
     fun connectedStateFromError(error: Throwable): String {
@@ -19,6 +21,16 @@ class VpnSessionController(private val context: Context? = null) {
         }
     }
 
+    fun start(profile: SessionProfile) {
+        if (BuildConfig.ALLOW_DEMO) {
+            start(profile.sessionId, profile.selectedMode.apiValue)
+            return
+        }
+        val appContext = requireNotNull(context) { "Android context is required to start VPN session" }
+        require(profile.wireGuardConfig.isNotBlank()) { "Signed WireGuard configuration is required" }
+        PrivateTunnelRuntime.start(appContext, profile.wireGuardConfig)
+    }
+
     fun start(profileId: String, requestedMode: String) {
         val appContext = requireNotNull(context) { "Android context is required to start VPN session" }
         val intent = Intent(appContext, GorzVpnService::class.java)
@@ -33,6 +45,10 @@ class VpnSessionController(private val context: Context? = null) {
     }
 
     fun stop() {
+        if (!BuildConfig.ALLOW_DEMO) {
+            PrivateTunnelRuntime.stop()
+            return
+        }
         val appContext = requireNotNull(context) { "Android context is required to stop VPN session" }
         val intent = Intent(appContext, GorzVpnService::class.java).setAction(GorzVpnService.ACTION_STOP)
         appContext.startService(intent)

@@ -3,6 +3,7 @@ package com.pirbod.gorz.state
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.pirbod.gorz.BuildConfig
 import com.pirbod.gorz.Diagnostics
 import com.pirbod.gorz.ProfileStateStore
 import com.pirbod.gorz.VpnSessionController
@@ -14,6 +15,7 @@ import com.pirbod.gorz.data.repository.AuditRepository
 import com.pirbod.gorz.data.repository.DiagnosticsRepository
 import com.pirbod.gorz.data.repository.EvidenceRepository
 import com.pirbod.gorz.data.repository.LocalDemoProfileRepository
+import com.pirbod.gorz.data.repository.ProfileRepository
 import com.pirbod.gorz.data.repository.SettingsRepository
 import com.pirbod.gorz.domain.ApplySafetyPauseUseCase
 import com.pirbod.gorz.domain.CalculateConfidenceUseCase
@@ -24,6 +26,7 @@ import com.pirbod.gorz.domain.ValidateProfileUseCase
 import com.pirbod.gorz.security.DemoSecureValueStore
 import com.pirbod.gorz.security.SecureValueStore
 import com.pirbod.gorz.security.SecureValueStoreFactory
+import com.pirbod.gorz.privateaccess.PrivateAccessProfileRepository
 import java.time.Clock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,11 +47,19 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
     private val diagnosticsRepository = DiagnosticsRepository(application, clock)
     private val validateProfileUseCase = ValidateProfileUseCase(clock)
     private val calculateConfidenceUseCase = CalculateConfidenceUseCase()
-    private val profileRepository = AdaptiveProfileRepository(
-        settingsRepository = settingsRepository,
-        localDemoProfileRepository = LocalDemoProfileRepository(clock),
-        clock = clock,
-    )
+    private val profileRepository: ProfileRepository = if (BuildConfig.ALLOW_DEMO) {
+        AdaptiveProfileRepository(
+            settingsRepository = settingsRepository,
+            localDemoProfileRepository = LocalDemoProfileRepository(clock),
+            clock = clock,
+        )
+    } else {
+        PrivateAccessProfileRepository(
+            settingsRepository = settingsRepository,
+            secureStore = secureValueStore,
+            clock = clock,
+        )
+    }
     private val connectSessionUseCase = ConnectSessionUseCase(
         settingsRepository = settingsRepository,
         profileRepository = profileRepository,
@@ -77,7 +88,7 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
             it.copy(
                 settings = settingsRepository.current(),
                 onboardingComplete = true,
-                statusMessage = "Demo command center ready.",
+                statusMessage = if (BuildConfig.ALLOW_DEMO) "Demo command center ready." else "Private access is ready to configure.",
             )
         }
     }
@@ -91,7 +102,7 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
         _state.update {
             it.copy(
                 sessionStatus = SessionStatus.Connecting,
-                statusMessage = "VPN permission requested for local lifecycle validation.",
+                statusMessage = if (BuildConfig.ALLOW_DEMO) "VPN permission requested for local lifecycle validation." else "VPN permission is required for private access.",
                 connectStages = GorzAppState.defaultConnectStages(),
                 lastError = "",
             )
@@ -107,7 +118,7 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
             _state.update {
                 it.copy(
                     sessionStatus = SessionStatus.Connecting,
-                    statusMessage = "Preparing controlled demo session.",
+                    statusMessage = if (BuildConfig.ALLOW_DEMO) "Preparing controlled demo session." else "Preparing private access.",
                     connectStages = GorzAppState.defaultConnectStages(),
                     lastError = "",
                 )
@@ -126,7 +137,7 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
                     it.copy(
                         settings = settingsRepository.current(),
                         sessionStatus = SessionStatus.DemoSessionActive,
-                        statusMessage = "Demo session active. Local VPN lifecycle only.",
+                        statusMessage = if (BuildConfig.ALLOW_DEMO) "Demo session active. Local VPN lifecycle only." else "Connected to approved internal services.",
                         profile = result.profile,
                         validation = result.validation,
                         confidenceScore = confidence.score,
@@ -178,13 +189,13 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
                 it.copy(
                     settings = settingsRepository.current(),
                     sessionStatus = if (it.safetyState.paused) SessionStatus.SafetyPaused else SessionStatus.Disconnected,
-                    statusMessage = "Disconnected from local demo session.",
+                    statusMessage = if (BuildConfig.ALLOW_DEMO) "Disconnected from local demo session." else "Private access disconnected.",
                     profile = null,
                     validation = null,
                     confidenceScore = 0,
                     confidenceStatus = "BLOCKED",
                     confidenceExplanation = "No validated profile is available.",
-                    confidenceRecommendedAction = "Request or generate a controlled prototype profile before connecting.",
+                    confidenceRecommendedAction = if (BuildConfig.ALLOW_DEMO) "Request or generate a controlled prototype profile before connecting." else "Enroll this device and request an approved access profile.",
                     confidenceBlockingReasons = emptyList(),
                     confidenceSignals = emptyList(),
                     offlineDemoActive = false,
@@ -315,7 +326,7 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
             _state.update {
                 it.copy(
                     sessionStatus = SessionStatus.Disconnected,
-                    statusMessage = "Safety pause lifted. Demo sessions may start again.",
+                    statusMessage = if (BuildConfig.ALLOW_DEMO) "Safety pause lifted. Demo sessions may start again." else "Device-local access pause lifted.",
                     safetyState = safety,
                     auditEvents = auditRepository.events(),
                 )
@@ -329,7 +340,13 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updateAdminToken(value: String) {
-        settingsRepository.updateAdminToken(value)
+        if (BuildConfig.ALLOW_DEMO) {
+            settingsRepository.updateAdminToken(value)
+        } else if (value.isBlank()) {
+            secureValueStore.remove(PrivateAccessProfileRepository.ENROLLMENT_TOKEN_KEY)
+        } else {
+            secureValueStore.putString(PrivateAccessProfileRepository.ENROLLMENT_TOKEN_KEY, value.trim())
+        }
         syncSettings()
     }
 
@@ -345,6 +362,7 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun updateExperimentalKeystoreStorage(enabled: Boolean) {
+        if (!BuildConfig.ALLOW_DEMO) return
         settingsRepository.updateExperimentalKeystoreStorage(enabled)
         secureValueStore = SecureValueStoreFactory.create(getApplication(), enabled)
         syncSettings()
@@ -352,6 +370,9 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
 
     fun resetLocalIdentity() {
         settingsRepository.resetLocalIdentity()
+        if (!BuildConfig.ALLOW_DEMO) {
+            secureValueStore.clear()
+        }
         recordAudit("device_identity_ready", status = "reset")
         _state.update {
             it.copy(
@@ -362,10 +383,11 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
                     confidenceScore = 0,
                     confidenceStatus = "BLOCKED",
                     confidenceExplanation = "No validated profile is available.",
-                    confidenceRecommendedAction = "Request or generate a controlled prototype profile before connecting.",
+                    confidenceRecommendedAction = if (BuildConfig.ALLOW_DEMO) "Request or generate a controlled prototype profile before connecting." else "Enroll this device and request an approved access profile.",
                     confidenceBlockingReasons = emptyList(),
                     confidenceSignals = emptyList(),
                 auditEvents = auditRepository.events(),
+                enrollmentConfigured = BuildConfig.ALLOW_DEMO,
             )
         }
     }
@@ -387,19 +409,22 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
             it.copy(
                 storageLabel = secureValueStore.storageLabel(),
                 storageHealth = secureValueStore.health(),
-                localReadinessSummary = "Secure storage cleared locally. ${DemoSecureValueStore.DEMO_WARNING}",
+                localReadinessSummary = if (BuildConfig.ALLOW_DEMO) "Secure storage cleared locally. ${DemoSecureValueStore.DEMO_WARNING}" else "Device credentials removed from Android Keystore.",
                 auditEvents = auditRepository.events(),
+                enrollmentConfigured = BuildConfig.ALLOW_DEMO,
             )
         }
     }
 
     fun exportLocalReadinessSummary() {
         val summary = buildString {
-            appendLine("Phase 4 local readiness summary")
+            appendLine(if (BuildConfig.ALLOW_DEMO) "Phase 4 local readiness summary" else "Private access device summary")
             appendLine("Storage mode: ${secureValueStore.storageLabel()}")
             appendLine("Storage health: ${secureValueStore.health().status}")
-            appendLine("Controlled prototype. Do not use for real sensitive communication.")
-            appendLine("Production gap: Android Keystore-backed storage is required before real sensitive usage.")
+            if (!BuildConfig.ALLOW_DEMO) {
+                appendLine("Profile API: ${BuildConfig.PROFILE_API_URL}")
+                appendLine("Enrollment configured: ${secureValueStore.getString(PrivateAccessProfileRepository.ENROLLMENT_TOKEN_KEY) != null}")
+            }
         }
         recordAudit("local_readiness_summary_exported")
         _state.update {
@@ -438,6 +463,9 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
                 settings = settingsRepository.current(),
                 storageLabel = secureValueStore.storageLabel(),
                 storageHealth = secureValueStore.health(),
+                enrollmentConfigured = BuildConfig.ALLOW_DEMO ||
+                    secureValueStore.getString(PrivateAccessProfileRepository.ENROLLMENT_TOKEN_KEY) != null ||
+                    secureValueStore.getString(PrivateAccessProfileRepository.DEVICE_TOKEN_KEY) != null,
             )
         }
     }
@@ -470,12 +498,12 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
         }
         val eventNames = when (label) {
             "Preparing device identity" -> listOf("device_identity_ready")
-            "Registering device" -> listOf("profile_api_health_checked", "device_registered")
-            "Requesting adaptive profile" -> listOf("profile_requested")
-            "Verifying issuer signature" -> listOf("profile_signature_verified")
-            "Decrypting local profile" -> listOf("profile_decrypted")
-            "Validating safety policy" -> listOf("profile_validated")
-            "Starting local VPN lifecycle" -> listOf("vpn_lifecycle_started")
+            "Registering device", "Authenticating device" -> listOf("profile_api_health_checked", "device_registered")
+            "Requesting adaptive profile", "Requesting access policy" -> listOf("profile_requested")
+            "Verifying issuer signature", "Verifying policy signature" -> listOf("profile_signature_verified")
+            "Decrypting local profile", "Checking key custody" -> listOf("profile_decrypted")
+            "Validating safety policy", "Validating private routes" -> listOf("profile_validated")
+            "Starting local VPN lifecycle", "Starting private tunnel" -> listOf("vpn_lifecycle_started")
             else -> emptyList()
         }
         eventNames.forEach { eventName ->
@@ -531,6 +559,9 @@ class GorzViewModel(application: Application) : AndroidViewModel(application) {
             offlineReason = if (settings.offlineDemoMode) "Offline demo mode enabled." else "",
             packetCount = counters.packetsRead,
             packetsDropped = counters.packetsDropped,
+            enrollmentConfigured = BuildConfig.ALLOW_DEMO ||
+                secureValueStore.getString(PrivateAccessProfileRepository.ENROLLMENT_TOKEN_KEY) != null ||
+                secureValueStore.getString(PrivateAccessProfileRepository.DEVICE_TOKEN_KEY) != null,
         )
     }
 }
