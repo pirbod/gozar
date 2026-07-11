@@ -118,9 +118,6 @@ class ProfileApiClient(
         } catch (exc: IOException) {
             throw ProfileApiException("backend unreachable", exc)
         } catch (exc: RuntimeException) {
-            if (exc is ProfileApiException) {
-                throw exc
-            }
             throw ProfileApiException("profile API response could not be parsed", exc)
         }
     }

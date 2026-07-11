@@ -1,0 +1,9 @@
+{
+    admin off
+}
+
+https://localhost:8443, https://gozar.internal:8443, https://10.0.2.2:8443 {
+    tls internal
+    encode zstd gzip
+    reverse_proxy profile-api:8095
+}

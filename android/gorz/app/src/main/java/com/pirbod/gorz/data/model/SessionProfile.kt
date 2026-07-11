@@ -3,6 +3,14 @@ package com.pirbod.gorz.data.model
 import java.time.Duration
 import java.time.Instant
 
+data class ApprovedService(
+    val id: String,
+    val name: String,
+    val host: String,
+    val port: Int,
+    val protocol: String,
+)
+
 data class SessionProfile(
     val sessionId: String,
     val deviceId: String,
@@ -21,6 +29,10 @@ data class SessionProfile(
     val policyReasons: List<String>,
     val validationResults: Map<String, String>,
     val backendConnected: Boolean,
+    val wireGuardConfig: String = "",
+    val gatewayEndpoint: String = "",
+    val approvedRoutes: List<String> = emptyList(),
+    val approvedServices: List<ApprovedService> = emptyList(),
 ) {
     fun redactedSessionId(): String = redactId(sessionId)
 

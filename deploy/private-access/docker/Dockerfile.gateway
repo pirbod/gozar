@@ -1,0 +1,5 @@
+FROM alpine:3.24.1
+RUN apk add --no-cache ca-certificates curl iproute2 iptables jq wireguard-tools
+COPY deploy/private-access/gateway/entrypoint.sh /usr/local/bin/gozar-gateway
+RUN chmod 0755 /usr/local/bin/gozar-gateway
+ENTRYPOINT ["/usr/local/bin/gozar-gateway"]

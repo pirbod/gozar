@@ -4,7 +4,7 @@ import json
 from collections.abc import Generator
 from uuid import uuid4
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, inspect, select
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -35,7 +35,7 @@ def configure_database(settings: Settings | None = None) -> None:
     settings = settings or get_settings()
     settings.ensure_storage_parent()
     connect_args = {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
-    _engine = create_engine(settings.database_url, connect_args=connect_args, future=True)
+    _engine = create_engine(settings.database_url, connect_args=connect_args, future=True, pool_pre_ping=True)
     _session_factory = sessionmaker(bind=_engine, expire_on_commit=False, autoflush=False)
 
 
@@ -56,7 +56,17 @@ def session_factory() -> sessionmaker[Session]:
 def init_db(settings: Settings | None = None) -> None:
     if settings is not None:
         configure_database(settings)
-    Base.metadata.create_all(bind=engine())
+    settings = settings or get_settings()
+    if settings.environment in {"development", "test"}:
+        Base.metadata.create_all(bind=engine())
+    else:
+        required_tables = {"devices", "session_profiles", "safety_state", "audit_events"}
+        existing_tables = set(inspect(engine()).get_table_names())
+        missing = sorted(required_tables - existing_tables)
+        if missing:
+            raise RuntimeError(
+                "database migrations are required before startup; missing tables: " + ", ".join(missing)
+            )
     with session_factory()() as session:
         state = session.scalar(select(SafetyState).where(SafetyState.state_id == "singleton"))
         if state is None:

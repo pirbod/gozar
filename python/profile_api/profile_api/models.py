@@ -24,6 +24,11 @@ class Device(Base):
     device_public_key: Mapped[str] = mapped_column(Text, nullable=False)
     device_public_key_hash: Mapped[str] = mapped_column(String(80), nullable=False, unique=True, index=True)
     capabilities_json: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(24), default="active", nullable=False, index=True)
+    auth_token_hash: Mapped[str | None] = mapped_column(String(80), nullable=True, unique=True, index=True)
+    wireguard_public_key: Mapped[str | None] = mapped_column(Text, nullable=True, unique=True)
+    assigned_address: Mapped[str | None] = mapped_column(String(48), nullable=True, unique=True)
+    last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, nullable=False)
 

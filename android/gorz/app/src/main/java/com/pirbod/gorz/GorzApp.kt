@@ -35,6 +35,7 @@ import com.pirbod.gorz.ui.screens.RoutePolicyScreen
 import com.pirbod.gorz.ui.screens.SafetyPauseScreen
 import com.pirbod.gorz.ui.screens.SessionDashboardScreen
 import com.pirbod.gorz.ui.screens.SettingsScreen
+import com.pirbod.gorz.ui.product.PrivateAccessProductApp
 
 private val GorzColorScheme = darkColorScheme(
     background = Color(0xFF071018),
@@ -57,6 +58,17 @@ fun GorzApp(
     onConnectRequested: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    if (!BuildConfig.ALLOW_DEMO) {
+        PrivateAccessProductApp(
+            state = state,
+            onCompleteOnboarding = viewModel::completeOnboarding,
+            onConnect = onConnectRequested,
+            onDisconnect = viewModel::disconnect,
+            onSaveEnrollmentCode = viewModel::updateAdminToken,
+            onClearCredentials = viewModel::clearSecureStorage,
+        )
+        return
+    }
     val navController = rememberNavController()
     val startDestination = if (state.onboardingComplete) "home" else "onboarding"
     val backStackEntry by navController.currentBackStackEntryAsState()

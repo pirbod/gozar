@@ -30,3 +30,36 @@ def test_non_local_mode_rejects_demo_private_keys(tmp_path) -> None:
 def test_invalid_audit_timestamp_bucket_fails() -> None:
     with pytest.raises(ValueError, match="PROFILE_AUDIT_TIMESTAMP_BUCKET_MINUTES"):
         Settings(audit_timestamp_bucket_minutes=45)
+
+def test_staging_requires_postgresql() -> None:
+    with pytest.raises(ValueError, match="PostgreSQL"):
+        Settings(
+            environment="staging",
+            enable_demo_api=False,
+            allow_demo_private_keys=False,
+            database_url="sqlite:///staging.sqlite3",
+            admin_token="admin-" + "a" * 40,
+            enrollment_token="enroll-" + "b" * 40,
+            device_token_pepper="pepper-" + "c" * 40,
+            issuer_private_key="IiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiI=",
+        )
+
+
+def test_staging_accepts_explicit_production_dependencies() -> None:
+    settings = Settings(
+        environment="staging",
+        enable_demo_api=False,
+        allow_demo_private_keys=False,
+        database_url="postgresql+psycopg://gozar:secret@postgres/gozar",
+        admin_token="admin-" + "a" * 40,
+        enrollment_token="enroll-" + "b" * 40,
+        device_token_pepper="pepper-" + "c" * 40,
+        issuer_private_key="IiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiI=",
+    )
+
+    assert settings.storage_backend == "postgresql"
+
+
+def test_public_route_is_rejected() -> None:
+    with pytest.raises(ValueError, match="non-private route"):
+        Settings(approved_routes=["0.0.0.0/0"])
