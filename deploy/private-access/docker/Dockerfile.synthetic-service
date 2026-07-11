@@ -1,0 +1,7 @@
+FROM alpine:3.24.1
+RUN apk add --no-cache busybox-extras
+RUN addgroup -S -g 10002 service && adduser -S -D -H -u 10002 -G service service
+COPY deploy/private-access/synthetic-service /srv
+USER 10002:10002
+EXPOSE 8080
+CMD ["httpd", "-f", "-p", "8080", "-h", "/srv"]

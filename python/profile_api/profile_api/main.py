@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import secrets
+
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import select
+from sqlalchemy import text as sql_text
 from sqlalchemy.orm import Session
 
 from .audit import audit_page, export_audit_bundle, record_audit
@@ -12,6 +15,16 @@ from .diagnostics import simulate_diagnostic
 from .issuer_keys import get_or_create_active_issuer_key, rotate_issuer_key
 from .models import Device, SessionProfile, utc_now
 from .openapi_tags import OPENAPI_TAGS
+from .private_access import (
+    DeviceAuthenticationError,
+    PrivateAccessDenied,
+    authenticate_device,
+    device_summary,
+    enroll_device,
+    issue_access_profile,
+    validate_access_profile,
+    wireguard_peers,
+)
 from .profile_issuer import ProfileIssueDenied, issue_session_profile, profile_metadata, validate_profile
 from .revocation import revoke_profile
 from .safety import get_safety_state, safety_response, set_pause
@@ -27,6 +40,11 @@ from .schemas import (
     IssuerRotateRequest,
     IssuerRotateResponse,
     MobileBootstrapResponse,
+    PrivateAccessDeviceResponse,
+    PrivateAccessEnrollmentRequest,
+    PrivateAccessEnrollmentResponse,
+    PrivateAccessProfileEnvelope,
+    PrivateAccessProfileRequest,
     ProfileValidationResponse,
     RevokeProfileRequest,
     RevokeProfileResponse,
@@ -41,16 +59,17 @@ from .storage import get_session, init_db, session_factory
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
     init_db(settings)
-    with session_factory()() as session:
-        get_or_create_active_issuer_key(session, allow_demo_private_keys=settings.allow_demo_private_keys)
-        session.commit()
+    if settings.enable_demo_api:
+        with session_factory()() as session:
+            get_or_create_active_issuer_key(session, allow_demo_private_keys=settings.allow_demo_private_keys)
+            session.commit()
 
     app = FastAPI(
         title="Gozar Profile API",
         version=settings.app_version,
         description=(
-            "Local-only profile lifecycle API for signed encrypted profile envelopes. "
-            "This service issues simulated profiles only and is not production secure."
+            "Device enrollment and short-lived WireGuard profiles for approved internal services. "
+            "Legacy demo endpoints are available only in the development environment."
         ),
         openapi_tags=OPENAPI_TAGS,
     )
@@ -63,10 +82,38 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["*"],
     )
 
+    @app.middleware("http")
+    async def disable_legacy_demo_api(request: Request, call_next):
+        if (
+            not settings.enable_demo_api
+            and request.url.path.startswith("/api/profile/")
+            and request.url.path != "/api/profile/health"
+        ):
+            raise HTTPException(status_code=404, detail="Legacy demo API is disabled")
+        return await call_next(request)
+
     def require_admin_token(request: Request) -> None:
-        token = request.headers.get("x-profile-admin-token")
-        if token != settings.admin_token:
-            raise HTTPException(status_code=401, detail="Profile admin token is required for this local demo action")
+        token = request.headers.get("x-profile-admin-token", "")
+        if not secrets.compare_digest(token, settings.admin_token):
+            raise HTTPException(status_code=401, detail="Operator authentication failed")
+
+    def require_enrollment_token(request: Request) -> None:
+        token = request.headers.get("x-gozar-enrollment-token", "")
+        if not secrets.compare_digest(token, settings.enrollment_token):
+            raise HTTPException(status_code=401, detail="Enrollment authentication failed")
+
+    def require_device(
+        request: Request,
+        session: Session = Depends(get_session),
+    ) -> Device:
+        authorization = request.headers.get("authorization", "")
+        scheme, _, token = authorization.partition(" ")
+        if scheme.lower() != "bearer" or not token:
+            raise HTTPException(status_code=401, detail="Device bearer token is required")
+        try:
+            return authenticate_device(session, token, settings)
+        except DeviceAuthenticationError as exc:
+            raise HTTPException(status_code=401, detail=str(exc)) from exc
 
     @app.get("/api/profile/health", response_model=HealthResponse, tags=["health"])
     def health() -> HealthResponse:
@@ -77,6 +124,117 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             storage_backend=settings.storage_backend,
             timestamp=utc_now(),
         )
+
+    @app.get("/livez", tags=["health"])
+    def livez() -> dict[str, str]:
+        return {"status": "ok"}
+
+    @app.get("/readyz", tags=["health"])
+    def readyz(session: Session = Depends(get_session)) -> dict[str, str]:
+        session.execute(sql_text("SELECT 1"))
+        return {"status": "ready", "storage": settings.storage_backend}
+
+    @app.post(
+        "/api/v1/enrollment",
+        response_model=PrivateAccessEnrollmentResponse,
+        tags=["private-access"],
+        dependencies=[Depends(require_enrollment_token)],
+    )
+    def enroll(
+        payload: PrivateAccessEnrollmentRequest,
+        session: Session = Depends(get_session),
+    ) -> dict[str, object]:
+        try:
+            device, raw_token = enroll_device(session, payload, settings)
+        except (ValueError, PrivateAccessDenied) as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        session.commit()
+        return {
+            "device_id": device.device_id,
+            "device_token": raw_token,
+            "assigned_address": str(device.assigned_address),
+            "status": "active",
+            "token_type": "Bearer",
+        }
+
+    @app.get("/api/v1/me", response_model=PrivateAccessDeviceResponse, tags=["private-access"])
+    def me(
+        device: Device = Depends(require_device),
+        session: Session = Depends(get_session),
+    ) -> dict[str, object]:
+        response = device_summary(device, settings)
+        session.commit()
+        return response
+
+    @app.post(
+        "/api/v1/access-profiles",
+        response_model=PrivateAccessProfileEnvelope,
+        tags=["private-access"],
+    )
+    def create_access_profile(
+        payload: PrivateAccessProfileRequest,
+        device: Device = Depends(require_device),
+        session: Session = Depends(get_session),
+    ) -> dict[str, object]:
+        try:
+            envelope = issue_access_profile(session, device, payload, settings)
+        except PrivateAccessDenied as exc:
+            raise HTTPException(status_code=423, detail=str(exc)) from exc
+        session.commit()
+        return envelope
+
+    @app.post(
+        "/api/v1/access-profiles/{profile_id}/validate",
+        response_model=ProfileValidationResponse,
+        tags=["private-access"],
+    )
+    def validate_private_access_profile(
+        profile_id: str,
+        device: Device = Depends(require_device),
+        session: Session = Depends(get_session),
+    ) -> dict[str, object]:
+        result = validate_access_profile(session, profile_id, device)
+        session.commit()
+        if result["status"] == "unknown":
+            raise HTTPException(status_code=404, detail="Profile not found")
+        return result
+
+    @app.get("/api/v1/admin/wireguard/peers", tags=["private-access"])
+    def list_wireguard_peers(
+        _: None = Depends(require_admin_token),
+        session: Session = Depends(get_session),
+    ) -> list[dict[str, str]]:
+        return wireguard_peers(session)
+
+    @app.post("/api/v1/admin/access/pause", tags=["private-access"])
+    def pause_private_access(
+        _: None = Depends(require_admin_token),
+        session: Session = Depends(get_session),
+    ) -> dict[str, object]:
+        state = set_pause(session, True)
+        record_audit(
+            session,
+            "private_access.pause_enabled",
+            summary="Private-access profile issuance paused by an operator.",
+            metadata={"pause_enabled": True},
+        )
+        session.commit()
+        return safety_response(state)
+
+    @app.post("/api/v1/admin/access/resume", tags=["private-access"])
+    def resume_private_access(
+        _: None = Depends(require_admin_token),
+        session: Session = Depends(get_session),
+    ) -> dict[str, object]:
+        state = set_pause(session, False)
+        record_audit(
+            session,
+            "private_access.pause_disabled",
+            summary="Private-access profile issuance resumed by an operator.",
+            metadata={"pause_enabled": False},
+        )
+        session.commit()
+        return safety_response(state)
 
     @app.post("/api/profile/devices/register", response_model=DeviceRegisterResponse, tags=["devices"])
     def register(payload: DeviceRegisterRequest, session: Session = Depends(get_session)) -> DeviceRegisterResponse:

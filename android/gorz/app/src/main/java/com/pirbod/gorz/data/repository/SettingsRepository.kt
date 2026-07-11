@@ -1,6 +1,7 @@
 package com.pirbod.gorz.data.repository
 
 import android.content.Context
+import com.pirbod.gorz.BuildConfig
 import com.pirbod.gorz.ProfileStateStore
 import com.pirbod.gorz.data.model.DemoMode
 
@@ -18,12 +19,12 @@ class SettingsRepository(private val store: ProfileStateStore) {
 
     fun current(): AppSettings {
         return AppSettings(
-            apiUrl = store.apiUrl,
-            adminToken = store.adminToken,
+            apiUrl = if (BuildConfig.ALLOW_DEMO) store.apiUrl else BuildConfig.PROFILE_API_URL,
+            adminToken = if (BuildConfig.ALLOW_DEMO) store.adminToken else "",
             selectedMode = DemoMode.fromApiValue(store.selectedDemoMode),
-            offlineDemoMode = store.offlineDemoMode,
+            offlineDemoMode = BuildConfig.ALLOW_DEMO && store.offlineDemoMode,
             onboardingComplete = store.onboardingComplete,
-            experimentalKeystoreStorage = store.experimentalKeystoreStorage,
+            experimentalKeystoreStorage = !BuildConfig.ALLOW_DEMO || store.experimentalKeystoreStorage,
         )
     }
 
