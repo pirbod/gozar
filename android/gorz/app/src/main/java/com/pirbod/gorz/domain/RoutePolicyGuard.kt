@@ -19,11 +19,15 @@ object RoutePolicyGuard {
         "127.0.0.1",
         "10.0.2.2",
         ControlledLabEndpoint,
+        "wireguard_authenticated",
     )
     private val unsafeRoutes = setOf(BlockedUnsafeRoute, BlockedUnsafeIpv6Route, "*", "0/0")
     private val unsafeLabelFragments = setOf("relay", "bridge", "forwarding")
 
-    fun isAppliedRouteSafe(route: String): Boolean = route.trim() in allowedRoutes
+    fun isAppliedRouteSafe(route: String): Boolean {
+        val routes = route.split(",").map(String::trim).filter(String::isNotEmpty)
+        return routes.isNotEmpty() && routes.all { it in allowedRoutes || isBoundedPrivateIpv4Cidr(it) }
+    }
 
     fun isBlockedRouteExplicit(route: String): Boolean = route.trim() in unsafeRoutes
 
@@ -100,6 +104,20 @@ object RoutePolicyGuard {
         if (unsafeLabelFragments.any { lowered.contains(it) }) return "blocked_public"
         if (looksPublicIpv4(value) || looksPublicIpv6(value) || looksPublicHostname(value)) return "blocked_public"
         return "blocked_public"
+    }
+
+    private fun isBoundedPrivateIpv4Cidr(value: String): Boolean {
+        val parts = value.split("/", limit = 2)
+        if (parts.size != 2) return false
+        val prefix = parts[1].toIntOrNull() ?: return false
+        if (prefix !in 1..32) return false
+        val octets = parts[0].split(".").map { it.toIntOrNull() ?: return false }
+        if (octets.size != 4 || octets.any { it !in 0..255 }) return false
+        val first = octets[0]
+        val second = octets[1]
+        return first == 10 ||
+            (first == 172 && second in 16..31) ||
+            (first == 192 && second == 168)
     }
 
     private fun looksPublicHostname(value: String): Boolean {

@@ -13,3 +13,8 @@ coverage/
 .vscode/
 runtime/
 temp.txt
+.venv/
+.gradle/
+android/**/build/
+android/**/local.properties
+.env.private-access

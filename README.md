@@ -1,36 +1,49 @@
 # Gozar/Gorz
 
-Controlled local-first prototype release candidate for Android session lifecycle, local profile issuance, Gozar Core service-to-service routing, evidence export, diagnostics, platform automation, observability, SIEM-style detection, deterministic incident summaries, and production-readiness hardening.
+Private-access VPN alpha for approved internal services, with an Android client, signed short-lived access policies, PostgreSQL device state, a WireGuard gateway, and an isolated staging environment.
 
-Static review labels, not live CI badges:
+Release status:
 
-- Controlled Release Candidate
-- Production: READY
-- Production-ready for real use: NO
+- Private-access alpha: runnable in isolated staging
+- Consumer VPN: out of scope
+- General production rollout: requires the controls listed below
 
 ## Safety Disclaimer
 
-Gozar/Gorz is for authorized local demo, research, review, and stakeholder evaluation only. It is not production secure, not a production VPN, not a public routing product, not a field-deployment routing product, and not a circumvention tool.
+Gozar/Gorz is an approved-user VPN for private services. It is not a consumer VPN, public routing product, public relay, or circumvention tool.
 
 Safety boundaries:
 
-- No public traffic forwarding.
-- No full-device Android route.
-- No public gateway discovery.
-- No public relay discovery.
+- Only configured private CIDRs can enter the tunnel.
+- No full-device default route.
+- No public gateway or relay discovery.
 - No public network probing.
 - No automatic diagnostic upload.
 - No contacts, phone number, location, or public IP history collection.
-- No production deployment claim from the provided production templates.
+- Enrollment and operator access require explicit secrets.
 
 ## Current Scope
 
-The repository currently combines two controlled tracks:
+The repository contains three tracks:
 
-1. **Gorz Android controlled demo:** Android session lifecycle, local profile flow, offline demo mode, diagnostics, evidence export, safety pause, and reviewer-facing product screens.
-2. **Gozar Core routing lab:** Rust dataplane services, TypeScript control plane, Docker Compose lab, relay and gateway routing, signed local control messages, bounded queues, and production-readiness hardening artifacts.
+1. **Private-access product:** Android `internal` flavor, authenticated enrollment, signed access policies, Android Keystore key custody, official WireGuard tunnel backend, approved services, and operator device pause.
+2. **Isolated staging:** PostgreSQL, Profile API, HTTPS ingress, WireGuard gateway, and a synthetic private service on internal-only container networks.
+3. **Controlled labs:** the Android `demo` flavor and Gozar Core routing lab remain available for research and regression testing, but they are not used by the internal product build.
 
-The latest production-hardening update keeps the local demo intact while making unsafe defaults explicit and adding production-oriented templates for future implementation.
+## Run Private Access
+
+The staging stack binds HTTPS and WireGuard only to loopback. It does not forward public traffic. Docker with Compose is required.
+
+```bash
+./deploy/private-access/bootstrap.sh
+./deploy/private-access/export-ca.sh
+python3 scripts/private_access/smoke_test.py
+./scripts/private_access/run_tunnel_smoke.sh
+```
+
+The first smoke test validates enrollment, PostgreSQL persistence, bearer authentication, signed policy issuance, and approved routes. The tunnel test creates an ephemeral peer, verifies a WireGuard handshake, reaches the synthetic private service, and confirms that no default route is installed.
+
+Full instructions: [docs/private-access/isolated-staging.md](docs/private-access/isolated-staging.md)
 
 ## Four-Phase Roadmap
 
@@ -150,9 +163,19 @@ Key entry points:
 
 Before real deployment, replace demo HMAC secrets, static admin tokens, process-local replay caches, local JSON state, self-signed QUIC trust, and template images with approved production identity, storage, certificate, signing, observability, and release controls.
 
-## Android Demo
+## Android Builds
 
-Open `android/gorz` in Android Studio and run on a Pixel 2 API 30 emulator. Offline demo mode works without the local Profile API.
+Open `android/gorz` in Android Studio. Use the `internal` flavor for the private-access product and the `demo` flavor only for offline regression work. The internal release build requires an HTTPS Profile API URL and a pinned policy signer public key.
+
+```bash
+./gradlew testInternalDebugUnitTest assembleInternalDebug
+```
+
+The internal app provides enrollment, connection status, approved resources, activity, settings, device pause state, and direct opening of approved HTTP or HTTPS services. Its WireGuard private key and device credentials remain in Android Keystore.
+
+### Demo Flavor
+
+The demo flavor works without the Profile API.
 
 ```bash
 make android-emulator-smoke-report

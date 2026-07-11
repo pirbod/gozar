@@ -198,3 +198,58 @@ class MobileBootstrapResponse(BaseModel):
     supported_profile_types: list[Literal["wireguard_like_demo", "quic_like_demo"]]
     android_emulator_api_url_hint: str
     safety_notes: list[str]
+
+class PrivateAccessEnrollmentRequest(BaseModel):
+    display_name: str = Field(min_length=1, max_length=120)
+    app_version: str = Field(min_length=1, max_length=40)
+    device_public_key: str = Field(min_length=44, max_length=44)
+    wireguard_public_key: str = Field(min_length=44, max_length=44)
+
+
+class PrivateAccessEnrollmentResponse(BaseModel):
+    device_id: str
+    device_token: str
+    assigned_address: str
+    status: Literal["active"]
+    token_type: Literal["Bearer"] = "Bearer"
+
+
+class PrivateAccessDeviceResponse(BaseModel):
+    device_id: str
+    display_name: str
+    status: str
+    assigned_address: str
+    approved_routes: list[str]
+    last_seen_at: datetime | None
+
+
+class PrivateAccessProfileRequest(BaseModel):
+    ttl_seconds: int | None = Field(default=None, ge=60, le=3600)
+
+
+class PrivateAccessService(BaseModel):
+    id: str
+    name: str
+    host: str
+    port: int
+    protocol: Literal["http", "https", "tcp"]
+
+
+class PrivateAccessProfileEnvelope(BaseModel):
+    profile_id: str
+    device_id: str
+    audience: str
+    issued_at: datetime
+    expires_at: datetime
+    ttl_seconds: int
+    client_address: str
+    gateway_public_key: str
+    gateway_endpoint: str
+    approved_routes: list[str]
+    approved_services: list[PrivateAccessService]
+    dns_servers: list[str]
+    persistent_keepalive_seconds: int = 25
+    policy_version: str
+    issuer_key_id: str
+    issuer_public_key: str
+    signature: str

@@ -1,5 +1,6 @@
 package com.pirbod.gorz.domain
 
+import com.pirbod.gorz.BuildConfig
 import com.pirbod.gorz.VpnSessionController
 import com.pirbod.gorz.data.model.ConfidenceResult
 import com.pirbod.gorz.data.model.SessionProfile
@@ -39,10 +40,11 @@ class ConnectSessionUseCase(
             throw IllegalStateException(validation.messages.joinToString("; "))
         }
 
-        onStage("Starting local VPN lifecycle", "running", "Opening controlled local Android VpnService.")
-        vpnSessionController.start(fetch.profile.sessionId, fetch.profile.selectedMode.apiValue)
-        onStage("Starting local VPN lifecycle", "success", "Local VPN lifecycle active; packets are counted and dropped.")
-        onStage("Session ready", "success", "Demo session active.")
+        val tunnelLabel = if (BuildConfig.ALLOW_DEMO) "Starting local VPN lifecycle" else "Starting private tunnel"
+        onStage(tunnelLabel, "running", "Activating approved routes through WireGuard.")
+        vpnSessionController.start(fetch.profile)
+        onStage(tunnelLabel, "success", "Private-service tunnel is active.")
+        onStage("Session ready", "success", "Approved internal services are available.")
 
         settingsRepository.saveProfile(fetch.profile.sessionId, fetch.profile.expiresAt)
         auditRepository.record(

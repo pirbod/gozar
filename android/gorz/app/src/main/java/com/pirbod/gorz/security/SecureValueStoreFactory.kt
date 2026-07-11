@@ -1,15 +1,16 @@
 package com.pirbod.gorz.security
 
 import android.content.Context
+import com.pirbod.gorz.BuildConfig
 
 object SecureValueStoreFactory {
     fun create(
         context: Context,
         experimentalKeystoreEnabled: Boolean = false,
     ): SecureValueStore {
-        if (!experimentalKeystoreEnabled) {
-            return DemoSecureValueStore(context)
+        if (!BuildConfig.ALLOW_DEMO || experimentalKeystoreEnabled) {
+            return AndroidKeystoreSecureValueStore(context)
         }
-        return AndroidKeystoreSecureValueStore(context)
+        return DemoSecureValueStore(context)
     }
 }
