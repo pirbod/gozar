@@ -55,7 +55,7 @@ jobs:
         run: |
           if command -v java >/dev/null 2>&1 && command -v gradle >/dev/null 2>&1 && { [ -n "${ANDROID_HOME:-}" ] || [ -n "${ANDROID_SDK_ROOT:-}" ]; }; then
             cd android/gorz
-            ./gradlew test assembleDebug
+            ./gradlew testDemoDebugUnitTest testInternalDebugUnitTest assembleDemoDebug assembleInternalDebug
           else
             echo "Android Gradle toolchain not available; static validation already completed."
           fi

@@ -23,11 +23,11 @@ jobs:
 
       - name: Android unit tests
         working-directory: android/gorz
-        run: ./gradlew testDebugUnitTest
+        run: ./gradlew testDemoDebugUnitTest testInternalDebugUnitTest
 
       - name: Android debug build
         working-directory: android/gorz
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDemoDebug assembleInternalDebug
 
       - name: Android safety checks
         run: |
@@ -45,5 +45,5 @@ jobs:
           name: android-build-artifacts
           path: |
             android/gorz/app/build/reports
-            android/gorz/app/build/outputs/apk/debug/*.apk
+            android/gorz/app/build/outputs/apk/*/debug/*.apk
             runtime/reports
