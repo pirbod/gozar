@@ -67,7 +67,7 @@ data class AccessProfileResponse(
 ) {
     fun validatePolicy() {
         require(approvedRoutes.isNotEmpty()) { "No internal routes were approved" }
-        require(approvedRoutes.none { it in DEFAULT_ROUTES }) { "Default routes are not allowed" }
+        require(approvedRoutes.none { it in BLOCKED_DEFAULT_ROUTES }) { "Default routes are not allowed" }
         require(approvedRoutes.all(::isBoundedPrivateCidr)) { "Profile contains a non-private route" }
         require(approvedServices.isNotEmpty()) { "Profile contains no approved services" }
         require(approvedServices.all { service ->
@@ -99,7 +99,7 @@ data class AccessProfileResponse(
     }
 
     companion object {
-        private val DEFAULT_ROUTES = setOf("0.0.0.0/0", "::/0", "0/0")
+        private val BLOCKED_DEFAULT_ROUTES = setOf("0.0.0.0/0", "::/0", "0/0")
 
         internal fun isBoundedPrivateCidr(value: String): Boolean {
             val parts = value.split("/", limit = 2)
