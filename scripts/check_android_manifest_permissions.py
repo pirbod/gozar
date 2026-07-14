@@ -6,7 +6,10 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MANIFEST = ROOT / "android" / "gorz" / "app" / "src" / "main" / "AndroidManifest.xml"
+MANIFESTS = {
+    "main": ROOT / "android" / "gorz" / "app" / "src" / "main" / "AndroidManifest.xml",
+    "demo": ROOT / "android" / "gorz" / "app" / "src" / "demo" / "AndroidManifest.xml",
+}
 ANDROID_NS = "{http://schemas.android.com/apk/res/android}"
 
 ALLOWED_PERMISSIONS = {
@@ -30,23 +33,35 @@ VPN_SERVICE_PERMISSION = "android.permission.BIND_VPN_SERVICE"
 
 
 def main() -> None:
-    if not MANIFEST.exists():
-        raise SystemExit(f"FAIL: missing manifest: {MANIFEST.relative_to(ROOT)}")
+    missing = [path.relative_to(ROOT) for path in MANIFESTS.values() if not path.exists()]
+    if missing:
+        raise SystemExit(f"FAIL: missing manifest: {', '.join(map(str, missing))}")
 
-    root = ET.parse(MANIFEST).getroot()
+    roots = {name: ET.parse(path).getroot() for name, path in MANIFESTS.items()}
     permissions = sorted(
-        permission.attrib.get(f"{ANDROID_NS}name", "")
-        for permission in root.findall("uses-permission")
-        if permission.attrib.get(f"{ANDROID_NS}name")
+        {
+            permission.attrib.get(f"{ANDROID_NS}name", "")
+            for root in roots.values()
+            for permission in root.findall("uses-permission")
+            if permission.attrib.get(f"{ANDROID_NS}name")
+        }
     )
     blocked = sorted(set(permissions) & BLOCKED_PERMISSIONS)
 
     service_permissions = sorted(
         service.attrib.get(f"{ANDROID_NS}permission", "")
+        for root in roots.values()
         for service in root.findall("./application/service")
         if service.attrib.get(f"{ANDROID_NS}permission")
     )
-    bind_vpn_service_ok = VPN_SERVICE_PERMISSION in service_permissions and VPN_SERVICE_PERMISSION not in permissions
+    demo_service_permissions = {
+        service.attrib.get(f"{ANDROID_NS}permission", "")
+        for service in roots["demo"].findall("./application/service")
+    }
+    bind_vpn_service_ok = (
+        VPN_SERVICE_PERMISSION in demo_service_permissions
+        and VPN_SERVICE_PERMISSION not in permissions
+    )
     unexpected = sorted(set(permissions) - ALLOWED_PERMISSIONS - BLOCKED_PERMISSIONS)
 
     print("Android manifest permission check")
