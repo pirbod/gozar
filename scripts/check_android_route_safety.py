@@ -16,13 +16,10 @@ BLOCKED_PATTERNS = {
 TEXTUAL_BLOCKED_ROUTES = ("0.0.0.0/0", "::/0")
 TEXTUAL_ALLOW_HINTS = (
     "blocked",
-    "Blocked",
     "reject",
-    "Reject",
     "unsafe route",
-    "BlockedUnsafeRoute",
-    "isBlockedRouteExplicit",
-    "assertFalse",
+    "isblockedrouteexplicit",
+    "assertfalse",
     "does not contain",
 )
 
@@ -34,12 +31,13 @@ def main() -> None:
             continue
         text = path.read_text(encoding="utf-8")
         for line_number, line in enumerate(text.splitlines(), start=1):
+            line_lower = line.lower()
             for label, pattern in BLOCKED_PATTERNS.items():
                 if pattern.search(line):
                     violations.append(_format(path, line_number, label))
             if "src/test" not in path.as_posix() and "src/androidTest" not in path.as_posix():
                 for route in TEXTUAL_BLOCKED_ROUTES:
-                    if route in line and not any(hint in line for hint in TEXTUAL_ALLOW_HINTS):
+                    if route in line and not any(hint in line_lower for hint in TEXTUAL_ALLOW_HINTS):
                         violations.append(_format(path, line_number, f"unqualified device-wide route literal {route}"))
 
     print("Android route safety check")
