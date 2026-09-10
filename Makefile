@@ -193,7 +193,7 @@ android-safety-check:
 	$(PYTHON) scripts/check_android_route_safety.py
 
 android-emulator-smoke:
-	cd $(ANDROID_DIR) && ./gradlew pixel2api30DebugAndroidTest
+	cd $(ANDROID_DIR) && ./gradlew pixel2api30DemoDebugAndroidTest
 
 android-emulator-smoke-report:
 	GORZ_EMULATOR_REPORT_ONLY=1 $(PYTHON) scripts/android/run_emulator_smoke_report.py
