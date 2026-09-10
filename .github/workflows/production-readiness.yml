@@ -27,11 +27,13 @@ jobs:
       - name: Demo video package check
         run: make demo-video-check
 
-      - name: Production readiness report
-        run: python scripts/production_readiness_check.py
-
       - name: Release candidate manifest
         run: make release-candidate-manifest
+
+      # The readiness gate asserts that the reports above exist, so it has to
+      # run after they are generated, not before.
+      - name: Production readiness report
+        run: python scripts/production_readiness_check.py
 
       - name: Example reports
         run: make phase4-example-reports
