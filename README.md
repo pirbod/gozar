@@ -10,7 +10,7 @@ Release status:
 
 ## Safety Disclaimer
 
-Gozar/Gorz is an approved-user VPN for private services. It is not a consumer VPN, public routing product, public relay, or circumvention tool.
+Gozar/Gorz is an approved-user VPN for private services. It is not a consumer VPN, not a public relay, not a field-deployment routing product, and not a circumvention tool.
 
 Safety boundaries:
 

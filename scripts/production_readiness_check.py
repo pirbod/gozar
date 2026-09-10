@@ -21,7 +21,7 @@ class CheckResult:
     critical: bool = False
 
 
-def main() -> None:
+def main() -> int:
     checks = build_checks()
     generated = datetime.now(UTC).isoformat()
     critical_failures = sum(1 for check in checks if check.status == "FAIL" and check.critical)
@@ -54,6 +54,13 @@ def main() -> None:
     (REPORT_DIR / "production-readiness-report.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     (REPORT_DIR / "production-readiness-report.md").write_text(render_markdown(payload), encoding="utf-8")
     print(render_console(payload))
+    if critical_failures:
+        print(
+            f"Production readiness gate: FAIL ({critical_failures} critical check(s) failed).",
+        )
+        return 1
+    print("Production readiness gate: OK (no critical check failures).")
+    return 0
 
 
 def build_checks() -> list[CheckResult]:
@@ -169,8 +176,8 @@ def build_checks() -> list[CheckResult]:
         _contains("Makefile android-emulator-smoke-report target exists", makefile, "\nandroid-emulator-smoke-report:"),
         _contains("Makefile phase4-check target exists", makefile, "\nphase4-check:"),
         _contains("Makefile phase4-screenshots target exists", makefile, "\nphase4-screenshots:"),
-        _contains("VERSION is 0.4.0-rc1", _read("VERSION"), "0.4.0-rc1", critical=True),
-        _contains("Android versionName is 0.4.0-rc1", gradle_text(), 'versionName = "0.4.0-rc1"', critical=True),
+        _version_file_check(),
+        _android_version_name_check(),
         _not_contains("No sensitive Android location permission", manifest, "ACCESS_FINE_LOCATION", critical=True),
         _not_contains("No Android contacts permission", manifest, "READ_CONTACTS", critical=True),
         _phrase_absent("Android code has no automatic diagnostic upload", android_text, "automatic diagnostic upload", critical=True),
@@ -288,6 +295,87 @@ def _joined_text(root: Path, suffixes: set[str]) -> str:
     return "\n".join(parts)
 
 
+def _declared_version() -> str:
+    return _read("VERSION").strip()
+
+
+def _version_file_check() -> CheckResult:
+    version = _declared_version()
+    return CheckResult(
+        "VERSION file declares a release version",
+        "PASS" if version else "FAIL",
+        f"VERSION is {version!r}" if version else "VERSION is empty or missing",
+        "Write the current release version into VERSION.",
+        critical=True,
+    )
+
+
+def _android_version_name_check() -> CheckResult:
+    """Keep the Android versionName in step with the VERSION file.
+
+    Reading VERSION instead of a hardcoded literal means the check keeps
+    working across releases rather than going stale one bump later.
+    """
+    version = _declared_version()
+    expected = f'versionName = "{version}"'
+    found = re.search(r'versionName\s*=\s*"([^"]*)"', gradle_text())
+    actual = found.group(1) if found else None
+    if not version:
+        return CheckResult(
+            "Android versionName matches VERSION",
+            "FAIL",
+            "VERSION is empty or missing, so the Android versionName cannot be compared.",
+            "Write the current release version into VERSION.",
+            critical=True,
+        )
+    if actual == version:
+        return CheckResult(
+            "Android versionName matches VERSION",
+            "PASS",
+            f"Found {expected!r}",
+            "",
+            critical=True,
+        )
+    return CheckResult(
+        "Android versionName matches VERSION",
+        "FAIL",
+        f"VERSION is {version!r} but Android versionName is {actual!r}"
+        if actual
+        else f"VERSION is {version!r} but no versionName was found",
+        f"Set versionName to {version!r} in android/gorz/app/build.gradle.kts.",
+        critical=True,
+    )
+
+
+_PLACEHOLDER_VALUE = re.compile(
+    r"""^\s*["']?(?:
+          $                                   # nothing assigned at all
+        | replace-with[\w.-]*                 # documented placeholder
+        | changeme[\w.-]*
+        | your-[\w.-]+
+        | <[^>]*>                             # <fill-me-in>
+        | \{\{[^}]*\}\}                      # {{ template_value }}
+        | \$\{?[A-Za-z_][A-Za-z0-9_]*\}?      # $VAR or ${VAR} expansion
+        | \$\([^)]*\)                         # $(command substitution)
+    )["']?\s*$""",
+    re.IGNORECASE | re.VERBOSE,
+)
+
+
+def _is_placeholder_assignment(text: str, value_start: int) -> bool:
+    """Return True when a key assignment carries a placeholder, not a real secret.
+
+    Example env files legitimately assign documented placeholders such as
+    "replace-with-...", and generator scripts assign shell expansions such as
+    "$generated_value". Neither is secret material, and flagging them trains
+    reviewers to ignore the check. Literal key names are kept out of this
+    docstring so the scanner does not match its own source.
+    """
+    line_end = text.find("\n", value_start)
+    value = text[value_start : line_end if line_end != -1 else len(text)]
+    return bool(_PLACEHOLDER_VALUE.match(value.lstrip().removeprefix("=")))
+
+
 def _secret_scan() -> CheckResult:
     patterns = [
         re.compile(re.escape("AWS_SECRET" + "_ACCESS_KEY")),
@@ -313,8 +401,11 @@ def _secret_scan() -> CheckResult:
             continue
         text = path.read_text(encoding="utf-8", errors="ignore")
         for pattern in patterns:
-            if pattern.search(text):
+            for match in pattern.finditer(text):
+                if _is_placeholder_assignment(text, match.end()):
+                    continue
                 violations.append(f"{path.relative_to(ROOT)} contains {pattern.pattern}")
+                break
     return CheckResult(
         "No obvious secrets in tracked files",
         "PASS" if not violations else "FAIL",
@@ -572,4 +663,4 @@ def status_for(payload: dict[str, object], prefix: str) -> str:
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
