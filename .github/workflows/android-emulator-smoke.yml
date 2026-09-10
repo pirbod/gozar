@@ -22,11 +22,11 @@ jobs:
 
       - name: Unit tests
         working-directory: android/gorz
-        run: ./gradlew testDebugUnitTest
+        run: ./gradlew testDemoDebugUnitTest testInternalDebugUnitTest
 
       - name: Assemble debug
         working-directory: android/gorz
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDemoDebug assembleInternalDebug
 
       - name: Managed-device smoke test and report
         run: python scripts/android/run_emulator_smoke_report.py
@@ -42,7 +42,7 @@ jobs:
           name: android-emulator-smoke-artifacts
           path: |
             android/gorz/app/build/reports
-            android/gorz/app/build/outputs/apk/debug
+            android/gorz/app/build/outputs/apk/*/debug
             runtime/reports/android-emulator-smoke-report.md
             runtime/reports/android-emulator-smoke-report.json
             runtime/reports/screenshots/phase4
