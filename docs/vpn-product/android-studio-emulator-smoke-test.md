@@ -98,7 +98,7 @@ Run:
 cd android/gorz
 ./gradlew test
 ./gradlew assembleDebug
-./gradlew pixel2api30DebugAndroidTest
+./gradlew pixel2api30DemoDebugAndroidTest
 ```
 
 Expected screens: onboarding, home, connect flow, session, confidence, route policy, diagnostics, evidence, safety pause, audit, settings, and storage mode. Manual VPN permission validation may remain manual if emulator permission automation is unstable.

@@ -44,7 +44,7 @@ def main() -> int:
         print("Android emulator smoke status: SKIPPED")
         return 0
 
-    command = ["./gradlew", "pixel2api30DebugAndroidTest"]
+    command = ["./gradlew", "pixel2api30DemoDebugAndroidTest"]
     result = subprocess.run(command, cwd=ANDROID_DIR, text=True, capture_output=True, check=False)
     output = result.stdout + "\n" + result.stderr
     if result.returncode == 0:
@@ -75,12 +75,12 @@ def payload_for(status: str, detail: str, output: str, exit_code: int) -> dict[s
         "generatedAt": datetime.now(UTC).isoformat(),
         "status": status,
         "detail": detail,
-        "command": "cd android/gorz && ./gradlew pixel2api30DebugAndroidTest",
+        "command": "cd android/gorz && ./gradlew pixel2api30DemoDebugAndroidTest",
         "exitCode": exit_code,
         "outputTail": "\n".join(output.splitlines()[-120:]),
         "artifacts": [
             "android/gorz/app/build/reports/androidTests/managedDevice",
-            "android/gorz/app/build/outputs/apk/debug",
+            "android/gorz/app/build/outputs/apk/demo/debug",
             "runtime/reports/android-emulator-smoke-report.md",
             "runtime/reports/android-emulator-smoke-report.json",
         ],
